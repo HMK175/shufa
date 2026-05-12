@@ -18,13 +18,15 @@ import numpy as np
 
 from utils import load_image, preprocess
 from skeleton import zhang_suen
-from trajectory import trace_skeleton, smooth_bspline, save_trajectory_csv
+from trajectory import trace_skeleton, trace_skeleton_dfs, smooth_bspline, save_trajectory_csv
+from stroke import get_stroke_list, prune_skeleton
 
 # ============================================================
 # 可调参数：直接修改这里的值，然后点 ▶ 运行
 # ============================================================
-SMOOTH = 2.0   # B样条平滑强度 (0=不平滑, 越大越平滑)
-SAMPLE = 300   # 平滑后采样点数 (0=保持原始点数)
+TRACE_MODE = "stroke"  # 轨迹追踪: "stroke"(笔画感知) / "dfs"(简单DFS)
+SMOOTH = 2.0           # B样条平滑强度 (0=不平滑, 越大越平滑)
+SAMPLE = 300           # 平滑后采样点数 (0=保持原始点数)
 # ============================================================
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,16 +39,16 @@ def _find_images():
                     glob.glob(os.path.join(SCRIPT_DIR, "*.jpeg")) +
                     glob.glob(os.path.join(SCRIPT_DIR, "*.png"))):
         base = os.path.basename(f)
-        if "pipeline" in base or "test_char" in base:
+        if "pipeline" in base or "test" in base:
             continue
         imgs.append(f)
     return imgs
 
 
-def process_one(image_path, output_csv, output_img, smooth, sample):
+def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode):
     """处理单张图片，返回是否成功。"""
     print(f"\n{'='*50}")
-    print(f"Processing: {os.path.basename(image_path)}")
+    print(f"Processing: {os.path.basename(image_path)}  [trace={trace_mode}]")
 
     img = load_image(image_path)
     print(f"[1/5] Loaded: {img.shape}")
@@ -61,8 +63,20 @@ def process_one(image_path, output_csv, output_img, smooth, sample):
         print("  -> SKIP: empty skeleton", file=sys.stderr)
         return False
 
-    trajectory = trace_skeleton(skeleton)
-    print(f"[4/5] Trajectory ({len(trajectory)} pts)")
+    # 骨架剪枝（移除毛刺）
+    skeleton = prune_skeleton(skeleton)
+    n_pruned = np.sum(skeleton > 0)
+    print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed)")
+
+    # 选择追踪方法
+    if trace_mode == "dfs":
+        trajectory = trace_skeleton_dfs(skeleton)
+        strokes = None
+    else:
+        trajectory = trace_skeleton(skeleton)
+        strokes = get_stroke_list(skeleton)
+
+    print(f"[4/5] Trajectory ({len(trajectory)} pts, {len(strokes) if strokes else 0} strokes)")
 
     if smooth > 0 or sample > 0:
         num_pts = sample if sample > 0 else len(trajectory)
@@ -84,14 +98,21 @@ def process_one(image_path, output_csv, output_img, smooth, sample):
     axes[2].imshow(skeleton, cmap="gray")
     axes[2].set_title("Skeleton")
     axes[3].set_facecolor("black")
-    if len(trajectory) > 0:
+
+    if strokes and len(strokes) > 1:
+        # 按笔画着色
+        colors = plt.cm.tab10(np.linspace(0, 1, len(strokes)))
+        for i, s in enumerate(strokes):
+            axes[3].plot(s[:, 1], s[:, 0], color=colors[i],
+                         linewidth=1.2, label=f"S{i+1}")
+    elif len(trajectory) > 0:
         axes[3].plot(trajectory[:, 1], trajectory[:, 0], "c-", linewidth=0.8, alpha=0.5, label="Raw")
     if smooth > 0 and len(smoothed) > 0:
         axes[3].plot(smoothed[:, 1], smoothed[:, 0], "r-", linewidth=1.0, label="Smoothed")
     axes[3].invert_yaxis()
     axes[3].set_aspect("equal")
-    axes[3].set_title("Trajectory")
-    if smooth > 0:
+    axes[3].set_title(f"Trajectory ({trace_mode})")
+    if (strokes and len(strokes) > 1) or smooth > 0:
         axes[3].legend(fontsize=7)
     for ax in axes:
         ax.axis("off")
@@ -107,6 +128,8 @@ def main():
     parser.add_argument("image", nargs="?", default=None)
     parser.add_argument("--output", "-o", default=None, help="CSV output (auto-named in batch mode)")
     parser.add_argument("--output-img", default=None, help="Visualization output (auto-named in batch mode)")
+    parser.add_argument("--trace", choices=["stroke", "dfs"], default=TRACE_MODE,
+                        help=f"Trace method (default: {TRACE_MODE})")
     parser.add_argument("--smooth", type=float, default=SMOOTH)
     parser.add_argument("--sample", type=int, default=SAMPLE)
     args = parser.parse_args()
@@ -115,7 +138,7 @@ def main():
         # 单张模式
         out_csv = args.output or "trajectory.csv"
         out_img = args.output_img or "pipeline_result.png"
-        process_one(args.image, out_csv, out_img, args.smooth, args.sample)
+        process_one(args.image, out_csv, out_img, args.smooth, args.sample, args.trace)
     else:
         # 批量模式
         images = _find_images()
@@ -128,7 +151,7 @@ def main():
             name = os.path.splitext(os.path.basename(img_path))[0]
             out_csv = f"{name}_trajectory.csv"
             out_img = f"{name}_pipeline.png"
-            if process_one(img_path, out_csv, out_img, args.smooth, args.sample):
+            if process_one(img_path, out_csv, out_img, args.smooth, args.sample, args.trace):
                 ok += 1
         print(f"\nDone: {ok}/{len(images)} succeeded.")
 

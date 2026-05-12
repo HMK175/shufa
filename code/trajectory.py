@@ -1,34 +1,40 @@
-"""骨架点排序、B样条平滑、轨迹CSV输出。"""
+"""骨架点排序、B样条平滑、轨迹CSV输出。
+
+提供两种轨迹追踪方法：
+- trace_skeleton_dfs: 简单 DFS（对比基线）
+- trace_skeleton:     骨架拓扑分析 + 笔画组装（推荐）
+"""
 
 import numpy as np
 from scipy import interpolate
 from typing import Optional
 
+from stroke import trace_strokes
+
 
 def trace_skeleton(skeleton: np.ndarray) -> np.ndarray:
-    """从骨架二值图 (0/255) 提取有序轨迹点序列，返回 (N, 2) 数组 [y, x]。
+    """骨架二值图 → (N,2) 轨迹点 [y, x]（笔画感知版）。
 
-    先找端点（8邻域仅1个前景点），从端点开始沿骨架追踪。
-    若无端点则从任意骨架点开始。
+    内部调用 stroke.trace_strokes，自动完成笔画分割、排序、定向。
     """
+    return trace_strokes(skeleton)
+
+
+def trace_skeleton_dfs(skeleton: np.ndarray) -> np.ndarray:
+    """骨架二值图 → 轨迹点（简单 DFS，不区分笔画，作为对比基线）。"""
     binary = (skeleton > 0).astype(np.uint8)
-    points = np.argwhere(binary)  # (N, 2) [y, x]
+    points = np.argwhere(binary)
     if len(points) == 0:
         return np.empty((0, 2))
 
-    # 找端点：8邻域仅有1个前景邻居
     endpoints = []
     for y, x in points:
         nb = _count_neighbors(binary, y, x)
         if nb == 1:
             endpoints.append((y, x))
 
-    if endpoints:
-        start = endpoints[0]
-    else:
-        start = tuple(points[0])
+    start = endpoints[0] if endpoints else tuple(points[0])
 
-    # DFS 追踪骨架
     visited = np.zeros(binary.shape, dtype=bool)
     order = []
     stack = [start]
@@ -39,7 +45,6 @@ def trace_skeleton(skeleton: np.ndarray) -> np.ndarray:
             continue
         visited[y, x] = True
         order.append((y, x))
-        # 8邻域中未访问的骨架点加入栈
         for ny, nx in _eight_neighbors(y, x):
             if 0 <= ny < binary.shape[0] and 0 <= nx < binary.shape[1]:
                 if binary[ny, nx] and not visited[ny, nx]:
