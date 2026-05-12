@@ -7,6 +7,7 @@
 
 import numpy as np
 from skimage.morphology import thin
+from scipy.ndimage import binary_dilation
 
 
 def skeletonize(binary: np.ndarray) -> np.ndarray:
@@ -96,3 +97,82 @@ def _thin_iteration(img: np.ndarray, iteration: int) -> np.ndarray:
     result = img.copy()
     result[marker == 1] = 0
     return result
+
+
+def smooth_junctions(skeleton: np.ndarray) -> np.ndarray:
+    """对骨架交叉区做局部膨胀→细化，平滑交叉点拓扑。
+
+    抹掉交叉核心像素后膨胀周围骨架，重新细化。
+    边界外的原始骨架充当锚点，确保细化后自然连通。
+    """
+    from collections import defaultdict
+
+    binary = skeleton > 0
+    ys, xs = np.where(binary)
+    pts_set = set(zip(ys, xs))
+
+    graph = defaultdict(list)
+    for y, x in pts_set:
+        for ny, nx in _eight_neighbors(y, x):
+            if (ny, nx) in pts_set:
+                graph[(y, x)].append((ny, nx))
+
+    junctions = {pt for pt, nb in graph.items() if len(nb) >= 3}
+    if len(junctions) <= 1:
+        return skeleton
+
+    # 8-连通聚类
+    visited = set()
+    components = []
+    for pt in junctions:
+        if pt in visited:
+            continue
+        comp = set()
+        stack = [pt]
+        while stack:
+            cur = stack.pop()
+            if cur in visited:
+                continue
+            visited.add(cur)
+            comp.add(cur)
+            for nb in graph.get(cur, []):
+                if nb in junctions and nb not in visited:
+                    stack.append(nb)
+        components.append(comp)
+
+    result = skeleton.copy()
+    H, W = skeleton.shape
+
+    for comp in components:
+        if len(comp) <= 1:
+            continue
+
+        ys_c = [p[0] for p in comp]
+        xs_c = [p[1] for p in comp]
+        margin = 5
+        min_y, max_y = max(0, min(ys_c) - margin), min(H, max(ys_c) + margin + 1)
+        min_x, max_x = max(0, min(xs_c) - margin), min(H, max(xs_c) + margin + 1)
+
+        patch = result[min_y:max_y, min_x:max_x].copy()
+
+        # 抹掉交叉核心像素（只去掉交叉像素，保留周围骨架当锚点）
+        for cy, cx in comp:
+            py, px = cy - min_y, cx - min_x
+            if 0 <= py < patch.shape[0] and 0 <= px < patch.shape[1]:
+                patch[py, px] = 0
+
+        # 膨胀 → 细化（锚点骨架确保连通性）
+        dilated = binary_dilation(patch > 0, iterations=3)
+        cleaned = thin(dilated, max_num_iter=20)
+        cleaned_u8 = (cleaned.astype(np.uint8)) * 255
+
+        result[min_y:max_y, min_x:max_x] = cleaned_u8
+
+    return result
+
+
+def _eight_neighbors(y: int, x: int):
+    return [
+        (y - 1, x), (y - 1, x + 1), (y, x + 1), (y + 1, x + 1),
+        (y + 1, x), (y + 1, x - 1), (y, x - 1), (y - 1, x - 1),
+    ]

@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import load_image, preprocess
-from skeleton import skeletonize
+from skeleton import skeletonize, smooth_junctions
 from trajectory import trace_skeleton, trace_skeleton_dfs, smooth_bspline, smooth_strokes, save_trajectory_csv, save_stroke_csv
 from stroke import get_stroke_list, prune_skeleton
 
@@ -69,6 +69,8 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
 
     # 骨架剪枝（移除毛刺）
     skeleton = prune_skeleton(skeleton)
+    # 可选交叉区平滑（当前默认关闭，thin 骨架交叉点质量已足够）
+    # skeleton = smooth_junctions(skeleton)
     n_pruned = np.sum(skeleton > 0)
     print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed)")
 
