@@ -91,260 +91,6 @@ def prune_skeleton(skeleton: np.ndarray, min_branch_len: int = 10) -> np.ndarray
     return cleaned
 
 
-# ── 交叉区检测 ────────────────────────────────────────────
-
-def classify_points(
-    graph: Dict[Tuple[int, int], List[Tuple[int, int]]]
-) -> Tuple[List, Set[Tuple[int, int]]]:
-    """返回 (端点列表, 交叉区像素集合)。
-
-    交叉区：degree>=3 的像素 + 3x3 膨胀区域。
-    """
-    raw_junctions: List[Tuple[int, int]] = []
-    for pt, neighbors in graph.items():
-        if len(neighbors) >= 3:
-            raw_junctions.append(pt)
-
-    # 交叉区 = 原始交叉点（不膨胀，避免吃掉太多正常骨架点）
-    junc_region: Set[Tuple[int, int]] = set(raw_junctions)
-
-    # 端点：degree=1 且不在交叉区内
-    endpoints = []
-    for pt, neighbors in graph.items():
-        if pt in junc_region:
-            continue
-        if len(neighbors) == 1:
-            endpoints.append(pt)
-
-    # 若无端点（骨架太乱或为闭合环），退回简单模式
-    if not endpoints:
-        pass  # 调用方应处理此情况
-
-    return endpoints, junc_region
-
-
-# ── 交叉区连通分量聚类 ────────────────────────────────────
-
-def _cluster_junc_region(
-    junc_region: Set[Tuple[int, int]],
-    graph: Dict
-) -> List[Set[Tuple[int, int]]]:
-    """将交叉区按 8-连通性分成独立分量（处理多个分离的交叉点）。"""
-    if not junc_region:
-        return []
-
-    visited: Set[Tuple[int, int]] = set()
-    components: List[Set[Tuple[int, int]]] = []
-
-    for pt in junc_region:
-        if pt in visited:
-            continue
-        # BFS
-        comp: Set[Tuple[int, int]] = set()
-        stack = [pt]
-        while stack:
-            cur = stack.pop()
-            if cur in visited:
-                continue
-            visited.add(cur)
-            comp.add(cur)
-            for nb in graph.get(cur, []):
-                if nb in junc_region and nb not in visited:
-                    stack.append(nb)
-        components.append(comp)
-
-    return components
-
-
-def _component_centroid(comp: Set[Tuple[int, int]]) -> Tuple[int, int]:
-    """分量质心（取整）。"""
-    ys = [p[0] for p in comp]
-    xs = [p[1] for p in comp]
-    return (int(round(np.mean(ys))), int(round(np.mean(xs))))
-
-
-# ── 段提取 ────────────────────────────────────────────────
-
-def extract_segments(
-    graph: Dict,
-    endpoints: List[Tuple[int, int]],
-    junc_region: Set[Tuple[int, int]]
-) -> List[List[Tuple[int, int]]]:
-    """从端点出发沿链点走到交叉区边界，切出无分支段。"""
-    visited_edges: Set[Tuple] = set()
-    segments: List[List[Tuple[int, int]]] = []
-    stop_set = set(endpoints) | junc_region
-
-    for ep in endpoints:
-        for nb in graph.get(ep, []):
-            edge = _normalize_edge(ep, nb)
-            if edge in visited_edges:
-                continue
-            visited_edges.add(edge)
-
-            path = [ep, nb]
-            prev = ep
-            cur = nb
-            while cur not in stop_set:
-                nxt = None
-                for n in graph[cur]:
-                    if n != prev:
-                        nxt = n
-                        break
-                if nxt is None:
-                    break
-                visited_edges.add(_normalize_edge(cur, nxt))
-                path.append(nxt)
-                prev, cur = cur, nxt
-
-            segments.append(path)
-
-    return segments
-
-
-# ── 笔画组装 ──────────────────────────────────────────────
-
-def assemble_strokes(
-    segments: List[List[Tuple[int, int]]],
-    junc_components: List[Set[Tuple[int, int]]],
-    junc_region: Set[Tuple[int, int]],
-    graph: Dict
-) -> List[List[Tuple[int, int]]]:
-    """在每个交叉区用方向连续性合并段，返回笔画列表。"""
-    n = len(segments)
-    if n <= 1:
-        return [list(seg) for seg in segments]
-
-    # 段 → 交叉分量 映射
-    seg_to_comp: List[Optional[int]] = [None] * n
-    for i, seg in enumerate(segments):
-        for ep in (seg[0], seg[-1]):
-            if ep in junc_region:
-                # 找这个点属于哪个分量
-                for ci, comp in enumerate(junc_components):
-                    if ep in comp:
-                        seg_to_comp[i] = ci
-                        break
-
-    # 每个分量单独配对
-    parent = list(range(n))
-
-    def find(i):
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
-
-    def union(i, j):
-        ri, rj = find(i), find(j)
-        if ri != rj:
-            parent[ri] = rj
-
-    for ci in range(len(junc_components)):
-        seg_indices = [i for i, c in enumerate(seg_to_comp) if c == ci]
-        if len(seg_indices) < 2:
-            continue
-
-        centroid = _component_centroid(junc_components[ci])
-        unpaired = set(seg_indices)
-
-        while len(unpaired) >= 2:
-            best_score = -1.0
-            best_pair = None
-            ul = list(unpaired)
-            for a in range(len(ul)):
-                for b in range(a + 1, len(ul)):
-                    ia, ib = ul[a], ul[b]
-                    score = _continuity_score(segments[ia], segments[ib])
-                    if score > best_score:
-                        best_score = score
-                        best_pair = (ia, ib)
-            if best_pair and best_score > 0.5:
-                union(best_pair[0], best_pair[1])
-                unpaired.discard(best_pair[0])
-                unpaired.discard(best_pair[1])
-            else:
-                break
-
-    # 按合并结果分组
-    groups: Dict[int, List[int]] = defaultdict(list)
-    for i in range(n):
-        groups[find(i)].append(i)
-
-    strokes = []
-    for seg_list in groups.values():
-        merged = _merge_segments([segments[i] for i in seg_list])
-        if len(merged) >= 2:
-            strokes.append(merged)
-
-    return strokes
-
-
-def _continuity_score(seg_a: List, seg_b: List) -> float:
-    """计算两段的方向连续性 (0~1，越大越贯穿)。
-
-    两段都从端点走向交叉区末端 (seg[-1] 在交叉区内)。
-    判断 seg_a 进入方向与 seg_b 离开方向是否一致。
-    """
-    dir_a = _junction_end_direction(seg_a)
-    dir_b = _junction_end_direction(seg_b)
-    if dir_a is None or dir_b is None:
-        return 0.0
-    na, nb = np.linalg.norm(dir_a), np.linalg.norm(dir_b)
-    if na < 1e-6 or nb < 1e-6:
-        return 0.0
-    # seg_a 进入交叉区方向 应与 seg_b 离开方向一致
-    # seg_b 离开方向 = -seg_b 进入方向
-    cos = np.dot(dir_a / na, -dir_b / nb)
-    return max(0.0, cos)
-
-
-def _junction_end_direction(seg: List) -> Optional[np.ndarray]:
-    """取段末端（交叉区侧）若干点的方向向量，指向交叉区内。"""
-    n_pts = min(5, len(seg))
-    if n_pts < 2:
-        return None
-    pts = np.array(seg[-n_pts:])
-    return (pts[-1] - pts[0]).astype(float)
-
-
-def _merge_segments(segments: List[List]) -> List:
-    """将属于同一笔画的多个段贪心拼接成连续路径。"""
-    if len(segments) == 1:
-        return list(segments[0])
-
-    remaining = [list(s) for s in segments]
-    result = remaining.pop(0)
-
-    changed = True
-    while changed and remaining:
-        changed = False
-        for i, seg in enumerate(remaining):
-            if seg[0] == result[-1]:
-                result.extend(seg[1:])
-                remaining.pop(i)
-                changed = True
-                break
-            elif seg[-1] == result[-1]:
-                result.extend(reversed(seg[:-1]))
-                remaining.pop(i)
-                changed = True
-                break
-            elif seg[0] == result[0]:
-                result = list(reversed(seg[1:])) + result
-                remaining.pop(i)
-                changed = True
-                break
-            elif seg[-1] == result[0]:
-                result = list(seg[:-1]) + result
-                remaining.pop(i)
-                changed = True
-                break
-
-    for seg in remaining:
-        result.extend(seg)
-    return result
-
 
 # ── 笔画排序 ──────────────────────────────────────────────
 
@@ -390,29 +136,14 @@ def set_stroke_direction(stroke: List[Tuple[int, int]]) -> List[Tuple[int, int]]
 def trace_strokes(skeleton: np.ndarray) -> np.ndarray:
     """骨架二值图 (0/255) → (N,2) 轨迹点数组 [y, x]。
 
-    流程：建图 → 交叉区检测 → 分量聚类 → 切段 → 合并笔画 → 排序 → 定方向。
+    流程：建图 → 简化图（压缩链点）→ 交叉点配对 → 排序 → 定方向。
     """
     if np.sum(skeleton > 0) == 0:
         return np.empty((0, 2))
 
-    graph = build_skeleton_graph(skeleton)
-    endpoints, junc_region = classify_points(graph)
-    junc_components = _cluster_junc_region(junc_region, graph)
-
-    if len(endpoints) == 0 or len(junc_components) == 0:
-        # 骨架太乱（大块交叉区），退回简单拓扑排序
-        all_pts = list(graph.keys())
-        return np.array(all_pts)
-
-    segments = extract_segments(graph, endpoints, junc_region)
-    if not segments:
-        all_pts = list(graph.keys())
-        return np.array(all_pts)
-
-    strokes = assemble_strokes(segments, junc_components, junc_region, graph)
+    strokes = _extract_strokes(skeleton)
     if not strokes:
-        all_pts = list(graph.keys())
-        return np.array(all_pts)
+        return np.array(list(build_skeleton_graph(skeleton).keys()))
 
     strokes = order_strokes(strokes)
     strokes = [set_stroke_direction(s) for s in strokes]
@@ -428,23 +159,385 @@ def get_stroke_list(skeleton: np.ndarray) -> List[np.ndarray]:
     if np.sum(skeleton > 0) == 0:
         return []
 
-    graph = build_skeleton_graph(skeleton)
-    endpoints, junc_region = classify_points(graph)
-    junc_components = _cluster_junc_region(junc_region, graph)
-
-    if len(endpoints) == 0 or len(junc_components) == 0:
-        return [np.array(list(graph.keys()))]
-
-    segments = extract_segments(graph, endpoints, junc_region)
-    if not segments:
-        return [np.array(list(graph.keys()))]
-
-    strokes = assemble_strokes(segments, junc_components, junc_region, graph)
+    strokes = _extract_strokes(skeleton)
     if not strokes:
-        return [np.array(list(graph.keys()))]
+        return [np.array(list(build_skeleton_graph(skeleton).keys()))]
 
     strokes = order_strokes(strokes)
     strokes = [set_stroke_direction(s) for s in strokes]
+    return [np.array(s) for s in strokes]
+
+
+def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
+    """核心笔画提取：简化图 + 交叉点配对。
+
+    1. 建全图，找端点和交叉点，聚类交叉点为分量
+    2. 压缩 deg-2 链点 → 简化图（节点=端点+交叉分量）
+    3. 在每个交叉分量将其关联边按方向连续性配对
+    4. 每对端点→交叉区→端点 = 一个笔画
+    """
+    graph = build_skeleton_graph(skeleton)
+    endpoints = [pt for pt, nb in graph.items() if len(nb) == 1]
+    raw_junctions = [pt for pt, nb in graph.items() if len(nb) >= 3]
+
+    if not endpoints:
+        return []
+
+    if not raw_junctions:
+        return _pair_endpoints_directly(graph, endpoints)
+
+    # 1. 聚类交叉点（8-连通）
+    junc_set = set(raw_junctions)
+    junc_components = _cluster_junc_pixels(junc_set, graph)
+
+    # 2. 建立交叉分量的查找表
+    pt_to_comp = {}
+    for ci, comp in enumerate(junc_components):
+        for pt in comp:
+            pt_to_comp[pt] = ci
+
+    # 3. 压缩：收缩 deg-2 链 → 构建简化图
+    # 简化图节点 = 端点坐标 或 交叉分量索引 (0..K-1)
+    # 简化图边 = (node_a, node_b, path_pixels)
+    #   其中 node_a/node_b 可以是端点坐标或分量索引
+    # 忽略同一分量内的交叉点间边
+    simp_edges = []
+    visited_nodes_in_search = set()
+
+    ep_set = set(endpoints)
+
+    # 只从端点出发遍历（避免从交叉点出发产生重复边）
+    for ep in endpoints:
+        for nb in graph.get(ep, []):
+            edge_key = _normalize_edge(ep, nb)
+            if edge_key in visited_nodes_in_search:
+                continue
+            visited_nodes_in_search.add(edge_key)
+
+            if nb in junc_set or nb in ep_set:
+                simp_edges.append((ep, nb, [ep, nb]))
+                continue
+
+            # 沿 deg-2 链走到下一个特殊节点
+            path = [ep, nb]
+            prev = ep
+            cur = nb
+            while cur not in junc_set and cur not in ep_set:
+                nxt = None
+                for n in graph[cur]:
+                    if n != prev:
+                        nxt = n
+                        break
+                if nxt is None:
+                    break
+                path.append(nxt)
+                prev, cur = cur, nxt
+            if cur in junc_set or cur in ep_set:
+                simp_edges.append((ep, cur, path))
+
+    # 补充：交叉点间的桥接边（从交叉点出发，但已访问的跳过）
+    for jp in junc_set:
+        for nb in graph.get(jp, []):
+            edge_key = _normalize_edge(jp, nb)
+            if edge_key in visited_nodes_in_search:
+                continue
+            if nb not in junc_set:
+                continue
+            if pt_to_comp[jp] == pt_to_comp[nb]:
+                continue
+            visited_nodes_in_search.add(edge_key)
+            # 走到交叉点间路径
+            path = [jp, nb]
+            prev = jp
+            cur = nb
+            while cur not in junc_set and cur not in ep_set:
+                nxt = None
+                for n in graph[cur]:
+                    if n != prev:
+                        nxt = n
+                        break
+                if nxt is None:
+                    break
+                path.append(nxt)
+                prev, cur = cur, nxt
+            if cur in junc_set:
+                simp_edges.append((jp, cur, path))
+
+    # 4. 合并所有通过桥接边连通的交叉分量
+    n_comp = len(junc_components)
+    comp_parent = list(range(n_comp))
+    def find_comp(i):
+        while comp_parent[i] != i:
+            comp_parent[i] = comp_parent[comp_parent[i]]
+            i = comp_parent[i]
+        return i
+    def union_comp(i, j):
+        ri, rj = find_comp(i), find_comp(j)
+        if ri != rj:
+            comp_parent[ri] = rj
+
+    for a, b, path in simp_edges:
+        if a in junc_set and b in junc_set:
+            ci, cj = pt_to_comp[a], pt_to_comp[b]
+            union_comp(ci, cj)  # 桥接连通就合并（不限距离）
+
+    # 重新映射：旧分量 → 新分量
+    new_comp_id: Dict[int, int] = {}
+    comp_groups: Dict[int, List[int]] = defaultdict(list)
+    for ci in range(n_comp):
+        root = find_comp(ci)
+        comp_groups[root].append(ci)
+    for new_id, (root, old_ids) in enumerate(comp_groups.items()):
+        for oi in old_ids:
+            new_comp_id[oi] = new_id
+
+    # 5. 将交叉分量作为合并后的节点，构建分量→关联边 映射
+    #    只考虑端点↔交叉分量 的边；交叉分量间的桥接边已内化
+    comp_edges: Dict[int, List[int]] = defaultdict(list)
+    ep_edges: Dict[Tuple, List[int]] = defaultdict(list)
+
+    for ei, (a, b, path) in enumerate(simp_edges):
+        # 跳过交叉点间边（已在合并后的分量内部）
+        if a in junc_set and b in junc_set:
+            continue
+
+        if a in ep_set:
+            ep_edges[a].append(ei)
+        elif a in junc_set:
+            comp_edges[new_comp_id[pt_to_comp[a]]].append(ei)
+
+        if b in ep_set:
+            ep_edges[b].append(ei)
+        elif b in junc_set:
+            comp_edges[new_comp_id[pt_to_comp[b]]].append(ei)
+
+    # 6. 在每个（合并后的）交叉分量配对
+    used_edges = set()
+    strokes = []
+
+    # 构建新分量→旧分量列表（用于方向计算）
+    new_to_old_comps: Dict[int, Set[Tuple[int, int]]] = {}
+    old_to_new = new_comp_id
+    for old_ci, new_ci in old_to_new.items():
+        if new_ci not in new_to_old_comps:
+            new_to_old_comps[new_ci] = set()
+        new_to_old_comps[new_ci] |= junc_components[old_ci]
+
+    for ci, edge_indices in comp_edges.items():
+        # 该分量关联的边（去重，排除已使用的）
+        available = [ei for ei in set(edge_indices) if ei not in used_edges]
+
+        paired = set()
+        for _ in range(len(available) // 2):
+            best_score = -1.0
+            best_pair = None
+            for p in range(len(available)):
+                if p in paired:
+                    continue
+                for q in range(p + 1, len(available)):
+                    if q in paired:
+                        continue
+                    score = _simp_edge_pair_score(
+                        simp_edges[available[p]], simp_edges[available[q]],
+                        new_to_old_comps[ci],
+                    )
+                    if score > best_score:
+                        best_score = score
+                        best_pair = (p, q)
+            if best_pair and best_score > 0.2:
+                p, q = best_pair
+                paired.add(p)
+                paired.add(q)
+                used_edges.add(available[p])
+                used_edges.add(available[q])
+                merged = _merge_edge_pair(
+                    simp_edges[available[p]], simp_edges[available[q]],
+                    new_to_old_comps[ci],
+                )
+                strokes.append(merged)
+
+        # 未配对的边：尝试强制配对剩余边
+        remaining = [p for p in range(len(available)) if p not in paired]
+        while len(remaining) >= 2:
+            p, q = remaining[0], remaining[1]
+            paired.add(p)
+            paired.add(q)
+            used_edges.add(available[p])
+            used_edges.add(available[q])
+            merged = _merge_edge_pair(
+                simp_edges[available[p]], simp_edges[available[q]],
+                new_to_old_comps[ci],
+            )
+            strokes.append(merged)
+            remaining = remaining[2:]
+
+        # 无法配对的单条边
+        for p in remaining:
+            used_edges.add(available[p])
+            _, _, path = simp_edges[available[p]]
+            strokes.append(_orient_path(path, endpoints, junc_set))
+
+    # 6. 未被任何交叉分量关联的边（直连端点对、孤立分量）
+    for ei, (a, b, path) in enumerate(simp_edges):
+        if ei not in used_edges:
+            # 跳过交叉点间边（已在合并后的分量内部）
+            if a in junc_set and b in junc_set:
+                continue
+            strokes.append(_orient_path(path, endpoints, junc_set))
+
+    # 7. 过滤太短的笔画（<5 像素）并去重
+    seen_keys = set()
+    filtered = []
+    for s in strokes:
+        if len(s) < 5:
+            continue
+        key = (s[0], s[-1]) if s[0] < s[-1] else (s[-1], s[0])
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        filtered.append(s)
+
+    return filtered
+
+
+def _cluster_junc_pixels(
+    junc_set: Set[Tuple[int, int]], graph: Dict
+) -> List[Set[Tuple[int, int]]]:
+    """将交叉点像素按 8-连通聚类成组件。"""
+    if not junc_set:
+        return []
+    visited = set()
+    components = []
+    for pt in junc_set:
+        if pt in visited:
+            continue
+        comp = set()
+        stack = [pt]
+        while stack:
+            cur = stack.pop()
+            if cur in visited:
+                continue
+            visited.add(cur)
+            comp.add(cur)
+            for nb in graph.get(cur, []):
+                if nb in junc_set and nb not in visited:
+                    stack.append(nb)
+        components.append(comp)
+    return components
+
+
+def _simp_edge_pair_score(
+    edge_a: Tuple, edge_b: Tuple,
+    junc_pts: Set[Tuple[int, int]],
+) -> float:
+    """两条简化边在交叉区处的方向连续性得分。"""
+    a_node_a, a_node_b, path_a = edge_a
+    b_node_a, b_node_b, path_b = edge_b
+
+    # 判断哪端连接交叉区
+    a_end_a_in_comp = a_node_a in junc_pts
+    b_end_a_in_comp = b_node_a in junc_pts
+
+    # 取交叉分量附近的局部方向
+    k = min(5, len(path_a), len(path_b))
+    if k < 2:
+        return 0.0
+
+    if a_end_a_in_comp:
+        pts_a = np.array(path_a[:k]).astype(float)
+    else:
+        pts_a = np.array(path_a[-k:]).astype(float)
+
+    if b_end_a_in_comp:
+        pts_b = np.array(path_b[:k]).astype(float)
+    else:
+        pts_b = np.array(path_b[-k:]).astype(float)
+
+    dir_a = pts_a[-1] - pts_a[0]  # 进入交叉区方向
+    dir_b = pts_b[-1] - pts_b[0]
+
+    na, nb = np.linalg.norm(dir_a), np.linalg.norm(dir_b)
+    if na < 1e-6 or nb < 1e-6:
+        return 0.0
+
+    cos = np.dot(dir_a / na, -dir_b / nb)
+    return max(0.0, cos)
+
+
+def _merge_edge_pair(
+    edge_a: Tuple, edge_b: Tuple,
+    junc_pts: Set[Tuple[int, int]],
+) -> List[Tuple[int, int]]:
+    """拼接两条边为一个完整笔画路径。"""
+    a_node_a, a_node_b, path_a = edge_a
+    b_node_a, b_node_b, path_b = edge_b
+
+    a_starts_in_comp = a_node_a in junc_pts
+    b_starts_in_comp = b_node_a in junc_pts
+
+    # path_a 从非交叉端走到交叉端
+    if a_starts_in_comp:
+        part_a = list(reversed(path_a))
+    else:
+        part_a = list(path_a)
+
+    # path_b 从交叉端走到非交叉端
+    if b_starts_in_comp:
+        part_b = list(path_b)
+    else:
+        part_b = list(reversed(path_b))
+
+    # 拼接（去掉交叉端的重复点）
+    merged = part_a + part_b[1:]
+    return merged
+
+
+def _orient_path(
+    path: List[Tuple[int, int]],
+    endpoints: List[Tuple[int, int]],
+    junc_set: Set[Tuple[int, int]],
+) -> List[Tuple[int, int]]:
+    """确保路径从端点出发（如果有的话）。"""
+    if not path:
+        return path
+    ep_set = set(endpoints)
+    if path[-1] in ep_set and path[0] not in ep_set:
+        return list(reversed(path))
+    return path
+
+
+
+
+
+
+def _pair_endpoints_directly(
+    graph: Dict, endpoints: List[Tuple[int, int]]
+) -> List[List[Tuple[int, int]]]:
+    """无交叉点时：端点对直接配对。"""
+    # BFS 找端点间路径
+    used = set()
+    strokes = []
+    for ep in endpoints:
+        if ep in used:
+            continue
+        # BFS 到最近的其他端点
+        queue = [(ep, [ep])]
+        visited = {ep}
+        while queue:
+            cur, path = queue.pop(0)
+            if cur != ep and cur in endpoints:
+                strokes.append(path)
+                for p in path:
+                    used.add(p)
+                break
+            for nb in graph.get(cur, []):
+                if nb not in visited:
+                    visited.add(nb)
+                    queue.append((nb, path + [nb]))
+        else:
+            strokes.append([ep])
+            used.add(ep)
+    return strokes
     return [np.array(s) for s in strokes]
 
 
