@@ -23,8 +23,8 @@ from trajectory import trace_skeleton, smooth_bspline, save_trajectory_csv
 # ============================================================
 # 可调参数：直接修改这里的值，然后点 ▶ 运行
 # ============================================================
-SMOOTH = 1.0   # B样条平滑强度 (0=不平滑, 越大越平滑)
-SAMPLE = 200   # 平滑后采样点数 (0=保持原始点数)
+SMOOTH = 2.0   # B样条平滑强度 (0=不平滑, 越大越平滑)
+SAMPLE = 300   # 平滑后采样点数 (0=保持原始点数)
 # ============================================================
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +37,7 @@ def _find_images():
                     glob.glob(os.path.join(SCRIPT_DIR, "*.jpeg")) +
                     glob.glob(os.path.join(SCRIPT_DIR, "*.png"))):
         base = os.path.basename(f)
-        if "pipeline_result" in base or "test_char" in base:
+        if "pipeline" in base or "test_char" in base:
             continue
         imgs.append(f)
     return imgs
