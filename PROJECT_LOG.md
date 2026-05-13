@@ -44,6 +44,36 @@
 - 撰写论文方法章节
 
 ---
+## 2026-05-13
+
+### 完成事项
+- 实现 Wu ICIRA 2024 骨架提取模块 (`code/wu2024_skeleton.py`)：
+  - Layer 1: 轮廓→中点骨架（距离变换 + PCA法向量 + 累加器阈值 + 形态学闭运算）
+  - Layer 2: V/S/C 分类（Nc 邻居连通分量数，避免交叉区附近误分类）
+  - Layer 3: 笔画组装（委托 stroke.py 已证明的简化图+端点配对算法）
+  - 对薄笔画自动降级到 morphology thin 回退
+- 实现轨迹优化工具包 (`code/trajectory_optimizer.py`)：
+  - 增强平滑：Savitzky-Golay、自适应曲率 B-spline、弧长重采样
+  - 速度规划：梯形速度剖面 + 曲率感知速度 + 时间参数化轨迹
+  - 曲率优化：Menger 三点曲率 + 峰值检测 + 局部约束 B-spline
+  - 工作空间映射：像素坐标 → 机器人 (X,Y,Z) 米制
+  - 顶层编排器 `optimize_trajectory()`
+- 集成 pipeline：新增 `--skeleton wu2024`、`--enhanced-smooth`、`--velocity-plan`、`--curvature-opt`、`--workspace-map` 等 CLI 参数
+- 用 yong.jfif 验证：5 笔画正确，Chamfer=0.0px，输出 timed CSV + workspace CSV
+
+### 关键发现
+- 对连通字形图像（整字二值图），轮廓中点骨架与形态学细化收敛到同一条中轴，肉眼无法区分
+- Wu ICIRA 2024 原文先分割笔画再对每笔求中点骨架，整字场景下优势不明显
+- V/S/C 分类仍有差异（wu2024: V=12 S=3 vs thin: V=11 S=2），交叉区拓扑不同
+- 速度规划 dt=0.01 产生 266K 轨迹点，实际使用需调大 dt 或降低采样率
+
+### 下一步计划
+- 用真实书法图片（笔画宽度 ≥8px）测试 wu2024 骨架在粗笔画上的表现
+- 完成三组对比实验（骨架基线 / B样条平滑 / RL 优化）
+- 撰写论文方法章节
+
+---
+
 ## 模板
 
 ## YYYY-MM-DD
