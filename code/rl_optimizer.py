@@ -212,6 +212,9 @@ class TrajectoryEnv:
         from scipy import ndimage
         # fg→背景距离 (用于 Chamfer 度量：轨迹点离前景多远)
         self.fg_dist = ndimage.distance_transform_edt(1 - self.binary)
+        # skeleton→最近骨架距离 (用于奖励贴近中心线)
+        skel_binary = (skeleton > 0).astype(np.float32)
+        self.skel_dist = ndimage.distance_transform_edt(1 - skel_binary)
         # 前景→边缘距离 (用于估算笔画半宽)
         half_width = ndimage.distance_transform_edt(self.binary)
         fg_mask = self.binary > 0
@@ -344,17 +347,23 @@ class TrajectoryEnv:
         else:
             r_inside = -0.5
 
-        # 奖励3：平滑性
+        # 奖励3：贴近骨架中心线
+        if 0 <= yi < self.H and 0 <= xi < self.W:
+            r_skeleton = -self.skel_dist[yi, xi] / self.render_thickness
+        else:
+            r_skeleton = -0.5
+
+        # 奖励4：平滑性
         if idx > 0:
             dist_to_prev = np.linalg.norm(self.points[idx] - self.points[idx - 1])
-            r_smooth = -max(0, dist_to_prev - 8.0) / 20.0
+            r_smooth = -max(0, dist_to_prev - 3.0) / 20.0
         else:
             r_smooth = 0.0
 
-        # 奖励4：出界惩罚
+        # 奖励5：出界惩罚
         r_boundary = -0.5 if (yi < 0 or yi >= self.H or xi < 0 or xi >= self.W) else 0.0
 
-        return 0.3 * r_foreground + 0.3 * r_inside + 0.3 * r_smooth + 0.1 * r_boundary
+        return 0.25 * r_foreground + 0.25 * r_inside + 0.2 * r_skeleton + 0.2 * r_smooth + 0.1 * r_boundary
 
     def get_trajectory(self) -> np.ndarray:
         return self.points.copy()
@@ -412,7 +421,7 @@ def optimize_trajectory_rl(
     skeleton: np.ndarray,
     strokes: List[np.ndarray],
     episodes_per_stroke: int = 300,
-    noise_std: float = 6.0,
+    noise_std: float = 2.0,
     device: str = "cpu",
     verbose: bool = True,
 ) -> Tuple[List[np.ndarray], List[np.ndarray], dict]:

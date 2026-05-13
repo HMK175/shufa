@@ -17,15 +17,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import load_image, preprocess
-from skeleton import skeletonize, smooth_junctions
-from trajectory import trace_skeleton, trace_skeleton_dfs, smooth_bspline, smooth_strokes, save_trajectory_csv, save_stroke_csv
+from skeleton import skeletonize, smooth_junctions, straighten_junctions
+from trajectory import trace_skeleton, trace_skeleton_dfs, trace_skeleton_curvature, smooth_bspline, smooth_strokes, save_trajectory_csv, save_stroke_csv
 from stroke import get_stroke_list, prune_skeleton
 
 # ============================================================
 # 可调参数：直接修改这里的值，然后点 ▶ 运行
 # ============================================================
-TRACE_MODE = "stroke"  # 轨迹追踪: "stroke"(笔画感知) / "dfs"(简单DFS)
-SMOOTH = 2.0           # B样条平滑强度 (0=不平滑, 越大越平滑)
+TRACE_MODE = "stroke"  # 轨迹追踪: "stroke"(笔画感知) / "curvature"(曲率分割) / "dfs"(简单DFS)
+SMOOTH = 5.0           # B样条平滑强度 (0=不平滑, 越大越平滑)
+BLUR_KSIZE = 5         # 二值化前高斯核大小 (0=关闭, 3-7推荐)
 SAMPLE = 300           # 平滑后采样点数 (0=保持原始点数)
 USE_RL = True          # 是否使用 RL 微调轨迹
 RL_EPISODES = 200      # RL 每笔画训练轮数
@@ -57,7 +58,7 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
     img = load_image(image_path)
     print(f"[1/5] Loaded: {img.shape}")
 
-    binary = preprocess(img)
+    binary = preprocess(img, blur_ksize=BLUR_KSIZE)
     print(f"[2/5] Binary (fg: {np.sum(binary > 0)})")
 
     skeleton = skeletonize(binary)
@@ -69,8 +70,8 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
 
     # 骨架剪枝（移除毛刺）
     skeleton = prune_skeleton(skeleton)
-    # 可选交叉区平滑（当前默认关闭，thin 骨架交叉点质量已足够）
-    # skeleton = smooth_junctions(skeleton)
+    # 交叉区平滑已禁用：当前实现在 thinning 骨架上会产生更多碎片
+    # 改用 _merge_collinear_strokes() 后处理合并被拆分的笔画
     n_pruned = np.sum(skeleton > 0)
     print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed)")
 
@@ -78,6 +79,10 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
     if trace_mode == "dfs":
         trajectory = trace_skeleton_dfs(skeleton)
         strokes = None
+    elif trace_mode == "curvature":
+        strokes_raw = trace_skeleton_curvature(skeleton, angle_threshold=50.0)
+        strokes = [s for s in strokes_raw if len(s) >= 5]
+        trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
     else:
         trajectory = trace_skeleton(skeleton)
         strokes = get_stroke_list(skeleton)
@@ -101,6 +106,7 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
             rl_strokes, rl_noisy_strokes, rl_stats = optimize_trajectory_rl(
                 binary, skeleton, smoothed_strokes,
                 episodes_per_stroke=rl_episodes,
+                noise_std=2.0,
                 verbose=True,
             )
             total_pts = sum(len(s) for s in rl_strokes)
@@ -172,7 +178,7 @@ def main():
     parser.add_argument("image", nargs="?", default=None)
     parser.add_argument("--output", "-o", default=None, help="CSV output (auto-named in batch mode)")
     parser.add_argument("--output-img", default=None, help="Visualization output (auto-named in batch mode)")
-    parser.add_argument("--trace", choices=["stroke", "dfs"], default=TRACE_MODE,
+    parser.add_argument("--trace", choices=["stroke", "dfs", "curvature"], default=TRACE_MODE,
                         help=f"Trace method (default: {TRACE_MODE})")
     parser.add_argument("--smooth", type=float, default=SMOOTH)
     parser.add_argument("--sample", type=int, default=SAMPLE)

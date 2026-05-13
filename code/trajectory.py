@@ -51,6 +51,57 @@ def trace_skeleton_dfs(skeleton: np.ndarray) -> np.ndarray:
     return np.array(order)
 
 
+def trace_skeleton_curvature(skeleton: np.ndarray, angle_threshold: float = 50.0,
+                              window: int = 8) -> List[np.ndarray]:
+    """DFS 追踪骨架全路径，按曲率分割为笔画段。
+
+    在方向急变处（> angle_threshold 度）切分笔画。
+    不依赖交叉区图分析，天然抗交叉区弯曲。
+    """
+    full_path = trace_skeleton_dfs(skeleton)
+    if len(full_path) < 10:
+        return [full_path] if len(full_path) > 0 else []
+
+    pts = full_path.astype(float)
+    n = len(pts)
+    cos_threshold = np.cos(np.radians(angle_threshold))
+
+    # 计算每个点的局部方向（前后 window 点）
+    directions = np.zeros((n, 2))
+    for i in range(n):
+        lo = max(0, i - window)
+        hi = min(n, i + window + 1)
+        seg = pts[lo:hi]
+        if len(seg) < 2:
+            continue
+        centered = seg - seg.mean(axis=0)
+        cov = np.cov(centered.T)
+        eigenvalues, eigenvectors = np.linalg.eigh(cov)
+        directions[i] = eigenvectors[:, -1]
+
+    # 找方向突变点作为切分边界
+    cuts = [0]
+    for i in range(window, n - window):
+        d1 = directions[i - window]
+        d2 = directions[i + window]
+        n1, n2 = np.linalg.norm(d1), np.linalg.norm(d2)
+        if n1 < 1e-6 or n2 < 1e-6:
+            continue
+        cos_angle = abs(np.dot(d1 / n1, d2 / n2))
+        if cos_angle < cos_threshold:
+            cuts.append(i)
+    cuts.append(n)
+
+    # 切分笔画
+    strokes = []
+    for c in range(len(cuts) - 1):
+        seg = full_path[cuts[c]:cuts[c + 1]]
+        if len(seg) >= 5:
+            strokes.append(seg)
+
+    return strokes
+
+
 def _find_endpoint_in_component(binary: np.ndarray, sy: int, sx: int):
     """在给定种子点所在的连通分量中找第一个端点（8邻域仅1个前景邻居），用于确定笔画起点。"""
     # BFS 搜索连通分量，回到第一个端点

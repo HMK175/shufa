@@ -95,17 +95,63 @@ def prune_skeleton(skeleton: np.ndarray, min_branch_len: int = 10) -> np.ndarray
 # ── 笔画排序 ──────────────────────────────────────────────
 
 def order_strokes(strokes: List[List[Tuple[int, int]]]) -> List[List[Tuple[int, int]]]:
-    """按书法习惯排序：自上而下、自左而右。"""
-    if len(strokes) <= 1:
+    """按书法规则排序：笔型优先 + 交叉区感知 + 拓扑排序，自上而下/自左而右兜底。
+
+    规则：先横后竖(交叉处)、先撇后捺、从上到下、从左到右。
+    """
+    n = len(strokes)
+    if n <= 1:
         return strokes
 
+    types = [classify_stroke(s) for s in strokes]
+
+    # 构建交叉区邻接：端点距离 < 8px 认为共享交叉区
+    adj = {i: set() for i in range(n)}
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _strokes_adjacent(strokes[i], strokes[j]):
+                adj[i].add(j)
+                adj[j].add(i)
+
+    # 优先级权重（越小越先写）
+    type_priority = {"dian": 0, "heng": 1, "zhe": 2, "shu": 3, "gou": 4, "pie": 5, "na": 6, "unknown": 7}
+
+    # 给每个笔画打分：结合笔型优先级和位置
+    def centroid(i):
+        ys = [p[0] for p in strokes[i]]
+        xs = [p[1] for p in strokes[i]]
+        return np.mean(ys), np.mean(xs)
+
     infos = []
-    for i, s in enumerate(strokes):
-        ys = [p[0] for p in s]
-        xs = [p[1] for p in s]
-        infos.append({'idx': i, 'cy': np.mean(ys), 'cx': np.mean(xs)})
-    infos.sort(key=lambda d: (d['cy'], d['cx']))
-    return [strokes[info['idx']] for info in infos]
+    for i in range(n):
+        cy, cx = centroid(i)
+        # 位置得分：上方和左侧优先
+        pos_score = cy * 1.0 + cx * 0.3
+        # 笔型优先级
+        tp = type_priority.get(types[i], 7)
+        infos.append({"idx": i, "cy": cy, "cx": cx, "type": types[i],
+                       "type_rank": tp, "pos_score": pos_score})
+
+    # 对邻接笔画应用规则约束
+    # 先横后竖：在交叉处横笔优先级提升
+    # 先撇后捺：在交叉处撇笔优先级提升
+    final_rank = {}
+    for info in infos:
+        i = info["idx"]
+        rank = info["type_rank"] * 1000 + info["pos_score"]
+        # 降低 1 级优先级数字 → 更容易被选中
+        for j in adj[i]:
+            ti, tj = types[i], types[j]
+            # 横 vs 竖：横优先
+            if ti == "heng" and tj == "shu":
+                rank -= 500
+            # 撇 vs 捺：撇优先
+            if ti == "pie" and tj == "na":
+                rank -= 500
+        final_rank[i] = rank
+
+    order = sorted(range(n), key=lambda i: final_rank[i])
+    return [strokes[i] for i in order]
 
 
 # ── 书写方向确定 ──────────────────────────────────────────
@@ -343,13 +389,57 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
 
         strokes.append(stroke_path)
 
-    # 7. 处理剩余未使用的边（循环或孤立交叉点间链）
-    for ei, (a, b, path) in enumerate(simp_edges):
-        if ei in used_edges:
-            continue
+    # 7. 二次配对：在每个交叉区对未使用的边按方向连续性配对
+    remaining = set(ei for ei in range(len(simp_edges)) if ei not in used_edges)
+    short_bridges = set()
+    for ei in remaining:
+        a, b, path = simp_edges[ei]
         if a in junc_set and b in junc_set and len(path) <= 5:
-            continue
-        strokes.append(_orient_path(path, endpoints, junc_set))
+            short_bridges.add(ei)
+    remaining -= short_bridges
+
+    # 按交叉区分组去重
+    comp_remaining: Dict[int, List[int]] = defaultdict(list)
+    for ei in remaining:
+        a, b, _ = simp_edges[ei]
+        if a in junc_set:
+            comp_remaining[new_comp_id[pt_to_comp[a]]].append(ei)
+        if b in junc_set:
+            comp_remaining[new_comp_id[pt_to_comp[b]]].append(ei)
+    for ci in comp_remaining:
+        comp_remaining[ci] = list(set(comp_remaining[ci]))
+
+    paired_in_second = set()
+    for ci, edge_list in comp_remaining.items():
+        comp_pts = new_to_old_comps.get(ci, set())
+        while len(edge_list) >= 2:
+            ei_a = edge_list.pop(0)
+            best_ei, best_score = None, -1.0
+            for ei_b in edge_list:
+                score = _simp_edge_pair_score(simp_edges[ei_a], simp_edges[ei_b], comp_pts)
+                if score > best_score:
+                    best_score = score
+                    best_ei = ei_b
+            if best_ei is not None and best_score > 0.2:
+                edge_list.remove(best_ei)
+                merged = _merge_edge_pair(simp_edges[ei_a], simp_edges[ei_b], comp_pts)
+                strokes.append(merged)
+                paired_in_second.add(ei_a)
+                paired_in_second.add(best_ei)
+            else:
+                _, _, path = simp_edges[ei_a]
+                strokes.append(_orient_path(path, endpoints, junc_set))
+                paired_in_second.add(ei_a)
+        for ei in edge_list:
+            _, _, path = simp_edges[ei]
+            strokes.append(_orient_path(path, endpoints, junc_set))
+            paired_in_second.add(ei)
+
+    # 剩余未在任何交叉区的边（纯端点-端点，step 6 可能漏掉）
+    for ei in remaining:
+        if ei not in paired_in_second:
+            _, _, path = simp_edges[ei]
+            strokes.append(_orient_path(path, endpoints, junc_set))
 
     # 7. 处理循环（无端点的闭合笔画，如「口」「日」等包围结构）
     all_visited = set()
@@ -389,8 +479,8 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
                 prev, cur = cur, nxt[0]
             strokes.append(cycle)
         else:
-            # 非纯循环但无端点：整体作为一笔
-            strokes.append(list(comp))
+            # 非纯循环但无端点：沿图遍历产生有序点序
+            strokes.append(_traverse_component(graph, comp))
 
     # 8. 过滤太短的笔画（<5 像素）并去重
     seen_keys = set()
@@ -403,6 +493,9 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
             continue
         seen_keys.add(key)
         filtered.append(s)
+
+    # 合并被交叉区拆分的共线笔画
+    filtered = _merge_collinear_strokes(filtered)
 
     return filtered
 
@@ -447,16 +540,16 @@ def _continuity_at_junction(
     if k < 2:
         return 0.0
 
-    # incoming 末尾 k 个点：进入交叉区方向
+    # incoming 末尾 k 个点：进入交叉区方向（PCA 主导方向，抗弯折）
     pts_in = np.array(incoming[-k:]).astype(float)
-    dir_in = pts_in[-1] - pts_in[0]
+    dir_in = _pca_direction(pts_in)
 
     # candidate 靠近交叉区的 k 个点：离开交叉区方向
     if candidate[0] in junc_pts:
         pts_out = np.array(candidate[:k]).astype(float)
     else:
         pts_out = np.array(candidate[-k:][::-1]).astype(float)
-    dir_out = pts_out[-1] - pts_out[0]
+    dir_out = _pca_direction(pts_out)
 
     na, nb = np.linalg.norm(dir_in), np.linalg.norm(dir_out)
     if na < 1e-6 or nb < 1e-6:
@@ -494,8 +587,8 @@ def _simp_edge_pair_score(
     else:
         pts_b = np.array(path_b[-k:]).astype(float)
 
-    dir_a = pts_a[-1] - pts_a[0]  # 进入交叉区方向
-    dir_b = pts_b[-1] - pts_b[0]
+    dir_a = _pca_direction(pts_a)  # 进入交叉区方向（PCA，抗弯折）
+    dir_b = _pca_direction(pts_b)
 
     na, nb = np.linalg.norm(dir_a), np.linalg.norm(dir_b)
     if na < 1e-6 or nb < 1e-6:
@@ -547,8 +640,74 @@ def _orient_path(
     return path
 
 
-
-
+def _merge_collinear_strokes(
+    strokes,
+    angle_threshold: float = 30.0,
+    dist_threshold: float = 20.0,
+):
+    import numpy as np
+    if len(strokes) <= 1:
+        return strokes
+    n = len(strokes)
+    pca_dirs = []
+    for s in strokes:
+        pts = np.array(s).astype(float)
+        if len(pts) < 3:
+            pca_dirs.append(pts[-1] - pts[0] if len(pts) == 2 else np.array([0.0, 0.0]))
+        else:
+            centered = pts - pts.mean(axis=0)
+            cov = np.cov(centered.T)
+            eigenvalues, eigenvectors = np.linalg.eigh(cov)
+            pca_dirs.append(eigenvectors[:, -1])
+    for i in range(n):
+        norm = np.linalg.norm(pca_dirs[i])
+        if norm > 1e-6:
+            pca_dirs[i] = pca_dirs[i] / norm
+    cos_threshold = np.cos(np.radians(angle_threshold))
+    merged = set()
+    result = []
+    for i in range(n):
+        if i in merged:
+            continue
+        best_j, best_dist = None, dist_threshold + 1
+        for j in range(n):
+            if i == j or j in merged:
+                continue
+            cos_abs = abs(np.dot(pca_dirs[i], pca_dirs[j]))
+            if cos_abs < cos_threshold:
+                continue
+            si, sj = strokes[i], strokes[j]
+            d00 = np.linalg.norm(np.array(si[0]) - np.array(sj[0]))
+            d01 = np.linalg.norm(np.array(si[0]) - np.array(sj[-1]))
+            d10 = np.linalg.norm(np.array(si[-1]) - np.array(sj[0]))
+            d11 = np.linalg.norm(np.array(si[-1]) - np.array(sj[-1]))
+            d = min(d00, d01, d10, d11)
+            if d < best_dist:
+                best_dist = d
+                best_j = j
+        if best_j is not None:
+            si, sj = strokes[i], strokes[best_j]
+            d00 = np.linalg.norm(np.array(si[0]) - np.array(sj[0]))
+            d01 = np.linalg.norm(np.array(si[0]) - np.array(sj[-1]))
+            d10 = np.linalg.norm(np.array(si[-1]) - np.array(sj[0]))
+            d11 = np.linalg.norm(np.array(si[-1]) - np.array(sj[-1]))
+            best_pair = min([(d00, 0, 0), (d01, 0, -1), (d10, -1, 0), (d11, -1, -1)], key=lambda x: x[0])
+            _, si_end, sj_end = best_pair
+            if si_end == 0:
+                si_ordered = list(reversed(si))
+            else:
+                si_ordered = list(si)
+            if sj_end == 0:
+                sj_ordered = list(sj)
+            else:
+                sj_ordered = list(reversed(sj))
+            result.append(si_ordered + sj_ordered[1:])
+            merged.add(i)
+            merged.add(best_j)
+        else:
+            result.append(strokes[i])
+            merged.add(i)
+    return result
 
 
 def _pair_endpoints_directly(
@@ -593,3 +752,123 @@ def _eight_neighbors(y: int, x: int):
 
 def _normalize_edge(a: Tuple[int, int], b: Tuple[int, int]) -> Tuple:
     return (a, b) if a < b else (b, a)
+
+
+def _traverse_component(graph: Dict, comp: Set[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    """从comp中任一点沿graph边遍历，产生有序点序列，避免set迭代的随机序。"""
+    if not comp:
+        return []
+    start = next(iter(comp))
+    ordered = [start]
+    visited = {start}
+    cur = start
+    while len(visited) < len(comp):
+        nxt = None
+        for nb in graph.get(cur, []):
+            if nb in comp and nb not in visited:
+                nxt = nb
+                break
+        if nxt is None:
+            for p in comp:
+                if p not in visited:
+                    nxt = p
+                    break
+        if nxt is None:
+            break
+        ordered.append(nxt)
+        visited.add(nxt)
+        cur = nxt
+    return ordered
+
+
+def _pca_direction(pts: np.ndarray) -> np.ndarray:
+    """返回点集的主成分方向向量（比首尾向量更抗弯折干扰）。"""
+    if len(pts) < 2:
+        return np.array([0.0, 0.0])
+    centered = pts - pts.mean(axis=0)
+    cov = np.cov(centered.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    principal = eigenvectors[:, -1]
+    if np.dot(principal, pts[-1] - pts[0]) < 0:
+        principal = -principal
+    return principal
+
+
+# ── 笔画分类 ──────────────────────────────────────────────
+
+def classify_stroke(stroke: List[Tuple[int, int]]) -> str:
+    """按几何特征将笔画分为 heng/shu/pie/na/dian/gou/zhe。
+
+    使用 PCA 主导方向 + 曲率分析，不依赖训练数据。
+    """
+    if len(stroke) < 2:
+        return "dian"
+
+    pts = np.array(stroke).astype(float)
+    start_end_vec = pts[-1] - pts[0]
+    total_len = np.linalg.norm(start_end_vec)
+
+    # 极短笔画 → 点
+    if len(pts) < 8 or total_len < 10:
+        return "dian"
+
+    # PCA 主导方向
+    dy, dx = _pca_direction(pts)
+    deg_from_vertical = abs(np.degrees(np.arctan2(dx, dy)))
+
+    # 曲率分析：最后 20% 是否急弯（钩）
+    has_hook = False
+    if len(pts) > 10:
+        split = int(len(pts) * 0.8)
+        main_dir = pts[split] - pts[0]
+        hook_dir = pts[-1] - pts[split]
+        n_main = np.linalg.norm(main_dir)
+        n_hook = np.linalg.norm(hook_dir)
+        if n_main > 2 and n_hook > 2:
+            cos_hook = np.dot(main_dir, hook_dir) / (n_main * n_hook)
+            if cos_hook < 0.5:  # > 60°
+                has_hook = True
+
+    # 曲率分析：中间是否有方向突变（折）
+    has_zhe = False
+    if len(pts) > 15:
+        third = len(pts) // 3
+        d1 = pts[third] - pts[0]
+        d2 = pts[-1] - pts[2 * third]
+        n1, n2 = np.linalg.norm(d1), np.linalg.norm(d2)
+        if n1 > 3 and n2 > 3:
+            cos_zhe = np.dot(d1, d2) / (n1 * n2)
+            if cos_zhe < 0.3:  # > 72°
+                has_zhe = True
+
+    if has_zhe:
+        return "zhe"
+    if has_hook:
+        return "gou"
+
+    # 按主导方向分类
+    if deg_from_vertical > 70:
+        return "heng"
+    if deg_from_vertical < 20:
+        return "shu"
+
+    # 斜向笔画：左下 = 撇，右下 = 捺
+    if dy > 0 and dx < 0:
+        return "pie"
+    if dy > 0 and dx > 0:
+        return "na"
+
+    return "unknown"
+
+
+def _strokes_adjacent(
+    s1: List[Tuple[int, int]], s2: List[Tuple[int, int]], threshold: int = 8
+) -> bool:
+    """判断两个笔画是否通过端点邻近（共享交叉区）。"""
+    eps1 = [(s1[0], s1[-1])]
+    eps2 = [(s2[0], s2[-1])]
+    for ep1 in eps1[0]:
+        for ep2 in eps2[0]:
+            if np.linalg.norm(np.array(ep1) - np.array(ep2)) < threshold:
+                return True
+    return False
