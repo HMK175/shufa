@@ -171,12 +171,12 @@ def smooth_junctions(skeleton: np.ndarray) -> np.ndarray:
     return result
 
 
-def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0) -> np.ndarray:
+def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0,
+                         walk_steps: int = 15) -> np.ndarray:
     """在交叉区用直线连接共线分支，防止竖笔穿过交叉区时弯曲。
 
-    1. 对每个交叉区，识别从外部进入的所有骨架分支
-    2. 找到方向差 < angle_threshold 的共线分支对
-    3. 在它们之间画直线（Bresenham），确保 thinning 后保持直线连通
+    采用非破坏性方法：不擦除原有骨架像素，直接在共线分支入口点之间
+    叠加直线，然后局部细化清理冗余像素。这样保证连通性不丢失。
     """
     from collections import defaultdict
 
@@ -216,20 +216,17 @@ def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0) ->
     result = skeleton.copy()
 
     for comp in junc_comps:
-        # 找到从交叉区出发、走出 k 步到达外部骨架点的所有分支
-        branches = []  # [(进入交叉区的 dir_pts, 离开方向向量)]
+        branches = []  # [(path_list, direction_vec, entry_pt)]
         seen_starts = set()
 
         for jpt in comp:
             for nb in graph.get(jpt, []):
                 if nb in comp:
-                    continue  # 还在交叉区内
-                # 从 nb 向外走 k 步，不在交叉区内
-                k = 8
+                    continue
                 path = [nb]
                 prev = jpt
                 cur = nb
-                for _ in range(k - 1):
+                for _ in range(walk_steps - 1):
                     nxt = None
                     for n in graph.get(cur, []):
                         if n != prev and n not in comp:
@@ -241,15 +238,13 @@ def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0) ->
                     prev, cur = cur, nxt
                 if len(path) < 3:
                     continue
-                # 用去重 key（避免同一分支从不同起点重复添加）
                 key = (path[0], path[-1]) if path[0] < path[-1] else (path[-1], path[0])
                 if key in seen_starts:
                     continue
                 seen_starts.add(key)
-                # 方向：从 path 远离交叉区的方向
                 approach_pts = np.array(path).astype(float)
                 direction = _pca_direction_vec(approach_pts)
-                branches.append((path, direction))
+                branches.append((path, direction, path[0]))
 
         if len(branches) < 2:
             continue
@@ -257,29 +252,47 @@ def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0) ->
         # 配对共线分支
         cos_threshold = np.cos(np.radians(angle_threshold))
         paired = set()
+        straight_lines = []
+
         for i in range(len(branches)):
             if i in paired:
                 continue
-            path_i, dir_i = branches[i]
+            path_i, dir_i, entry_i = branches[i]
             best_j, best_cos = None, -1.0
             for j in range(len(branches)):
                 if j == i or j in paired:
                     continue
-                path_j, dir_j = branches[j]
-                # 共线判定：方向向量点积的绝对值（同向或反向都算共线）
+                path_j, dir_j, entry_j = branches[j]
                 cos_abs = abs(np.dot(dir_i, dir_j))
                 if cos_abs > best_cos and cos_abs > cos_threshold:
                     best_cos = cos_abs
                     best_j = j
             if best_j is not None:
-                path_j, dir_j = branches[best_j]
-                # 在两条分支靠近交叉区的端点之间画直线
-                p1 = np.array(path_i[-1]).astype(int)  # 离交叉区最远点
-                p2 = np.array(path_j[-1]).astype(int)
-                # 画线
-                _draw_line(result, p1[0], p1[1], p2[0], p2[1], value=255)
+                path_j, dir_j, entry_j = branches[best_j]
+                straight_lines.append((entry_i, entry_j))
                 paired.add(i)
                 paired.add(best_j)
+
+        if not straight_lines:
+            continue
+
+        # 直接在骨架上叠加直线（不擦除原有像素，保证连通性）
+        for (y1, x1), (y2, x2) in straight_lines:
+            _draw_line(result, y1, x1, y2, x2, value=255)
+
+        # 局部细化清理冗余像素（直线被叠加后细化产生更直的骨架）
+        ys_c = [p[0] for p in comp]
+        xs_c = [p[1] for p in comp]
+        margin = 6
+        min_y = max(0, min(ys_c) - margin)
+        max_y = min(result.shape[0], max(ys_c) + margin + 1)
+        min_x = max(0, min(xs_c) - margin)
+        max_x = min(result.shape[1], max(xs_c) + margin + 1)
+
+        patch = result[min_y:max_y, min_x:max_x]
+        cleaned = thin(patch > 0, max_num_iter=15)
+        cleaned_u8 = (cleaned.astype(np.uint8)) * 255
+        result[min_y:max_y, min_x:max_x] = cleaned_u8
 
     return result
 

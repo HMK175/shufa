@@ -108,6 +108,9 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
         skeleton = prune_skeleton(skeleton)
         n_pruned = np.sum(skeleton > 0)
         print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed)")
+        skeleton = straighten_junctions(skeleton)
+        n_straight = np.sum(skeleton > 0)
+        print(f"      Junction fix: {n_pruned} → {n_straight} px")
 
         if trace_mode == "dfs":
             trajectory = trace_skeleton_dfs(skeleton)

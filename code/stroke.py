@@ -533,29 +533,48 @@ def _continuity_at_junction(
 ) -> float:
     """计算到达交叉区后延续到候选边的方向连续性得分。
 
-    incoming 末端在交叉区；candidate 一端在交叉区。
-    返回 [0, 1] 得分，越高表示方向越一致。
+    跳过交叉区边缘最可能扭曲的像素（skip_margin），用远离交叉区的点
+    估计真实笔画方向，避免交叉区局部弯折干扰方向判断。
     """
-    k = min(5, len(incoming), len(candidate))
+    skip_margin = 6  # 跳过交叉区边缘最可能扭曲的像素
+    k = 15
+    k = min(k, len(incoming), len(candidate))
+    total_needed = k + skip_margin
+    if total_needed >= min(len(incoming), len(candidate)):
+        k = min(len(incoming), len(candidate)) // 2
+        skip_margin = min(3, k // 2)
     if k < 2:
         return 0.0
 
-    # incoming 末尾 k 个点：进入交叉区方向（PCA 主导方向，抗弯折）
-    pts_in = np.array(incoming[-k:]).astype(float)
+    # incoming：取远离交叉区的 k 个点（跳过最靠近交叉区的 skip_margin 点）
+    start_in = max(0, len(incoming) - skip_margin - k)
+    end_in = len(incoming) - skip_margin
+    if end_in - start_in < 2:
+        start_in = max(0, len(incoming) - k)
+        end_in = len(incoming)
+    pts_in = np.array(incoming[start_in:end_in]).astype(float)
     dir_in = _pca_direction(pts_in)
 
-    # candidate 靠近交叉区的 k 个点：离开交叉区方向
+    # candidate：跳过靠近交叉区的前 skip_margin 个点，取后续 k 个点
     if candidate[0] in junc_pts:
-        pts_out = np.array(candidate[:k]).astype(float)
+        start_out = skip_margin
+        end_out = min(len(candidate), skip_margin + k)
     else:
-        pts_out = np.array(candidate[-k:][::-1]).astype(float)
+        end_out = len(candidate) - skip_margin
+        start_out = max(0, end_out - k)
+    if end_out - start_out < 2:
+        if candidate[0] in junc_pts:
+            start_out, end_out = 0, min(len(candidate), k)
+        else:
+            end_out = len(candidate)
+            start_out = max(0, end_out - k)
+    pts_out = np.array(candidate[start_out:end_out]).astype(float)
     dir_out = _pca_direction(pts_out)
 
     na, nb = np.linalg.norm(dir_in), np.linalg.norm(dir_out)
     if na < 1e-6 or nb < 1e-6:
         return 0.0
 
-    # 进入和离开方向应一致（同向，不反向）
     cos = np.dot(dir_in / na, dir_out / nb)
     return max(0.0, cos)
 
@@ -568,24 +587,36 @@ def _simp_edge_pair_score(
     a_node_a, a_node_b, path_a = edge_a
     b_node_a, b_node_b, path_b = edge_b
 
-    # 判断哪端连接交叉区
     a_end_a_in_comp = a_node_a in junc_pts
     b_end_a_in_comp = b_node_a in junc_pts
 
-    # 取交叉分量附近的局部方向
-    k = min(5, len(path_a), len(path_b))
+    # 跳过交叉区边缘扭曲像素，取远离交叉区的点估计方向
+    skip_margin = 6
+    k = 15
+    if k + skip_margin >= min(len(path_a), len(path_b)):
+        k = min(len(path_a), len(path_b)) // 2
+        skip_margin = min(3, k // 2)
     if k < 2:
         return 0.0
 
     if a_end_a_in_comp:
-        pts_a = np.array(path_a[:k]).astype(float)
+        start_a, end_a = skip_margin, min(len(path_a), skip_margin + k)
     else:
-        pts_a = np.array(path_a[-k:]).astype(float)
+        end_a = len(path_a) - skip_margin
+        start_a = max(0, end_a - k)
+    if end_a - start_a < 2:
+        start_a, end_a = 0, min(len(path_a), k)
 
     if b_end_a_in_comp:
-        pts_b = np.array(path_b[:k]).astype(float)
+        start_b, end_b = skip_margin, min(len(path_b), skip_margin + k)
     else:
-        pts_b = np.array(path_b[-k:]).astype(float)
+        end_b = len(path_b) - skip_margin
+        start_b = max(0, end_b - k)
+    if end_b - start_b < 2:
+        start_b, end_b = 0, min(len(path_b), k)
+
+    pts_a = np.array(path_a[start_a:end_a]).astype(float)
+    pts_b = np.array(path_b[start_b:end_b]).astype(float)
 
     dir_a = _pca_direction(pts_a)  # 进入交叉区方向（PCA，抗弯折）
     dir_b = _pca_direction(pts_b)
@@ -642,49 +673,82 @@ def _orient_path(
 
 def _merge_collinear_strokes(
     strokes,
-    angle_threshold: float = 30.0,
-    dist_threshold: float = 20.0,
+    angle_threshold: float = 25.0,
+    dist_threshold: float = 40.0,
 ):
+    """合并被交叉区错误拆分的共线笔画。
+
+    使用端点局部方向（最后/最前 30% 的点）而非全局 PCA，
+    以避免复杂笔画（穿过交叉区）的全局方向误导合并判断。
+    """
     import numpy as np
     if len(strokes) <= 1:
         return strokes
+
     n = len(strokes)
-    pca_dirs = []
+    cos_threshold = np.cos(np.radians(angle_threshold))
+
+    # 计算每个笔画的起笔和收笔局部方向
+    end_dirs = []  # [(dir_at_start, dir_at_end)]
     for s in strokes:
         pts = np.array(s).astype(float)
-        if len(pts) < 3:
-            pca_dirs.append(pts[-1] - pts[0] if len(pts) == 2 else np.array([0.0, 0.0]))
-        else:
-            centered = pts - pts.mean(axis=0)
-            cov = np.cov(centered.T)
-            eigenvalues, eigenvectors = np.linalg.eigh(cov)
-            pca_dirs.append(eigenvectors[:, -1])
-    for i in range(n):
-        norm = np.linalg.norm(pca_dirs[i])
-        if norm > 1e-6:
-            pca_dirs[i] = pca_dirs[i] / norm
-    cos_threshold = np.cos(np.radians(angle_threshold))
+        k = max(3, len(pts) // 3)
+        start_pts = pts[:k]
+        end_pts = pts[-k:]
+        end_dirs.append((_pca_safe(start_pts), _pca_safe(end_pts)))
+
     merged = set()
     result = []
     for i in range(n):
         if i in merged:
             continue
-        best_j, best_dist = None, dist_threshold + 1
+        best_j, best_score = None, -1.0
+        si = strokes[i]
         for j in range(n):
             if i == j or j in merged:
                 continue
-            cos_abs = abs(np.dot(pca_dirs[i], pca_dirs[j]))
-            if cos_abs < cos_threshold:
-                continue
-            si, sj = strokes[i], strokes[j]
+            sj = strokes[j]
             d00 = np.linalg.norm(np.array(si[0]) - np.array(sj[0]))
             d01 = np.linalg.norm(np.array(si[0]) - np.array(sj[-1]))
             d10 = np.linalg.norm(np.array(si[-1]) - np.array(sj[0]))
             d11 = np.linalg.norm(np.array(si[-1]) - np.array(sj[-1]))
             d = min(d00, d01, d10, d11)
-            if d < best_dist:
-                best_dist = d
+            if d > dist_threshold:
+                continue
+
+            # 用连接端的局部方向做共线性判断
+            if d == d00:  # si.start ↔ sj.start
+                dir_i, dir_j = end_dirs[i][0], end_dirs[j][0]
+                gap_vec = np.array(sj[0]) - np.array(si[0])
+            elif d == d01:  # si.start ↔ sj.end
+                dir_i, dir_j = end_dirs[i][0], end_dirs[j][1]
+                gap_vec = np.array(sj[-1]) - np.array(si[0])
+            elif d == d10:  # si.end ↔ sj.start
+                dir_i, dir_j = end_dirs[i][1], end_dirs[j][0]
+                gap_vec = np.array(sj[0]) - np.array(si[-1])
+            else:  # si.end ↔ sj.end
+                dir_i, dir_j = end_dirs[i][1], end_dirs[j][1]
+                gap_vec = np.array(sj[-1]) - np.array(si[-1])
+
+            # 局部方向必须共线
+            cos_local = abs(np.dot(dir_i, dir_j))
+            if cos_local < cos_threshold:
+                continue
+
+            # 间隙方向必须与笔画方向一致（防止把交叉区对面的不同笔画合并）
+            gap_norm = np.linalg.norm(gap_vec)
+            if gap_norm < 1e-6:
+                continue
+            gap_dir = gap_vec / gap_norm
+            gap_align = abs(np.dot(gap_dir, dir_i))
+            if gap_align < cos_threshold:
+                continue
+
+            score = cos_local * 2.0 - d / max(dist_threshold, 1) + gap_align
+            if score > best_score:
+                best_score = score
                 best_j = j
+
         if best_j is not None:
             si, sj = strokes[i], strokes[best_j]
             d00 = np.linalg.norm(np.array(si[0]) - np.array(sj[0]))
@@ -708,6 +772,23 @@ def _merge_collinear_strokes(
             result.append(strokes[i])
             merged.add(i)
     return result
+
+
+def _pca_safe(pts: np.ndarray) -> np.ndarray:
+    """返回点集的归一化 PCA 主方向，点太少时退化为首尾方向。"""
+    import numpy as np
+    if len(pts) < 2:
+        return np.array([0.0, 0.0])
+    if len(pts) == 2:
+        v = pts[-1] - pts[0]
+        n = np.linalg.norm(v)
+        return v / n if n > 1e-6 else np.array([0.0, 0.0])
+    centered = pts - pts.mean(axis=0)
+    cov = np.cov(centered.T)
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+    v = eigenvectors[:, -1]
+    n = np.linalg.norm(v)
+    return v / n if n > 1e-6 else np.array([0.0, 0.0])
 
 
 def _pair_endpoints_directly(
