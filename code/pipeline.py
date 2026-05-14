@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import load_image, preprocess
+from utils import load_image, preprocess, estimate_stroke_width
 from skeleton import skeletonize, smooth_junctions, straighten_junctions
 from trajectory import trace_skeleton, trace_skeleton_dfs, trace_skeleton_curvature, smooth_bspline, smooth_strokes, save_trajectory_csv, save_stroke_csv
 from stroke import get_stroke_list, prune_skeleton
@@ -25,14 +25,14 @@ from stroke import get_stroke_list, prune_skeleton
 # 可调参数：直接修改这里的值，然后点 ▶ 运行
 # ============================================================
 TRACE_MODE = "stroke"  # 轨迹追踪: "stroke"(笔画感知) / "curvature"(曲率分割) / "dfs"(简单DFS)
-SMOOTH = 5.0           # B样条平滑强度 (0=不平滑, 越大越平滑)
-BLUR_KSIZE = 5         # 二值化前高斯核大小 (0=关闭, 3-7推荐)
+SMOOTH = 15.0          # B样条平滑强度 (0=不平滑, 越大越平滑)
+BLUR_KSIZE = 21        # 二值化前高斯核大小 (0=关闭, 3-7推荐, 高清大图用9-21)
 SAMPLE = 300           # 平滑后采样点数 (0=保持原始点数)
 USE_RL = True          # 是否使用 RL 微调轨迹
 RL_EPISODES = 200      # RL 每笔画训练轮数
 
 # ── 新增：骨架方法 & 轨迹优化 ──────────────────────────────────
-SKELETON_METHOD = "thin"    # 骨架: "thin"(形态学细化) / "wu2024"(轮廓中点)
+SKELETON_METHOD = "thin"    # 骨架: "thin"(中轴变换,推荐) / "wu2024"(轮廓中点,实验)
 ENHANCED_SMOOTH = False     # 启用增强平滑（savgol/adaptive_bspline）
 SMOOTH_METHOD = "savgol"    # 平滑方法: "savgol" / "adaptive_bspline" / "both"
 APPLY_ARC_LENGTH = True     # 弧长均匀重采样
@@ -79,6 +79,7 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
     print(f"[2/5] Binary (fg: {np.sum(binary > 0)})")
 
     # 骨架提取：按方法分发
+    half_width = estimate_stroke_width(binary)
     if skeleton_method == "wu2024":
         from wu2024_skeleton import wu2024_skeletonize, get_wu2024_stroke_list
         skeleton = wu2024_skeletonize(binary)
@@ -87,7 +88,6 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
         if n_sk == 0:
             print("  -> SKIP: empty skeleton", file=sys.stderr)
             return False
-        # wu2024 自带笔画组装，不需额外 prune
         if trace_mode == "dfs":
             trajectory = trace_skeleton_dfs(skeleton)
             strokes = None
@@ -96,7 +96,13 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
             strokes = [s for s in strokes_raw if len(s) >= 5]
             trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
         else:
-            strokes = get_wu2024_stroke_list(skeleton)
+            min_branch = max(30, int(half_width * 1.8))
+            min_stroke = max(30, int(half_width * 2.5))
+            strokes = get_wu2024_stroke_list(skeleton,
+                                             min_branch_len=min_branch,
+                                             min_stroke_len=min_stroke)
+            print(f"      Adaptive prune: half_width={half_width:.0f}, "
+                  f"min_branch={min_branch}, min_stroke={min_stroke}")
             trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
     else:
         skeleton = skeletonize(binary)
@@ -105,9 +111,11 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
         if n_sk == 0:
             print("  -> SKIP: empty skeleton", file=sys.stderr)
             return False
-        skeleton = prune_skeleton(skeleton)
+        min_branch = max(30, int(half_width * 1.8))
+        skeleton = prune_skeleton(skeleton, min_branch_len=min_branch)
         n_pruned = np.sum(skeleton > 0)
-        print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed)")
+        print(f"      Pruned: {n_sk} → {n_pruned} px ({n_sk - n_pruned} removed, "
+              f"half_width={half_width:.0f}, min_branch={min_branch})")
         skeleton = straighten_junctions(skeleton)
         n_straight = np.sum(skeleton > 0)
         print(f"      Junction fix: {n_pruned} → {n_straight} px")
@@ -122,8 +130,47 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
         else:
             trajectory = trace_skeleton(skeleton)
             strokes = get_stroke_list(skeleton)
+            # 过滤短笔画（粗笔画骨架毛刺产生的碎片）
+            min_stroke_len = max(30, int(half_width * 2.5))
+            before = len(strokes)
+            strokes = [s for s in strokes if len(s) >= min_stroke_len]
+            if before > len(strokes):
+                print(f"      Stroke filter: {before} → {len(strokes)} "
+                      f"(min_len={min_stroke_len})")
+            trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
 
     print(f"[4/5] Trajectory ({len(trajectory)} pts, {len(strokes) if strokes else 0} strokes)")
+
+    # ── 知识库校验 + 引导合并 ──
+    if strokes and len(strokes) > 0:
+        char_name = os.path.splitext(os.path.basename(image_path))[0]
+        from stroke_knowledge import validate_stroke_count, guided_merge, get_stroke_count
+        expected = get_stroke_count(char_name)
+        # 先切断跨部件笔画（防止礻的点连到田里去）
+        from stroke_knowledge import _split_cross_component
+        strokes = _split_cross_component(strokes, char_name)
+
+        if expected and len(strokes) != expected:
+            before = len(strokes)
+            strokes = guided_merge(strokes, char_name)
+            after = len(strokes)
+            if after != before:
+                trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
+                print(f"      Knowledge merge: {before} → {after} strokes (expected {expected})")
+            else:
+                print(f"      Knowledge: {before} strokes (expected {expected}, no merge found)")
+        elif expected:
+            print(f"      Knowledge: {len(strokes)} strokes OK (expected {expected})")
+
+        # 部件级校验（仅对有部件拆解的字）
+        from stroke_knowledge import validate_components
+        comp_result = validate_components(strokes, char_name)
+        if comp_result.get("status") != "no_components":
+            parts = []
+            for ck, info in comp_result.get("components", {}).items():
+                status = "OK" if info["match"] else f'MISMATCH ({info["actual"]}vs{info["expected"]})'
+                parts.append(f'{info["name"]}={info["actual"]}/{info["expected"]} {status}')
+            print(f"      Component check: {', '.join(parts)}")
 
     # 平滑：如果有笔画列表则逐笔画平滑（笔画间抬笔），否则整条平滑
     rl_strokes = None

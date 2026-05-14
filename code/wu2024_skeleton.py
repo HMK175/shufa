@@ -15,6 +15,8 @@ import cv2
 import numpy as np
 from collections import defaultdict
 from typing import Dict, List, Set, Tuple, Optional
+from skimage.morphology import skeletonize as _skel_medial
+from stroke import compute_nc
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -55,26 +57,32 @@ def wu2024_skeletonize(binary: np.ndarray) -> np.ndarray:
             continue
         _midpoint_accumulate(pts, dist, grad_y, grad_x, skel_accum, d_min)
 
-    # Threshold: keep consensus midpoints only
+    # Threshold: keep only high-consensus midpoints (adaptive percentile)
     skeleton_map = np.zeros((H, W), dtype=np.uint8)
-    if skel_accum.max() >= 3:
+    valid = skel_accum[skel_accum > 0]
+    if len(valid) == 0:
+        return skeleton_map
+    # 取 90 分位数以上的高共识点作为骨架核心
+    pct_val = np.percentile(valid, 90)
+    threshold = max(2, int(pct_val * 0.6))
+    skeleton_map[skel_accum >= threshold] = 255
+    if np.count_nonzero(skeleton_map) < 10:
+        # 退路：极细笔画
         skeleton_map[skel_accum >= 2] = 255
-    else:
-        skeleton_map[skel_accum >= 1] = 255
 
     if np.count_nonzero(skeleton_map) < 10:
         from skimage.morphology import thin
-        skeleton_map = (thin(fg > 0, max_num_iter=100).astype(np.uint8)) * 255
+        skeleton_map = (_skel_medial(fg > 0).astype(np.uint8)) * 255
         return skeleton_map
 
     # Morphological closing to connect nearby midpoints into continuous lines
-    ksize = max(2, int(dt_median * 0.5))
+    ksize = max(2, min(7, int(dt_median * 0.15)))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ksize, ksize))
     closed = cv2.morphologyEx(skeleton_map, cv2.MORPH_CLOSE, kernel, iterations=1)
 
-    # Thin to 1-pixel width
+    # Thin to 1-pixel width (increased iterations for thick strokes)
     from skimage.morphology import thin
-    skeleton_map = (thin(closed > 0, max_num_iter=40).astype(np.uint8)) * 255
+    skeleton_map = (_skel_medial(closed > 0).astype(np.uint8)) * 255
 
     return skeleton_map
 
@@ -162,7 +170,7 @@ def classify_skeleton_points(
     label_map = np.zeros((H, W), dtype=np.int8)
 
     for pt, neighbors in graph.items():
-        nc = _compute_nc(graph, pt)
+        nc = compute_nc(graph, pt)
         if nc == 1:
             V_list.append(pt)
             label_map[pt[0], pt[1]] = 1
@@ -180,29 +188,6 @@ def classify_skeleton_points(
         'graph': graph,
     }
 
-
-def _compute_nc(graph: Dict, pt: Tuple[int, int]) -> int:
-    """Number of 8-connected components among the neighbors of pt."""
-    nbs = graph.get(pt, [])
-    if len(nbs) <= 1:
-        return len(nbs)
-
-    nb_set = set(nbs)
-    visited = set()
-    components = 0
-    for nb in nbs:
-        if nb in visited:
-            continue
-        components += 1
-        stack = [nb]
-        visited.add(nb)
-        while stack:
-            cur = stack.pop()
-            for nxt in graph.get(cur, []):
-                if nxt in nb_set and nxt not in visited:
-                    visited.add(nxt)
-                    stack.append(nxt)
-    return components
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -222,7 +207,9 @@ def trace_wu2024(skeleton: np.ndarray) -> np.ndarray:
     return np.array(all_pts)
 
 
-def get_wu2024_stroke_list(skeleton: np.ndarray) -> List[np.ndarray]:
+def get_wu2024_stroke_list(skeleton: np.ndarray,
+                          min_branch_len: int = 30,
+                          min_stroke_len: int = 60) -> List[np.ndarray]:
     """Skeleton → per-stroke arrays.
 
     Prunes short spurs then uses stroke.py's robust assembly pipeline.
@@ -236,14 +223,14 @@ def get_wu2024_stroke_list(skeleton: np.ndarray) -> List[np.ndarray]:
     if np.sum(skeleton > 0) == 0:
         return []
 
-    # Prune spurs from midpoint noise
-    skeleton = prune_skeleton(skeleton, min_branch_len=10)
+    # 自适应剪枝（调用方应传入基于笔画宽度的阈值）
+    skeleton = prune_skeleton(skeleton, min_branch_len=min_branch_len)
 
     strokes_raw = stroke_extract(skeleton)
     if not strokes_raw:
         return []
 
-    strokes_raw = [s for s in strokes_raw if len(s) >= 5]
+    strokes_raw = [s for s in strokes_raw if len(s) >= min_stroke_len]
     strokes_raw = _merge_collinear_strokes(strokes_raw)
     strokes_raw = order_strokes(strokes_raw)
     strokes_raw = [set_stroke_direction(s) for s in strokes_raw]

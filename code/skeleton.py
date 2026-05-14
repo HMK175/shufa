@@ -2,22 +2,109 @@
 
 提供两种方法：
 - zhang_suen: 手工实现的 Zhang-Suen（参考基线）
-- skeletonize: 使用 skimage.morphology.thin（推荐，对复杂字形噪点少 20 倍）
+- skeletonize: 使用 skimage.morphology.skeletonize（中轴变换，1像素宽）
 """
 
 import numpy as np
-from skimage.morphology import thin
+from skimage.morphology import skeletonize as _skel_medial
 from scipy.ndimage import binary_dilation
+from stroke import compute_nc
 
 
 def skeletonize(binary: np.ndarray) -> np.ndarray:
     """输入二值图 (0/255, 前景白色)，返回骨架二值图 (0/255)。
 
-    使用 skimage 的 morphological thinning，相比 Zhang-Suen 在斜线、
-    粗笔画上的交叉点噪点少一个数量级。
+    Iterative thinning + 断裂小环（消除拐点三角凸起）。
     """
-    skel = thin(binary > 0, max_num_iter=100)
+    from skimage.morphology import thin
+    skel = thin(binary > 0, max_num_iter=300)
+    skel = _break_small_loops(skel, max_len=6, min_deviation=0.5)
     return (skel.astype(np.uint8)) * 255
+
+
+def _break_small_loops(skel: np.ndarray, max_len: int = 6,
+                       min_deviation: float = 0.5) -> np.ndarray:
+    """断裂长度≤max_len 且有尖锐拐角的小环（thin 在拐点产生的三角/菱形）。
+
+    安全约束：环必须是简单环（除首尾外所有点 deg=2），
+    且断裂后不产生新的孤立点。
+    """
+    from stroke import build_skeleton_graph
+    graph = build_skeleton_graph(skel)
+    if not graph:
+        return skel
+
+    result = skel.copy()
+    juncs = {pt for pt, nb in graph.items() if len(nb) >= 3}
+    broken = set()
+
+    for start in juncs:
+        if start in broken:
+            continue
+        for nb in graph[start]:
+            queue = [(nb, [start, nb])]
+            visited = {start, nb}
+            while queue:
+                cur, path = queue.pop(0)
+                if len(path) > max_len:
+                    continue
+                for nxt in graph.get(cur, []):
+                    if nxt == start and len(path) >= 3:
+                        # 检查是否简单环（中间点全 deg=2）
+                        if any(len(graph.get(p, [])) > 2 for p in path[1:]):
+                            continue
+                        # 找方向偏离最大的点
+                        best_pt, best_dev = None, -1.0
+                        for i, pt in enumerate(path):
+                            prev_pt = path[(i - 1) % len(path)]
+                            next_pt = path[(i + 1) % len(path)]
+                            v_in = np.array(pt) - np.array(prev_pt)
+                            v_out = np.array(next_pt) - np.array(pt)
+                            n_in = np.linalg.norm(v_in.astype(float))
+                            n_out = np.linalg.norm(v_out.astype(float))
+                            if n_in < 1e-6 or n_out < 1e-6:
+                                continue
+                            dev = 1.0 - abs(np.dot(v_in/n_in, v_out/n_out))
+                            if dev > best_dev:
+                                best_dev = dev
+                                best_pt = pt
+                        # 只断够尖锐的
+                        if best_pt and best_dev > min_deviation:
+                            y, x = int(best_pt[0]), int(best_pt[1])
+                            # 安全检查：去掉后邻居未断开
+                            before_nb = len(graph.get(best_pt, []))
+                            if before_nb >= 2:
+                                result[y, x] = 0
+                                broken.add(best_pt)
+                        continue
+                    if nxt not in visited and nxt not in broken:
+                        visited.add(nxt)
+                        queue.append((nxt, path + [nxt]))
+
+    return result
+
+
+def _draw_line(img: np.ndarray, y1: int, x1: int, y2: int, x2: int, value: int = 255):
+    """Bresenham 直线绘制（就地修改）。"""
+    H, W = img.shape
+    dy = abs(y2 - y1)
+    dx = abs(x2 - x1)
+    sy = 1 if y1 < y2 else -1
+    sx = 1 if x1 < x2 else -1
+    err = dx - dy
+    cy, cx = y1, x1
+    while True:
+        if 0 <= cy < H and 0 <= cx < W:
+            img[cy, cx] = value
+        if cy == y2 and cx == x2:
+            break
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            cx += sx
+        if e2 < dx:
+            err += dx
+            cy += sy
 
 
 def zhang_suen(binary: np.ndarray) -> np.ndarray:
@@ -163,7 +250,7 @@ def smooth_junctions(skeleton: np.ndarray) -> np.ndarray:
 
         # 膨胀 → 细化（锚点骨架确保连通性）
         dilated = binary_dilation(patch > 0, iterations=3)
-        cleaned = thin(dilated, max_num_iter=20)
+        cleaned = _skel_medial(dilated)
         cleaned_u8 = (cleaned.astype(np.uint8)) * 255
 
         result[min_y:max_y, min_x:max_x] = cleaned_u8
@@ -290,7 +377,7 @@ def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0,
         max_x = min(result.shape[1], max(xs_c) + margin + 1)
 
         patch = result[min_y:max_y, min_x:max_x]
-        cleaned = thin(patch > 0, max_num_iter=15)
+        cleaned = _skel_medial(patch > 0)
         cleaned_u8 = (cleaned.astype(np.uint8)) * 255
         result[min_y:max_y, min_x:max_x] = cleaned_u8
 
@@ -309,30 +396,6 @@ def _pca_direction_vec(pts: np.ndarray) -> np.ndarray:
     if norm < 1e-6:
         return np.array([0.0, 0.0])
     return principal / norm
-
-
-def _draw_line(img: np.ndarray, y1: int, x1: int, y2: int, x2: int, value: int = 255):
-    """Bresenham 直线绘制（在 img 上就地修改）。"""
-    H, W = img.shape
-    dy = abs(y2 - y1)
-    dx = abs(x2 - x1)
-    sy = 1 if y1 < y2 else -1
-    sx = 1 if x1 < x2 else -1
-    err = dx - dy
-    cy, cx = y1, x1
-    while True:
-        if 0 <= cy < H and 0 <= cx < W:
-            img[cy, cx] = value
-        if cy == y2 and cx == x2:
-            break
-        e2 = 2 * err
-        if e2 > -dy:
-            err -= dy
-            cx += sx
-        if e2 < dx:
-            err += dx
-            cy += sy
-
 
 def _eight_neighbors(y: int, x: int):
     return [

@@ -33,6 +33,34 @@ def build_skeleton_graph(skeleton: np.ndarray) -> Dict[Tuple[int, int], List[Tup
 
 # ── 骨架剪枝 ──────────────────────────────────────────────
 
+def compute_nc(graph: Dict, pt: Tuple[int, int]) -> int:
+    """计算 pt 的 8 邻域分量数 Nc（Wu2024 分类）。
+
+    Nc=1 → V 端点, Nc=2 → C 连接点, Nc≥3 → S 交叉点。
+    与简单 degree 不同：交叉区边界点即使有 3+ 邻居，
+    若邻居同属 2 个连通分量，仍判为 C（抗边界误判）。
+    """
+    nbs = graph.get(pt, [])
+    if len(nbs) <= 1:
+        return len(nbs)
+    nb_set = set(nbs)
+    visited = set()
+    components = 0
+    for nb in nbs:
+        if nb in visited:
+            continue
+        components += 1
+        stack = [nb]
+        visited.add(nb)
+        while stack:
+            cur = stack.pop()
+            for nxt in graph.get(cur, []):
+                if nxt in nb_set and nxt not in visited:
+                    visited.add(nxt)
+                    stack.append(nxt)
+    return components
+
+
 def prune_skeleton(skeleton: np.ndarray, min_branch_len: int = 10) -> np.ndarray:
     """移除骨架的短小毛刺分支，返回清理后的骨架二值图 (0/255)。
 
@@ -42,7 +70,7 @@ def prune_skeleton(skeleton: np.ndarray, min_branch_len: int = 10) -> np.ndarray
     graph = build_skeleton_graph(skeleton)
 
     while True:
-        # 找所有端点和分支点
+        # 找所有端点和分支点（deg 判断——剪枝只需找到主分支的连接点）
         endpoints, branchpoints = [], []
         for pt, neighbors in graph.items():
             deg = len(neighbors)
@@ -289,7 +317,7 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
             comp_parent[ri] = rj
 
     for a, b, path in simp_edges:
-        if a in junc_set and b in junc_set and len(path) <= 5:
+        if a in junc_set and b in junc_set and len(path) <= 50:
             ci, cj = pt_to_comp[a], pt_to_comp[b]
             union_comp(ci, cj)  # 短桥合并，长链保留为笔画段
 
@@ -309,7 +337,7 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
 
     for ei, (a, b, path) in enumerate(simp_edges):
         # 跳过用于合并的短桥（已在合并后的分量内部）
-        if a in junc_set and b in junc_set and len(path) <= 5:
+        if a in junc_set and b in junc_set and len(path) <= 50:
             continue
         if a in ep_set:
             ep_to_edge[a] = ei
@@ -394,7 +422,7 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
     short_bridges = set()
     for ei in remaining:
         a, b, path = simp_edges[ei]
-        if a in junc_set and b in junc_set and len(path) <= 5:
+        if a in junc_set and b in junc_set and len(path) <= 50:
             short_bridges.add(ei)
     remaining -= short_bridges
 
@@ -590,7 +618,6 @@ def _simp_edge_pair_score(
     a_end_a_in_comp = a_node_a in junc_pts
     b_end_a_in_comp = b_node_a in junc_pts
 
-    # 跳过交叉区边缘扭曲像素，取远离交叉区的点估计方向
     skip_margin = 6
     k = 15
     if k + skip_margin >= min(len(path_a), len(path_b)):
@@ -618,7 +645,7 @@ def _simp_edge_pair_score(
     pts_a = np.array(path_a[start_a:end_a]).astype(float)
     pts_b = np.array(path_b[start_b:end_b]).astype(float)
 
-    dir_a = _pca_direction(pts_a)  # 进入交叉区方向（PCA，抗弯折）
+    dir_a = _pca_direction(pts_a)
     dir_b = _pca_direction(pts_b)
 
     na, nb = np.linalg.norm(dir_a), np.linalg.norm(dir_b)
@@ -673,8 +700,8 @@ def _orient_path(
 
 def _merge_collinear_strokes(
     strokes,
-    angle_threshold: float = 25.0,
-    dist_threshold: float = 40.0,
+    angle_threshold: float = 30.0,
+    dist_threshold: float = 350.0,
 ):
     """合并被交叉区错误拆分的共线笔画。
 
