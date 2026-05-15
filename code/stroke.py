@@ -522,10 +522,148 @@ def _extract_strokes(skeleton: np.ndarray) -> List[List[Tuple[int, int]]]:
         seen_keys.add(key)
         filtered.append(s)
 
+    # 切断笔画内部的大跳跃（straighten_junctions 或 tracer 引入的伪连接）
+    filtered = _break_internal_jumps(filtered)
+
+    # 拆分骨架回溯路径（粗笔画导致的平行骨架线错误连结）
+    filtered = _split_backtracks(filtered)
+
     # 合并被交叉区拆分的共线笔画
     filtered = _merge_collinear_strokes(filtered)
 
     return filtered
+
+
+def _break_internal_jumps(
+    strokes: List[List[Tuple[int, int]]],
+    max_step: float = 200.0,
+    min_segment: int = 15,
+) -> List[List[Tuple[int, int]]]:
+    """在笔画内部的大跳跃处切断（>max_step px），修复骨架伪连接。"""
+    result = []
+    for stk in strokes:
+        if len(stk) < 4:
+            result.append(stk)
+            continue
+        pts = np.array(stk).astype(float)
+        steps = np.linalg.norm(np.diff(pts, axis=0), axis=1)
+        cut_indices = np.where(steps > max_step)[0]
+        if len(cut_indices) == 0:
+            result.append(stk)
+            continue
+        # 在所有跳跃处切断
+        prev = 0
+        for ci in cut_indices:
+            segment = stk[prev:ci + 1]
+            if len(segment) >= min_segment:
+                result.append(segment)
+            prev = ci + 1
+        segment = stk[prev:]
+        if len(segment) >= min_segment:
+            result.append(segment)
+    return result
+
+
+def _merge_junction_fragments(
+    strokes: List[List[Tuple[int, int]]],
+    junc_radius: float = 5.0,
+    max_winding: float = 3.0,
+    short_ratio: float = 0.2,
+) -> List[List[Tuple[int, int]]]:
+    """合并共享同一 junction 的笔画碎片。
+
+    当骨架在笔直笔画中部产生多余 junction 时，tracer 可能把
+    一笔拆成两段。此函数查找端点邻接同一 junction 的笔画对，
+    若合并后路径不绕路则合并。一方显著短于另一方时放宽要求。
+    """
+    if len(strokes) <= 1:
+        return strokes
+
+    n = len(strokes)
+    ends = [(np.array(s[0]).astype(float), np.array(s[-1]).astype(float)) for s in strokes]
+
+    pairs = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            for ei in [0, -1]:
+                ep_i = ends[i][ei]
+                # 检查 j 的端点 vs i 的端点
+                for ej in [0, -1]:
+                    d = np.linalg.norm(ep_i - ends[j][ej])
+                    if d < junc_radius:
+                        pairs.append((i, j, ei, ej, d, 'end'))
+                # 也检查 j 的碎片端点是否在 i 内部（junction 在笔画中部时）
+                pts_j = np.array(strokes[j]).astype(float)
+                # 从 j 的端点出发，检查其是否接近 i 内部的某个点
+                for pj_idx in [0, -1]:
+                    pj = pts_j[pj_idx]
+                    # 在 i 中搜索最近点
+                    pts_i = np.array(strokes[i]).astype(float)
+                    dists = np.linalg.norm(pts_i - pj, axis=1)
+                    min_idx = np.argmin(dists)
+                    if dists[min_idx] < junc_radius:
+                        # j 的 pj_idx 端靠近 i 内部的点 — 在最近处拼接
+                        pairs.append((i, j, min_idx, pj_idx, dists[min_idx], 'internal'))
+
+    if not pairs:
+        return strokes
+
+    merged = set()
+    result = []
+    for i in range(n):
+        if i in merged:
+            continue
+        best_j, best_merged = None, None
+        best_score = -1.0
+        i_pairs = [p for p in pairs if p[0] == i and p[1] not in merged]
+        for p_entry in i_pairs:
+            pinfo = list(p_entry)
+            pi, j, ei, ej, d = pinfo[:5]
+            is_internal = len(pinfo) > 5 and pinfo[5] == 'internal'
+            si, sj = strokes[i], strokes[j]
+
+            if is_internal:
+                # 碎片 j 的 ej 端靠近 i 内部的 ei 位置 —— 在 ei 处插入 j
+                cut_at = int(ei)  # ei is the index in si
+                # 确定 j 的插入方向：如果 j 的靠近端是 j_start，则 j 正向插入
+                if ej == 0:
+                    j_segment = list(sj)  # j 从 start 开始
+                else:
+                    j_segment = list(reversed(sj))  # j 从 end 开始（反转后从 end 走向 start）
+                # 在 cut_at 处拼接：si[:cut_at] + j_segment + si[cut_at+1:]
+                merged_stk = si[:cut_at] + j_segment + si[cut_at + 1:]
+            else:
+                # 端点拼接（原有逻辑）
+                si_ord = list(si) if ei == -1 else list(reversed(si))
+                sj_ord = list(reversed(sj)) if ej == -1 else list(sj)
+                merged_stk = si_ord + sj_ord[1:]
+
+            if len(merged_stk) < 4:
+                continue
+            mpts = np.array(merged_stk).astype(float)
+            se = np.linalg.norm(mpts[-1] - mpts[0])
+            if se < 1:
+                continue
+            path = np.sum(np.linalg.norm(np.diff(mpts, axis=0), axis=1))
+            len_ratio = min(len(si), len(sj)) / max(len(si), len(sj))
+            effective_limit = max(max_winding, 8.0) if len_ratio < short_ratio else max_winding
+            if path / se > effective_limit:
+                continue
+            score = (1.0 - len_ratio) * 0.5 + min(se / (path + 1e-6), 1.0) * 0.5
+            if score > best_score:
+                best_score = score
+                best_j = j
+                best_merged = merged_stk
+
+        if best_j is not None:
+            result.append(best_merged)
+            merged.add(i)
+            merged.add(best_j)
+        else:
+            result.append(strokes[i])
+            merged.add(i)
+
+    return result
 
 
 def _cluster_junc_pixels(
@@ -716,12 +854,15 @@ def _merge_collinear_strokes(
     cos_threshold = np.cos(np.radians(angle_threshold))
 
     # 计算每个笔画的起笔和收笔局部方向
-    end_dirs = []  # [(dir_at_start, dir_at_end)]
+    end_dirs = []   # [(dir_at_start, dir_at_end)]
     for s in strokes:
         pts = np.array(s).astype(float)
         k = max(3, len(pts) // 3)
-        start_pts = pts[:k]
-        end_pts = pts[-k:]
+        # 跳过最靠近 junction 的 8 个点计算局部方向（抗 junction 弯折干扰）
+        start_k = min(k, max(3, len(pts) - 8))
+        end_k = min(k, max(3, len(pts) - 8))
+        start_pts = pts[8:8+start_k] if len(pts) > 8 + start_k else pts[:start_k]
+        end_pts = pts[-end_k-8:-8] if len(pts) > end_k + 8 else pts[-end_k:]
         end_dirs.append((_pca_safe(start_pts), _pca_safe(end_pts)))
 
     merged = set()
@@ -765,11 +906,13 @@ def _merge_collinear_strokes(
             # 间隙方向必须与笔画方向一致（防止把交叉区对面的不同笔画合并）
             gap_norm = np.linalg.norm(gap_vec)
             if gap_norm < 1e-6:
-                continue
-            gap_dir = gap_vec / gap_norm
-            gap_align = abs(np.dot(gap_dir, dir_i))
-            if gap_align < cos_threshold:
-                continue
+                # 端点重合（共享交叉区/junction）
+                gap_align = 1.0  # 共享端点视为完美对齐
+            else:
+                gap_dir = gap_vec / gap_norm
+                gap_align = abs(np.dot(gap_dir, dir_i))
+                if gap_align < cos_threshold:
+                    continue
 
             score = cos_local * 2.0 - d / max(dist_threshold, 1) + gap_align
             if score > best_score:
@@ -887,6 +1030,80 @@ def _traverse_component(graph: Dict, comp: Set[Tuple[int, int]]) -> List[Tuple[i
         visited.add(nxt)
         cur = nxt
     return ordered
+
+
+def _split_backtracks(
+    strokes: List[List[Tuple[int, int]]],
+    spatial_threshold: float = 25.0,
+    path_threshold: float = 200.0,
+    min_stroke_len: int = 20,
+    keep_ratio: float = 0.15,
+) -> List[List[Tuple[int, int]]]:
+    """拆分含有回溯路径的笔画，丢弃过短的回溯碎片。
+
+    Zhang-Suen 在粗笔画上会产生平行双线，tracer 可能把两条线错误连成
+    一个「走到底→回头→再走」的回溯笔画。此函数检测路径上空间邻近但
+    路径距离远的点对，在回溯点切开，只保留长段（短段是回溯产物）。
+
+    keep_ratio: 短段/长段长度比低于此值则丢弃短段。
+    """
+    if not strokes:
+        return strokes
+
+    result = []
+    for stk in strokes:
+        if len(stk) < 20:
+            result.append(stk)
+            continue
+
+        pts = np.array(stk).astype(float)
+        n = len(pts)
+
+        seg_lens = np.linalg.norm(np.diff(pts, axis=0), axis=1)
+        cum_dist = np.zeros(n)
+        cum_dist[1:] = np.cumsum(seg_lens)
+
+        cut_at = None
+        for i in range(0, n - 10, 5):
+            j_start = i + 50
+            j_end = min(i + 300, n)
+            for j in range(j_start, j_end, 5):
+                spatial_d = np.linalg.norm(pts[i] - pts[j])
+                path_d = cum_dist[j] - cum_dist[i]
+                if spatial_d < spatial_threshold and path_d > path_threshold:
+                    cut_at = (i + j) // 2
+                    break
+            if cut_at is not None:
+                break
+
+        if cut_at is None:
+            result.append(stk)
+            continue
+
+        part1 = stk[:cut_at]
+        part2 = stk[cut_at + 1:]
+
+        # 保留长段，丢弃显著更短的碎片
+        longer, shorter = (part1, part2) if len(part1) >= len(part2) else (part2, part1)
+
+        if len(shorter) < len(longer) * keep_ratio:
+            # 短段是回溯产物，丢弃
+            if len(longer) >= min_stroke_len:
+                result.extend(_split_backtracks(
+                    [longer], spatial_threshold, path_threshold, min_stroke_len, keep_ratio
+                ))
+            else:
+                result.append(stk)
+        else:
+            # 两段都有效（可能是交叉区的两个独立笔画）
+            if len(part1) >= min_stroke_len:
+                result.append(part1)
+            if len(part2) >= min_stroke_len:
+                result.extend(_split_backtracks(
+                    [part2], spatial_threshold, path_threshold, min_stroke_len, keep_ratio
+                ))
+
+    return result
 
 
 def _pca_direction(pts: np.ndarray) -> np.ndarray:

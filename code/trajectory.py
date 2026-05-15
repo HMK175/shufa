@@ -123,13 +123,38 @@ def _find_endpoint_in_component(binary: np.ndarray, sy: int, sx: int):
     return None
 
 
+def _rdp_simplify(points: np.ndarray, epsilon: float) -> np.ndarray:
+    """Ramer-Douglas-Peucker 折线简化，返回简化后的点集。"""
+    if len(points) < 3:
+        return points
+    # 找离首尾连线最远的点
+    dmax, idx = 0.0, 0
+    end = len(points) - 1
+    seg = points[end] - points[0]
+    seg_len_sq = np.dot(seg, seg)
+    if seg_len_sq < 1e-12:
+        return np.array([points[0], points[-1]])
+    for i in range(1, end):
+        d = abs(np.cross(seg, points[i] - points[0])) / np.sqrt(seg_len_sq)
+        if d > dmax:
+            dmax, idx = d, i
+    if dmax > epsilon:
+        left = _rdp_simplify(points[: idx + 1], epsilon)
+        right = _rdp_simplify(points[idx:], epsilon)
+        return np.vstack([left[:-1], right])
+    return np.array([points[0], points[-1]])
+
+
 def smooth_bspline(points: np.ndarray, num_points: Optional[int] = None, s: float = 0.0) -> np.ndarray:
     """对轨迹点做B样条平滑，返回平滑后的 (M, 2) 点序列。
 
     Args:
         points: (N, 2) 原始轨迹点
         num_points: 输出点数，默认为原始点数
-        s: 平滑因子，越大越平滑
+        s: 平滑因子，越大越平滑（自动按压缩比缩放）
+
+    先用 RDP 简化去除 Zhang-Suen 锯齿，再用 k=2 二次样条拟合。
+    若二次样条自交，回退到线性插值。
     """
     if len(points) < 4:
         return points
@@ -137,16 +162,53 @@ def smooth_bspline(points: np.ndarray, num_points: Optional[int] = None, s: floa
     if num_points is None:
         num_points = len(points)
 
-    t = np.linspace(0, 1, len(points))
+    # RDP 预简化：去除骨架锯齿（epsilon=2.0 保留亚像素级细节）
+    simplified = _rdp_simplify(points.astype(float), epsilon=2.0)
+    if len(simplified) < 4:
+        simplified = points.astype(float)
+
+    # 自动按压缩比缩放 s
+    compression = num_points / len(simplified)
+    s_effective = s * max(compression, 0.02)
+
+    t = np.linspace(0, 1, len(simplified))
     t_new = np.linspace(0, 1, num_points)
 
-    try:
-        tck, _ = interpolate.splprep([points[:, 0], points[:, 1]], s=s, k=min(3, len(points) - 1))
-        smoothed = np.array(interpolate.splev(t_new, tck)).T
-    except Exception:
-        return points
+    for k in [2, 1]:
+        try:
+            k_use = min(k, len(simplified) - 1)
+            tck, _ = interpolate.splprep(
+                [simplified[:, 0], simplified[:, 1]], s=s_effective, k=k_use
+            )
+            smoothed = np.array(interpolate.splev(t_new, tck)).T
 
-    return smoothed
+            if k == 2 and _has_self_cross(smoothed):
+                continue
+
+            return smoothed
+        except Exception:
+            continue
+
+    return points
+
+
+def _has_self_cross(pts: np.ndarray) -> bool:
+    """检查点序列是否自交（采样检测，非精确）。"""
+    n = len(pts)
+    if n < 10:
+        return False
+    for a in range(0, n - 5, 5):
+        for b in range(a + 5, n - 1, 5):
+            p1, p2 = pts[a], pts[min(a + 5, n - 1)]
+            p3, p4 = pts[b], pts[min(b + 5, n - 1)]
+            d = (p2[0] - p1[0]) * (p4[1] - p3[1]) - (p2[1] - p1[1]) * (p4[0] - p3[0])
+            if abs(d) < 1e-6:
+                continue
+            t = ((p3[0] - p1[0]) * (p4[1] - p3[1]) - (p3[1] - p1[1]) * (p4[0] - p3[0])) / d
+            u = ((p3[0] - p1[0]) * (p2[1] - p1[1]) - (p3[1] - p1[1]) * (p2[0] - p1[0])) / d
+            if 0.05 < t < 0.95 and 0.05 < u < 0.95:
+                return True
+    return False
 
 
 def smooth_strokes(

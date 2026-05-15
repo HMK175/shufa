@@ -416,6 +416,17 @@ def add_noise_to_stroke(stroke: np.ndarray, noise_std: float = 4.0) -> np.ndarra
     return np.clip(noisy + noise, 0, None)
 
 
+def _clip_displacement(traj: np.ndarray, ref: np.ndarray, max_disp: float = 4.0) -> np.ndarray:
+    """将 traj 每个点相对于 ref 的偏移限制在 max_disp 像素内。"""
+    clipped = traj.copy()
+    for i in range(len(traj)):
+        delta = clipped[i] - ref[i]
+        dist = np.linalg.norm(delta)
+        if dist > max_disp:
+            clipped[i] = ref[i] + delta / dist * max_disp
+    return clipped
+
+
 def optimize_trajectory_rl(
     binary: np.ndarray,
     skeleton: np.ndarray,
@@ -450,6 +461,11 @@ def optimize_trajectory_rl(
             optimized_strokes.append(stroke.copy())
             continue
 
+        # 计算初始指标（始终计算，用于回退判断）
+        init_env = TrajectoryEnv(binary, skeleton, stroke)
+        init_iou = init_env.compute_iou()
+        init_chamfer = init_env.compute_chamfer()
+
         # 加噪
         noisy = add_noise_to_stroke(stroke, noise_std)
         noisy_strokes.append(noisy)
@@ -459,16 +475,12 @@ def optimize_trajectory_rl(
         state_dim = env.state_dim
         agent = DDPGAgent(state_dim=state_dim, device=device)
 
-        if verbose:
-            init_env = TrajectoryEnv(binary, skeleton, stroke)
-            init_iou = init_env.compute_iou()
-            init_chamfer = init_env.compute_chamfer()
-            noisy_iou = env.compute_iou()
-            noisy_chamfer = env.compute_chamfer()
+        noisy_iou = env.compute_iou()
+        noisy_chamfer = env.compute_chamfer()
 
-        best_iou = 0.0
+        best_iou = noisy_iou
         best_traj = noisy.copy()
-        best_chamfer = 999.0
+        best_chamfer = noisy_chamfer
 
         for ep in range(episodes_per_stroke):
             state = env.reset()
@@ -494,6 +506,19 @@ def optimize_trajectory_rl(
                 best_iou = current_iou
                 best_traj = env.get_trajectory().copy()
                 best_chamfer = env.compute_chamfer()
+
+        # 回退保护：RL 结果不能比初始平滑轨迹差
+        if best_iou < init_iou or best_chamfer > init_chamfer * 1.1:
+            if verbose:
+                print(f"  Stroke {si+1}/{len(strokes)}: FALLBACK — "
+                      f"RL IoU={best_iou:.3f} vs init={init_iou:.3f}, "
+                      f"Chamfer={best_chamfer:.1f} vs init={init_chamfer:.1f}px")
+            best_traj = stroke.copy().astype(np.float32)
+            best_iou = init_iou
+            best_chamfer = init_chamfer
+        else:
+            # 限制单点最大位移（相对原始平滑轨迹）
+            best_traj = _clip_displacement(best_traj, stroke.astype(np.float32), max_disp=4.0)
 
         if verbose:
             print(f"  Stroke {si+1}/{len(strokes)}: "

@@ -384,6 +384,109 @@ def straighten_junctions(skeleton: np.ndarray, angle_threshold: float = 25.0,
     return result
 
 
+def clean_junction_spurs(skeleton: np.ndarray, angle_threshold: float = 50.0,
+                         walk_steps: int = 25) -> np.ndarray:
+    """去除交叉区处方向偏离主干的短小毛刺分支。
+
+    对每个交叉点，沿各分支走 walk_steps 步，若某分支方向与
+    所有其他分支的夹角均大于 angle_threshold，则擦除该分支。
+    用于修复「川」右侧竖笔被多余分支拆成两段的骨架问题。
+    """
+    from collections import defaultdict
+
+    binary = skeleton > 0
+    ys, xs = np.where(binary)
+    pts_set = set(zip(ys, xs))
+
+    graph = defaultdict(list)
+    for y, x in pts_set:
+        for ny, nx in [(y-1,x),(y-1,x+1),(y,x+1),(y+1,x+1),
+                       (y+1,x),(y+1,x-1),(y,x-1),(y-1,x-1)]:
+            if (ny, nx) in pts_set:
+                graph[(y, x)].append((ny, nx))
+
+    junctions = {pt for pt, nb in graph.items() if len(nb) >= 3}
+    if not junctions:
+        return skeleton
+
+    cos_threshold = np.cos(np.radians(angle_threshold))
+    removed = set()
+
+    # 聚类交叉区（8-连通）
+    junc_visited = set()
+    junc_clusters = []
+    for jpt in junctions:
+        if jpt in junc_visited:
+            continue
+        cluster = set()
+        stack = [jpt]
+        while stack:
+            cur = stack.pop()
+            if cur in junc_visited:
+                continue
+            junc_visited.add(cur)
+            cluster.add(cur)
+            for nb in graph.get(cur, []):
+                if nb in junctions and nb not in junc_visited:
+                    stack.append(nb)
+        junc_clusters.append(cluster)
+
+    for cluster in junc_clusters:
+        # 收集从本簇出发的各分支（走出交叉区后继续走到端点或下一交叉区）
+        branches = []
+        seen_dirs = set()
+        for jpt in cluster:
+            for nb in graph[jpt]:
+                if nb in removed or nb in cluster:
+                    continue
+                path = [nb]
+                prev, cur = jpt, nb
+                while True:
+                    nxt = None
+                    for n in graph.get(cur, []):
+                        if n != prev and n not in removed:
+                            nxt = n
+                            break
+                    if nxt is None:
+                        break  # 到达端点
+                    if nxt in junctions:
+                        break  # 到达另一交叉区
+                    path.append(nxt)
+                    prev, cur = cur, nxt
+                if len(path) < 3:
+                    continue
+                # 去重：同一方向的分支只取一次
+                direction = _pca_direction_vec(np.array(path).astype(float))
+                dir_key = (round(direction[0], 2), round(direction[1], 2))
+                if dir_key in seen_dirs:
+                    continue
+                seen_dirs.add(dir_key)
+                branches.append((path, direction, len(path)))
+
+        if len(branches) < 3:
+            continue  # 只有 ≤2 个分支的不需要清理
+
+        # 找最长分支的方向作为「主方向」
+        longest = max(branches, key=lambda b: b[2])
+        main_dir = longest[1]
+
+        # 标记偏离分支：擦除分支上所有非交叉点像素
+        for path, direction, plen in branches:
+            cos_abs = abs(np.dot(direction, main_dir))
+            if cos_abs < cos_threshold:
+                for p in path:
+                    if p not in junctions:
+                        removed.add(p)
+
+    if not removed:
+        return skeleton
+
+    result = skeleton.copy()
+    for (y, x) in removed:
+        result[y, x] = 0
+    return result
+
+
 def _pca_direction_vec(pts: np.ndarray) -> np.ndarray:
     """返回归一化的 PCA 主方向向量。"""
     if len(pts) < 2:
