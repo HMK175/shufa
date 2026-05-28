@@ -18,16 +18,17 @@ def skeletonize(binary: np.ndarray) -> np.ndarray:
     """
     from skimage.morphology import thin
     skel = thin(binary > 0, max_num_iter=300)
-    skel = _break_small_loops(skel, max_len=6, min_deviation=0.5)
+    skel = _break_small_loops(skel)
     return (skel.astype(np.uint8)) * 255
 
 
-def _break_small_loops(skel: np.ndarray, max_len: int = 6,
-                       min_deviation: float = 0.5) -> np.ndarray:
+def _break_small_loops(skel: np.ndarray, max_len: int = 4,
+                       min_deviation: float = 0.7) -> np.ndarray:
     """断裂长度≤max_len 且有尖锐拐角的小环（thin 在拐点产生的三角/菱形）。
 
     安全约束：环必须是简单环（除首尾外所有点 deg=2），
-    且断裂后不产生新的孤立点。
+    断裂后不产生新的孤立点，且断裂点不邻接交叉区像素。
+    收紧默认参数避免破坏闭合/半闭合结构的短边。
     """
     from stroke import build_skeleton_graph
     graph = build_skeleton_graph(skel)
@@ -71,7 +72,14 @@ def _break_small_loops(skel: np.ndarray, max_len: int = 6,
                         # 只断够尖锐的
                         if best_pt and best_dev > min_deviation:
                             y, x = int(best_pt[0]), int(best_pt[1])
-                            # 安全检查：去掉后邻居未断开
+                            # 安全检查：断裂点不能 8-邻接其他交叉区像素
+                            adj_junc = False
+                            for ny, nx in _eight_neighbors(y, x):
+                                if (ny, nx) != start and (ny, nx) in juncs:
+                                    adj_junc = True
+                                    break
+                            if adj_junc:
+                                continue
                             before_nb = len(graph.get(best_pt, []))
                             if before_nb >= 2:
                                 result[y, x] = 0
@@ -466,15 +474,19 @@ def clean_junction_spurs(skeleton: np.ndarray, angle_threshold: float = 50.0,
         if len(branches) < 3:
             continue  # 只有 ≤2 个分支的不需要清理
 
-        # 找最长分支的方向作为「主方向」
-        longest = max(branches, key=lambda b: b[2])
-        main_dir = longest[1]
-
-        # 标记偏离分支：擦除分支上所有非交叉点像素
-        for path, direction, plen in branches:
-            cos_abs = abs(np.dot(direction, main_dir))
-            if cos_abs < cos_threshold:
-                for p in path:
+        # 全对全方向比较：仅当分支无任何方向伙伴且很短时判为毛刺。
+        # 避免「中/福」的 口/田 等结构上垂直分支被错误删除。
+        for i, (path_i, dir_i, len_i) in enumerate(branches):
+            has_partner = False
+            for j, (path_j, dir_j, len_j) in enumerate(branches):
+                if i == j:
+                    continue
+                if abs(np.dot(dir_i, dir_j)) > cos_threshold:
+                    has_partner = True
+                    break
+            # 无方向伙伴 且 分支很短 → 真正的毛刺
+            if not has_partner and len_i < 8:
+                for p in path_i:
                     if p not in junctions:
                         removed.add(p)
 

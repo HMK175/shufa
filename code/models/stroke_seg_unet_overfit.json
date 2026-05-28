@@ -1,0 +1,29 @@
+{
+  "max_strokes": 13,
+  "image_size": 256,
+  "base_channels": 16,
+  "in_channels": 1,
+  "train_samples": 5,
+  "val_samples": 5,
+  "test_samples": 0,
+  "val_mean_dice": 0.7220924894014994,
+  "val_per_channel_dice": [
+    0.9272261261940002,
+    0.7221301794052124,
+    0.5169211626052856,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "best_threshold": 0.6,
+  "pos_weight": 12.0,
+  "empty_channel_weight": 0.1,
+  "overfit_count": 5
+}

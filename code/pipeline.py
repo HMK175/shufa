@@ -19,7 +19,7 @@ import numpy as np
 from utils import load_image, preprocess, estimate_stroke_width
 from skeleton import skeletonize, smooth_junctions, straighten_junctions
 from trajectory import trace_skeleton, trace_skeleton_dfs, trace_skeleton_curvature, smooth_bspline, smooth_strokes, save_trajectory_csv, save_stroke_csv
-from stroke import get_stroke_list, prune_skeleton
+from stroke import get_last_trace_diagnostics, get_stroke_list, prune_skeleton, set_trace_context
 
 # ============================================================
 # 可调参数：直接修改这里的值，然后点 ▶ 运行
@@ -48,8 +48,76 @@ CURV_ALPHA = 1.0                    # 曲率灵敏度
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+def _despike_smoothed(smoothed, raw_strokes,
+                      max_winding: float = 4.0,
+                      min_pts: int = 8):
+    """后平滑清理：移除极端绕路碎片，用原笔画重平滑替代锯齿段。"""
+    if len(smoothed) <= 1:
+        return smoothed
+
+    se_list = []
+    for s in smoothed:
+        if len(s) >= 2:
+            pts = np.array(s).astype(float)
+            se_list.append(np.linalg.norm(pts[-1] - pts[0]))
+    median_se = np.median(se_list) if se_list else 100
+
+    result = []
+    for i, s in enumerate(smoothed):
+        if len(s) < 2:
+            continue
+        pts = np.array(s).astype(float)
+        se = np.linalg.norm(pts[-1] - pts[0])
+        path = np.sum(np.linalg.norm(np.diff(pts, axis=0), axis=1))
+        winding = path / se if se > 1 else 0
+
+        # 锯齿碎片判定（三级）
+        remove = False
+
+        # 1) 极短净位移 + 极高绕路 → 微环/碎锯齿
+        if se < median_se * 0.25 and winding > 6.0 and len(s) < 30:
+            remove = True
+
+        # 2) 极端绕路且净位移极小
+        if not remove and winding > 10.0 and se < median_se * 0.3:
+            remove = True
+
+        # 3) 高绕路 + 短点数 + 短净位移
+        if not remove and winding > max_winding and se < median_se * 0.2 and len(s) < min_pts * 2:
+            remove = True
+
+        if remove:
+            continue
+
+        # 中等绕路 → 用更高平滑因子重做（保留笔画但减锯齿）
+        if winding > max_winding and i < len(raw_strokes):
+            raw = raw_strokes[i]
+            if len(raw) >= 3:
+                from trajectory import smooth_bspline
+                num_pts = max(10, int(len(s) * 0.6))
+                try:
+                    repaired = smooth_bspline(np.array(raw).astype(float),
+                                             num_points=num_pts, s=SMOOTH * 2.5)
+                    if len(repaired) >= 5:
+                        result.append(repaired)
+                        continue
+                except Exception:
+                    pass
+
+        result.append(s)
+    return result
+
+
 def _find_images():
-    """返回 code/ 下所有用户图片（排除生成的结果图）。"""
+    """批量模式：优先扫描 tune_set/ 目录，为空则回退 code/ 根目录。"""
+    tune_dir = os.path.join(SCRIPT_DIR, "tune_set")
+    if os.path.isdir(tune_dir):
+        imgs = sorted(glob.glob(os.path.join(tune_dir, "*.jpg")) +
+                      glob.glob(os.path.join(tune_dir, "*.jpeg")) +
+                      glob.glob(os.path.join(tune_dir, "*.png")))
+        if imgs:
+            return imgs
+    # 回退：扫描 code/ 根目录
     imgs = []
     for f in sorted(glob.glob(os.path.join(SCRIPT_DIR, "*.jpg")) +
                     glob.glob(os.path.join(SCRIPT_DIR, "*.jpeg")) +
@@ -71,6 +139,8 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
     """处理单张图片，返回是否成功。"""
     print(f"\n{'='*50}")
     print(f"Processing: {os.path.basename(image_path)}  [trace={trace_mode}]")
+    char_name = os.path.splitext(os.path.basename(image_path))[0]
+    set_trace_context(char_name)
 
     img = load_image(image_path)
     print(f"[1/5] Loaded: {img.shape}")
@@ -133,8 +203,8 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
             strokes = [s for s in strokes_raw if len(s) >= 5]
             trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
         else:
-            trajectory = trace_skeleton(skeleton)
             strokes = get_stroke_list(skeleton)
+            trajectory = np.vstack(strokes) if strokes else np.empty((0, 2))
             # 过滤短笔画（粗笔画骨架毛刺产生的碎片）
             min_stroke_len = max(30, int(half_width * 2.5))
             before = len(strokes)
@@ -152,10 +222,20 @@ def process_one(image_path, output_csv, output_img, smooth, sample, trace_mode,
     ep_count = sum(1 for pt, nb in sk_graph.items() if len(nb) == 1)
     jn_count = sum(1 for pt, nb in sk_graph.items() if len(nb) >= 3)
     print(f"      Topology: {len(sk_graph)} px, {ep_count} endpoints, {jn_count} junction-px")
+    diag = get_last_trace_diagnostics() if trace_mode == "stroke" else {}
+    if diag:
+        selected = diag.get("selected", {})
+        fallback = diag.get("fallback_reason") or "none"
+        print(
+            "      Stroke extractor: "
+            f"char={diag.get('char')}, method={diag.get('method')}, "
+            f"pred={selected.get('count')}, skeleton_px={diag.get('skeleton_px')}, "
+            f"endpoints={diag.get('endpoints')}, junction_px={diag.get('junction_px')}, "
+            f"fallback={fallback}"
+        )
 
     # ── 知识库校验 + 引导合并 ──
     if strokes and len(strokes) > 0:
-        char_name = os.path.splitext(os.path.basename(image_path))[0]
         from stroke_knowledge import validate_stroke_count, guided_merge, get_stroke_count
         expected = get_stroke_count(char_name)
         # 先切断跨部件笔画（防止礻的点连到田里去）
@@ -357,12 +437,14 @@ def main():
         if not images:
             print("No jpg/png images found in code/", file=sys.stderr)
             sys.exit(1)
+        out_dir = os.path.join(SCRIPT_DIR, "output")
+        os.makedirs(out_dir, exist_ok=True)
         print(f"Batch processing {len(images)} image(s)")
         ok = 0
         for img_path in images:
             name = os.path.splitext(os.path.basename(img_path))[0]
-            out_csv = f"{name}_trajectory.csv"
-            out_img = f"{name}_pipeline.png"
+            out_csv = os.path.join(out_dir, f"{name}_trajectory.csv")
+            out_img = os.path.join(out_dir, f"{name}_pipeline.png")
             if process_one(img_path, out_csv, out_img, args.smooth, args.sample, args.trace,
                           use_rl=args.rl, rl_episodes=args.rl_episodes,
                           skeleton_method=args.skeleton,

@@ -6,4 +6,17 @@ __pycache__/
 .pytest_cache/
 .env
 references/downloads/
+references/external/
 .claude/
+
+# Model checkpoints
+*.pt
+*.pth
+*.bak
+
+# Generated output
+code/output/
+
+# Datasets (images)
+code/stroke_cls_dataset/
+code/stroke_cls_dataset_extended/

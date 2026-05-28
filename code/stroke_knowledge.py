@@ -550,6 +550,15 @@ _char("guo",   "国", 8,  components=["wei_kuang", "yu"], note="囗+玉",
 _char("hui",   "回", 6,  components=["wei_kuang", "kou"], note="囗+口")
 _char("pin",   "品", 9,  components=["kou", "kou", "kou"], note="口+口+口")
 
+# 保留集工程验收用的简化笔画先验：只用于 count 量化，不表达完整书法写法差异。
+_char("ri",    "日", 4,  strokes=["shu", "heng_zhe", "heng", "heng"])
+_char("ren",   "人", 2,  strokes=["pie", "na"])
+_char("da",    "大", 3,  strokes=["heng", "pie", "na"])
+_char("shan",  "山", 3,  strokes=["shu", "shu_zhe", "shu"])
+_char("xin",   "心", 4,  strokes=["dian", "gou_wan", "dian", "dian"])
+_char("xiao",  "小", 3,  strokes=["shu_gou", "dian", "dian"])
+_char("shui",  "水", 4,  strokes=["shu_gou", "heng_pie", "pie", "na"])
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 工具函数

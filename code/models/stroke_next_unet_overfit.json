@@ -1,0 +1,22 @@
+{
+  "image_size": 256,
+  "base_channels": 16,
+  "in_channels": 3,
+  "train_stroke_samples": 11,
+  "val_stroke_samples": 11,
+  "test_stroke_samples": 0,
+  "val_mean_dice": 0.8128468611023643,
+  "best_threshold": 0.7,
+  "val_threshold_sweep": {
+    "0.3": 0.6138807697729631,
+    "0.4": 0.7115576863288879,
+    "0.5": 0.8128468611023643,
+    "0.6": 0.8510285290804777,
+    "0.7": 0.8580883795564825
+  },
+  "pos_weight": 12.0,
+  "dice_weight": 0.5,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "overfit_count": 5
+}
