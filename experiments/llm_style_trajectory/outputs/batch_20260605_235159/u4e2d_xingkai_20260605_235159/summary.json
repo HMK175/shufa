@@ -1,0 +1,30 @@
+{
+  "task": "写一个行楷风格的中",
+  "char": "中",
+  "style": "xingkai",
+  "stroke_count": 4,
+  "raw_points": 22,
+  "styled_points": 138,
+  "point_count": 138,
+  "path_length": 918.348,
+  "pen_up_count": 3,
+  "bounding_box_width": 142.002,
+  "bounding_box_height": 226.308,
+  "aspect_ratio": 0.627471,
+  "mean_turning": 0.054535,
+  "connection_count": 3,
+  "out_of_bounds": false,
+  "style_params": {
+    "horizontal_scale": 0.9502,
+    "vertical_scale": 1.0524,
+    "smoothness": 0.197,
+    "corner_rounding": 0.1212,
+    "connection_strength": 0.32,
+    "allow_interstroke_connections": true,
+    "speed_scale": 0.8445,
+    "pen_up_height": 4.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u4e2d_xingkai_20260605_235159\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u4e2d_xingkai_20260605_235159\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u4e2d_xingkai_20260605_235159\\plan.json"
+}

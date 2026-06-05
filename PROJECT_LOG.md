@@ -103,6 +103,78 @@
 
 ---
 
+## 2026-05-29
+
+### 完成事项
+- 完成结构约束版 next-stroke segmentation 独立实验，仍未接入旧 `stroke.py` / `pipeline.py` 主流程。
+- 在 next-stroke 分割链路中加入 remaining mask、4 通道输入、overlap penalty 和 `constrain-remaining` rollout 后处理。
+- 完整回归测试通过：`28 passed, 2 warnings`。
+
+### 关键发现
+- baseline 仍是当前最佳 next-stroke 模型：teacher-forcing Dice=0.6173，autoregressive Dice=0.3299。
+- `constrain-remaining` 可将 overlap 压到 0，但 autoregressive Dice 从 0.3299 降至 0.3079，说明硬约束会误伤自然连接/交叠区域。
+- 4 通道 remaining + overlap penalty 未提升自回归表现，autoregressive Dice 为 0.2613；加后处理后降至 0.2409。
+- 仅靠 previous/remaining mask 约束不足以稳定解决自回归误差累积。
+
+### 当前判断
+- next-stroke 形式相对 fixed 13-channel 仍然成立，但自回归阶段尚不稳定。
+- 当前分割结果还不适合直接进入 mask-to-trajectory 主链路。
+- 下一阶段应考虑组合目标、笔画 order/class 先验或数据规模/样本设计调整，而不是继续堆 previous mask 噪声、DAgger 或硬 remaining 约束。
+
+---
+
+## 2026-05-30
+
+### 完成事项
+- 整理 `experiments/llm_style_trajectory` 独立实验模块的三风格批量 demo 结果。
+- 当前模块已能批量生成 `山/中/永` 的 `kaishu/xingkai/lishu` 三风格轨迹，并输出单任务 `plan.json`、`trajectory.csv`、`preview.png`、`summary.json`。
+- 批量输出增加 `batch_summary.csv` 与每字三风格 compare 图，便于观察 style profile 是否产生可见几何差异。
+
+### 当前状态
+- planner 仍是规则/模拟版，尚未接入真实 LLM 或外部 API。
+- CSV 轨迹由确定性轨迹工具基于 Make Me a Hanzi medians 与人工 style profile 生成，不由 LLM 直接输出轨迹点。
+- 当前风格 profile 是人工参数：`kaishu` 保守，`xingkai` 更连接/平滑，`lishu` 更宽扁；尚未从字体、图片或示教轨迹中学习。
+
+### 下一步可选方向
+- 接入真实 LLM planner，仅用于任务解析、风格选择和工具编排。
+- 引入字体/图片统计或少量人工示教轨迹，估计更有依据的 style profile 参数。
+- 继续保持该路线与旧图像骨架/CNN 分割路线隔离，避免影响主流程。
+
+---
+
+## 2026-06-05
+
+### 完成事项
+- 完成 `experiments/llm_style_trajectory` 的 style profile 数据化实验记录。
+- 本机成功使用 3 个中文字体作为风格来源：楷书 `simkai.ttf`、行楷 `STXINGKA.TTF`、隶书 `SIMLI.TTF`。
+- 每种风格成功渲染 10/10 个字符，并生成 `style_metrics.csv`、`style_profile_estimated.json`、`style_profile_report.md` 与 estimated profile 三风格 demo。
+
+### 关键发现
+- `horizontal_scale`、`vertical_scale`、`smoothness`、`corner_rounding`、`speed_scale` 已可由字体渲染样本统计估计。
+- `connection_strength`、`pen_up_height` 仍保留为人工先验，不能表述为从字体或图片中学习得到。
+- 人工查看确认三种字体风格差异明显，estimated profile 生成的轨迹也有可见差异。
+
+### 当前判断
+- 多风格轨迹模块已从“纯人工参数 demo”推进为“字体样本统计 + 参数化轨迹生成”。
+- 当前仍未接入真实 LLM，planner 仍是规则/模拟版；CSV 仍由确定性轨迹工具生成。
+- 当前尚未验证真实书写效果，后续若用于论文展示，应明确为字体几何统计驱动的参数化风格实验，而非真实书法风格学习。
+
+### 虚拟书写评价补充
+- 在 `experiments/llm_style_trajectory` 中新增 trajectory render/evaluation，已能将 `trajectory.csv` 渲染成模拟书写图，并与对应 style 字体图计算 IoU、Chamfer、aspect ratio error 等指标。
+- 评价 batch：`experiments/llm_style_trajectory/outputs/batch_20260601_135226/`。
+- 三风格平均指标：kaishu IoU=0.1701，xingkai IoU=0.2352，lishu IoU=0.1951；其中 xingkai 的平均 Chamfer 与 aspect error 最好。
+- 模拟书写后仍能看到风格差异，尤其 lishu 的宽扁趋势仍明显；但整体 IoU 偏低，说明 median 轨迹 + 固定笔宽渲染与真实字体轮廓差距较大。
+- 当前更值得优化的是 style-aware brush rendering，而不是继续优先调整 LLM planner。
+
+### 连笔先验修正
+- 人工检查发现目标隶书字体样本无连笔，但旧 `lishu.connection_strength=0.06` 会产生跨笔连接。
+- 已新增/使用 `allow_interstroke_connections` 显式控制跨笔连接：`kaishu=false`、`lishu=false`、`xingkai=true`。
+- 新 batch `experiments/llm_style_trajectory/outputs/batch_20260605_235159/` 中，connection_count 为 kaishu=0、xingkai=9、lishu=0。
+- 去掉 lishu 错误连笔后，style_brush IoU 从 0.2124 降至 0.1825，但这是合理修正；旧分数部分来自不符合目标字体的错误连接。
+- 当前方法边界更清楚：静态字体可估计形态参数，不能可靠估计连笔/抬笔等书写过程参数。
+
+---
+
 ## 模板
 
 ## YYYY-MM-DD

@@ -1,0 +1,30 @@
+{
+  "task": "写一个行楷风格的山",
+  "char": "山",
+  "style": "xingkai",
+  "stroke_count": 3,
+  "raw_points": 19,
+  "styled_points": 127,
+  "point_count": 127,
+  "path_length": 766.999,
+  "pen_up_count": 2,
+  "bounding_box_width": 208.594,
+  "bounding_box_height": 210.739,
+  "aspect_ratio": 0.989823,
+  "mean_turning": 0.052922,
+  "connection_count": 2,
+  "out_of_bounds": false,
+  "style_params": {
+    "smoothness": 0.42,
+    "resample_step": 5.0,
+    "horizontal_scale": 1.03,
+    "vertical_scale": 0.98,
+    "corner_rounding": 0.36,
+    "connection_strength": 0.32,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_xingkai_20260529_163539\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_xingkai_20260529_163539\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_xingkai_20260529_163539\\plan.json"
+}

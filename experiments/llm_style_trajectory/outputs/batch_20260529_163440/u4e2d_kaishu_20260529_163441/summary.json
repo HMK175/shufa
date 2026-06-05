@@ -1,0 +1,30 @@
+{
+  "task": "写一个楷书风格的中",
+  "char": "中",
+  "style": "kaishu",
+  "stroke_count": 4,
+  "raw_points": 22,
+  "styled_points": 106,
+  "point_count": 106,
+  "path_length": 603.423,
+  "pen_up_count": 3,
+  "bounding_box_width": 149.127,
+  "bounding_box_height": 215.04,
+  "aspect_ratio": 0.693486,
+  "mean_turning": 0.066845,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "style_params": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163440\\u4e2d_kaishu_20260529_163441\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163440\\u4e2d_kaishu_20260529_163441\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163440\\u4e2d_kaishu_20260529_163441\\plan.json"
+}

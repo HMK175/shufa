@@ -1,0 +1,58 @@
+{
+  "kaishu": {
+    "horizontal_scale": 0.9468,
+    "vertical_scale": 1.0562,
+    "smoothness": 0.1741,
+    "corner_rounding": 0.0926,
+    "connection_strength": 0.0,
+    "speed_scale": 1.25,
+    "pen_up_height": 8.0
+  },
+  "xingkai": {
+    "horizontal_scale": 0.9502,
+    "vertical_scale": 1.0524,
+    "smoothness": 0.197,
+    "corner_rounding": 0.1212,
+    "connection_strength": 0.32,
+    "speed_scale": 0.8445,
+    "pen_up_height": 4.0
+  },
+  "lishu": {
+    "horizontal_scale": 1.0958,
+    "vertical_scale": 0.9126,
+    "smoothness": 0.169,
+    "corner_rounding": 0.0862,
+    "connection_strength": 0.06,
+    "speed_scale": 0.9036,
+    "pen_up_height": 7.0
+  },
+  "_parameter_sources": {
+    "kaishu": {
+      "horizontal_scale": "estimated",
+      "vertical_scale": "estimated",
+      "smoothness": "estimated",
+      "corner_rounding": "estimated",
+      "connection_strength": "default_prior",
+      "speed_scale": "estimated",
+      "pen_up_height": "default_prior"
+    },
+    "xingkai": {
+      "horizontal_scale": "estimated",
+      "vertical_scale": "estimated",
+      "smoothness": "estimated",
+      "corner_rounding": "estimated",
+      "connection_strength": "default_prior",
+      "speed_scale": "estimated",
+      "pen_up_height": "default_prior"
+    },
+    "lishu": {
+      "horizontal_scale": "estimated",
+      "vertical_scale": "estimated",
+      "smoothness": "estimated",
+      "corner_rounding": "estimated",
+      "connection_strength": "default_prior",
+      "speed_scale": "estimated",
+      "pen_up_height": "default_prior"
+    }
+  }
+}

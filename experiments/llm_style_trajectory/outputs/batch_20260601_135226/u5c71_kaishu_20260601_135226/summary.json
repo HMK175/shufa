@@ -1,0 +1,29 @@
+{
+  "task": "写一个楷书风格的山",
+  "char": "山",
+  "style": "kaishu",
+  "stroke_count": 3,
+  "raw_points": 19,
+  "styled_points": 124,
+  "point_count": 124,
+  "path_length": 592.468,
+  "pen_up_count": 2,
+  "bounding_box_width": 192.002,
+  "bounding_box_height": 227.125,
+  "aspect_ratio": 0.845356,
+  "mean_turning": 0.051698,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "style_params": {
+    "horizontal_scale": 0.9468,
+    "vertical_scale": 1.0562,
+    "smoothness": 0.1741,
+    "corner_rounding": 0.0926,
+    "connection_strength": 0.0,
+    "speed_scale": 1.25,
+    "pen_up_height": 8.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u5c71_kaishu_20260601_135226\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u5c71_kaishu_20260601_135226\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u5c71_kaishu_20260601_135226\\plan.json"
+}

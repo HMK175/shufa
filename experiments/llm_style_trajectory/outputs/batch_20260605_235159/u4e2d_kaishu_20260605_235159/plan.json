@@ -1,0 +1,21 @@
+{
+  "task": "写一个楷书风格的中",
+  "char": "中",
+  "style": "kaishu",
+  "style_params": {
+    "horizontal_scale": 0.9468,
+    "vertical_scale": 1.0562,
+    "smoothness": 0.1741,
+    "corner_rounding": 0.0926,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.25,
+    "pen_up_height": 8.0
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "trajectory_generator": "deterministic_style_profile",
+    "stroke_count": 4
+  }
+}

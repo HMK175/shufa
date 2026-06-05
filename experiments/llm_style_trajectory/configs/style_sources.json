@@ -1,0 +1,31 @@
+{
+  "kaishu": {
+    "font_paths": [
+      "C:/Windows/Fonts/simkai.ttf",
+      "C:/Windows/Fonts/STKAITI.TTF",
+      "../style_sources/fonts/kaishu.ttf"
+    ],
+    "image_dirs": [
+      "../style_sources/images/kaishu"
+    ]
+  },
+  "xingkai": {
+    "font_paths": [
+      "C:/Windows/Fonts/STXINGKA.TTF",
+      "../style_sources/fonts/xingkai.ttf"
+    ],
+    "image_dirs": [
+      "../style_sources/images/xingkai"
+    ]
+  },
+  "lishu": {
+    "font_paths": [
+      "C:/Windows/Fonts/SIMLI.TTF",
+      "C:/Windows/Fonts/STLITI.TTF",
+      "../style_sources/fonts/lishu.ttf"
+    ],
+    "image_dirs": [
+      "../style_sources/images/lishu"
+    ]
+  }
+}

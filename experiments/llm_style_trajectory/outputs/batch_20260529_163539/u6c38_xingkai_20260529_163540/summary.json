@@ -1,0 +1,30 @@
+{
+  "task": "写一个行楷风格的永",
+  "char": "永",
+  "style": "xingkai",
+  "stroke_count": 5,
+  "raw_points": 37,
+  "styled_points": 153,
+  "point_count": 153,
+  "path_length": 1044.59,
+  "pen_up_count": 4,
+  "bounding_box_width": 221.491,
+  "bounding_box_height": 198.359,
+  "aspect_ratio": 1.116619,
+  "mean_turning": 0.078572,
+  "connection_count": 4,
+  "out_of_bounds": false,
+  "style_params": {
+    "smoothness": 0.42,
+    "resample_step": 5.0,
+    "horizontal_scale": 1.03,
+    "vertical_scale": 0.98,
+    "corner_rounding": 0.36,
+    "connection_strength": 0.32,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_xingkai_20260529_163540\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_xingkai_20260529_163540\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_xingkai_20260529_163540\\plan.json"
+}

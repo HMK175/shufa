@@ -1,0 +1,29 @@
+{
+  "task": "写一个隶书风格的中",
+  "char": "中",
+  "style": "lishu",
+  "stroke_count": 4,
+  "raw_points": 22,
+  "styled_points": 136,
+  "point_count": 136,
+  "path_length": 912.371,
+  "pen_up_count": 3,
+  "bounding_box_width": 163.561,
+  "bounding_box_height": 196.246,
+  "aspect_ratio": 0.833449,
+  "mean_turning": 0.054637,
+  "connection_count": 3,
+  "out_of_bounds": false,
+  "style_params": {
+    "horizontal_scale": 1.0958,
+    "vertical_scale": 0.9126,
+    "smoothness": 0.169,
+    "corner_rounding": 0.0862,
+    "connection_strength": 0.06,
+    "speed_scale": 0.9036,
+    "pen_up_height": 7.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u4e2d_lishu_20260601_135226\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u4e2d_lishu_20260601_135226\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260601_135226\\u4e2d_lishu_20260601_135226\\plan.json"
+}

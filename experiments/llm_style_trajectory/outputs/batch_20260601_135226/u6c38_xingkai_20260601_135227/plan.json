@@ -1,0 +1,20 @@
+{
+  "task": "写一个行楷风格的永",
+  "char": "永",
+  "style": "xingkai",
+  "style_params": {
+    "horizontal_scale": 0.9502,
+    "vertical_scale": 1.0524,
+    "smoothness": 0.197,
+    "corner_rounding": 0.1212,
+    "connection_strength": 0.32,
+    "speed_scale": 0.8445,
+    "pen_up_height": 4.0
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "trajectory_generator": "deterministic_style_profile",
+    "stroke_count": 5
+  }
+}

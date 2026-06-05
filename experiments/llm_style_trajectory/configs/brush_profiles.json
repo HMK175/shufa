@@ -1,0 +1,46 @@
+{
+  "kaishu": {
+    "base_width": 9.0,
+    "min_width": 4.0,
+    "max_width": 14.0,
+    "start_taper": 0.12,
+    "end_taper": 0.14,
+    "turn_width_gain": 0.28,
+    "horizontal_width_gain": 0.02,
+    "vertical_width_gain": 0.04,
+    "antialias_scale": 3
+  },
+  "xingkai": {
+    "base_width": 9.5,
+    "min_width": 4.0,
+    "max_width": 15.0,
+    "start_taper": 0.06,
+    "end_taper": 0.08,
+    "turn_width_gain": 0.20,
+    "horizontal_width_gain": 0.00,
+    "vertical_width_gain": 0.02,
+    "antialias_scale": 3
+  },
+  "lishu": {
+    "base_width": 10.0,
+    "min_width": 4.0,
+    "max_width": 18.0,
+    "start_taper": 0.10,
+    "end_taper": 0.18,
+    "turn_width_gain": 0.34,
+    "horizontal_width_gain": 0.24,
+    "vertical_width_gain": -0.03,
+    "antialias_scale": 3
+  },
+  "default": {
+    "base_width": 8.0,
+    "min_width": 3.0,
+    "max_width": 14.0,
+    "start_taper": 0.12,
+    "end_taper": 0.12,
+    "turn_width_gain": 0.22,
+    "horizontal_width_gain": 0.0,
+    "vertical_width_gain": 0.0,
+    "antialias_scale": 3
+  }
+}

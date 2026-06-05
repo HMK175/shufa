@@ -1,0 +1,30 @@
+{
+  "task": "写一个隶书风格的山",
+  "char": "山",
+  "style": "lishu",
+  "stroke_count": 3,
+  "raw_points": 19,
+  "styled_points": 111,
+  "point_count": 111,
+  "path_length": 734.035,
+  "pen_up_count": 2,
+  "bounding_box_width": 239.159,
+  "bounding_box_height": 176.333,
+  "aspect_ratio": 1.356292,
+  "mean_turning": 0.066343,
+  "connection_count": 2,
+  "out_of_bounds": false,
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.18,
+    "vertical_scale": 0.82,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.06,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_lishu_20260529_163540\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_lishu_20260529_163540\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u5c71_lishu_20260529_163540\\plan.json"
+}

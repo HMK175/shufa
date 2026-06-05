@@ -1,0 +1,21 @@
+{
+  "task": "写一个隶书风格的中",
+  "char": "中",
+  "style": "lishu",
+  "style_params": {
+    "horizontal_scale": 1.0958,
+    "vertical_scale": 0.9126,
+    "smoothness": 0.169,
+    "corner_rounding": 0.0862,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9036,
+    "pen_up_height": 7.0
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "trajectory_generator": "deterministic_style_profile",
+    "stroke_count": 4
+  }
+}

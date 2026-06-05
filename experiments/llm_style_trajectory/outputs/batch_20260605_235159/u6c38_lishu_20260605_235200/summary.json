@@ -1,0 +1,30 @@
+{
+  "task": "写一个隶书风格的永",
+  "char": "永",
+  "style": "lishu",
+  "stroke_count": 5,
+  "raw_points": 37,
+  "styled_points": 140,
+  "point_count": 140,
+  "path_length": 655.34,
+  "pen_up_count": 4,
+  "bounding_box_width": 235.641,
+  "bounding_box_height": 185.021,
+  "aspect_ratio": 1.273587,
+  "mean_turning": 0.081962,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "style_params": {
+    "horizontal_scale": 1.0958,
+    "vertical_scale": 0.9126,
+    "smoothness": 0.169,
+    "corner_rounding": 0.0862,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9036,
+    "pen_up_height": 7.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u6c38_lishu_20260605_235200\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u6c38_lishu_20260605_235200\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260605_235159\\u6c38_lishu_20260605_235200\\plan.json"
+}

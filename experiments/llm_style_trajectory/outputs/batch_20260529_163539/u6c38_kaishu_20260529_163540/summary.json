@@ -1,0 +1,30 @@
+{
+  "task": "写一个楷书风格的永",
+  "char": "永",
+  "style": "kaishu",
+  "stroke_count": 5,
+  "raw_points": 37,
+  "styled_points": 117,
+  "point_count": 117,
+  "path_length": 649.156,
+  "pen_up_count": 4,
+  "bounding_box_width": 215.04,
+  "bounding_box_height": 201.921,
+  "aspect_ratio": 1.064969,
+  "mean_turning": 0.099365,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "style_params": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_kaishu_20260529_163540\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_kaishu_20260529_163540\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260529_163539\\u6c38_kaishu_20260529_163540\\plan.json"
+}
