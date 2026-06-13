@@ -1,0 +1,51 @@
+{
+  "task": "写一个更宽的隶书中",
+  "char": "中",
+  "style": "lishu",
+  "stroke_count": 4,
+  "raw_points": 22,
+  "styled_points": 120,
+  "point_count": 120,
+  "path_length": 622.852,
+  "pen_up_count": 3,
+  "bounding_box_width": 190.54,
+  "bounding_box_height": 176.333,
+  "aspect_ratio": 1.080569,
+  "mean_turning": 0.057841,
+  "total_turning_angle": 6.478225,
+  "max_turning_angle": 1.039635,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "planner_mode": "mock",
+  "style_modifiers": {
+    "connection_preference": "weak",
+    "shape_emphasis": "wider",
+    "smoothness_level": "medium",
+    "stroke_width_level": "normal"
+  },
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.2744,
+    "vertical_scale": 0.82,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "brush_params": {
+    "base_width": 10.0,
+    "min_width": 4.0,
+    "max_width": 18.0,
+    "start_taper": 0.1,
+    "end_taper": 0.18,
+    "turn_width_gain": 0.34,
+    "horizontal_width_gain": 0.28,
+    "vertical_width_gain": -0.03,
+    "antialias_scale": 3.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u4e2d_lishu_20260613_085440_862834\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u4e2d_lishu_20260613_085440_862834\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u4e2d_lishu_20260613_085440_862834\\plan.json"
+}

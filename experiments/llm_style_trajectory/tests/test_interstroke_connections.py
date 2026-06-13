@@ -13,7 +13,7 @@ if str(SRC_DIR) not in sys.path:
 
 from build_style_profiles import build_estimated_profiles
 from planner import load_style_profiles
-from trajectory_tools import build_styled_trajectory, trajectory_metrics
+from trajectory_tools import build_styled_trajectory, stroke_path_length, trajectory_metrics
 
 
 def _two_simple_strokes():
@@ -63,6 +63,25 @@ def test_connection_requires_allow_flag_and_positive_strength():
 
     assert len(styled) == 3
     assert metrics["connection_count"] == 1
+    assert np.allclose(styled[1][0], styled[0][-1])
+    assert np.allclose(styled[1][-1], styled[2][0])
+
+
+def test_connection_strength_does_not_shorten_connector_geometry():
+    weak_profile = {
+        "resample_step": 10.0,
+        "smoothness": 0.0,
+        "corner_rounding": 0.0,
+        "connection_strength": 0.2,
+        "allow_interstroke_connections": True,
+    }
+    normal_profile = dict(weak_profile, connection_strength=0.8)
+
+    weak = build_styled_trajectory(_two_simple_strokes(), weak_profile, image_size=64)
+    normal = build_styled_trajectory(_two_simple_strokes(), normal_profile, image_size=64)
+
+    assert np.allclose(weak[1], normal[1])
+    assert stroke_path_length(weak[1]) == stroke_path_length(normal[1])
 
 
 def test_kaishu_lishu_profiles_do_not_allow_interstroke_connections():

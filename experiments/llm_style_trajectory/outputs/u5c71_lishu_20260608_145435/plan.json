@@ -1,0 +1,40 @@
+{
+  "task": "写一个隶书风格的山，不要连笔",
+  "char": "山",
+  "style": "lishu",
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.2744,
+    "vertical_scale": 0.779,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": true
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ],
+    "stroke_count": 3
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "Parsed a lishu request for 山.",
+  "raw_response": "{\n  \"char\": \"山\",\n  \"style\": \"lishu\",\n  \"constraints\": {\n    \"allow_interstroke_connections\": false,\n    \"emphasize_flat_shape\": true\n  },\n  \"stroke_plan\": {\n    \"source\": \"makemeahanzi\",\n    \"order\": \"source_order\",\n    \"generator\": \"deterministic_style_profile\",\n    \"tools\": [\n      \"knowledge.get_glyph\",\n      \"trajectory_tools.build_styled_trajectory\"\n    ]\n  },\n  \"notes\": \"Parsed a lishu request for 山.\"\n}",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

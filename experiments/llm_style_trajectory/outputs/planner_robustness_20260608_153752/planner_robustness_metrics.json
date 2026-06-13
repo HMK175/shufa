@@ -1,0 +1,16 @@
+{
+  "output_dir": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\planner_robustness_20260608_153752",
+  "summary_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\planner_robustness_20260608_153752\\planner_robustness_summary.csv",
+  "report_md": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\planner_robustness_20260608_153752\\planner_robustness_report.md",
+  "metrics": {
+    "total": 12,
+    "validation_ok_count": 8,
+    "char_correct_count": 11,
+    "style_correct_count": 12,
+    "connection_constraint_correct_count": 12,
+    "expected_invalid_rejected_count": 3,
+    "dangerous_output_count": 0,
+    "json_parse_success_count": 12,
+    "average_latency": 0.0602
+  }
+}

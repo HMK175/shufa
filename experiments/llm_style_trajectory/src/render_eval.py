@@ -419,6 +419,13 @@ def evaluate_demo_dir(
 
     strokes = load_trajectory_csv(root / "trajectory.csv")
     brush_profiles = load_brush_profiles(brush_profiles_path)
+    if renderer == "style_brush" and isinstance(plan.get("brush_params"), dict):
+        brush_profiles = dict(brush_profiles)
+        merged_brush = dict(brush_profiles.get(style, brush_profiles.get("default", {})))
+        for key, value in plan["brush_params"].items():
+            if key in BRUSH_KEYS:
+                merged_brush[key] = float(value)
+        brush_profiles[style] = merged_brush
     rendered = render_strokes(
         strokes,
         style=style,

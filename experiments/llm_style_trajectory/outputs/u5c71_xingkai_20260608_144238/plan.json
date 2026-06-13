@@ -1,0 +1,42 @@
+{
+  "task": "写一个行楷风格的山",
+  "char": "山",
+  "style": "xingkai",
+  "style_params": {
+    "smoothness": 0.42,
+    "resample_step": 5.0,
+    "horizontal_scale": 1.03,
+    "vertical_scale": 0.98,
+    "corner_rounding": 0.36,
+    "connection_strength": 0.32,
+    "allow_interstroke_connections": true,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": true,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ],
+    "stroke_count": 3
+  },
+  "planner_mode": "mock",
+  "source": "mock_rule_based",
+  "warnings": [
+    "api planner not configured; set LLM_STYLE_PLANNER_API_KEY; use --fallback-to-mock for the rule-based planner"
+  ],
+  "notes": "Rule-based mock planner selected char=山, style=xingkai, allow_interstroke_connections=True.",
+  "raw_response": null,
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

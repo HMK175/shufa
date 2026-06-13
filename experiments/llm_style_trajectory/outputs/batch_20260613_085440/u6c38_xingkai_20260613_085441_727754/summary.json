@@ -1,0 +1,51 @@
+{
+  "task": "写一个更保守的行楷永",
+  "char": "永",
+  "style": "xingkai",
+  "stroke_count": 5,
+  "raw_points": 37,
+  "styled_points": 141,
+  "point_count": 141,
+  "path_length": 653.408,
+  "pen_up_count": 4,
+  "bounding_box_width": 221.491,
+  "bounding_box_height": 198.875,
+  "aspect_ratio": 1.113723,
+  "mean_turning": 0.081651,
+  "total_turning_angle": 10.69622,
+  "max_turning_angle": 1.048066,
+  "connection_count": 0,
+  "out_of_bounds": false,
+  "planner_mode": "mock",
+  "style_modifiers": {
+    "connection_preference": "none",
+    "shape_emphasis": "normal",
+    "smoothness_level": "low",
+    "stroke_width_level": "normal"
+  },
+  "style_params": {
+    "smoothness": 0.231,
+    "resample_step": 5.0,
+    "horizontal_scale": 1.03,
+    "vertical_scale": 0.98,
+    "corner_rounding": 0.198,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "brush_params": {
+    "base_width": 9.5,
+    "min_width": 4.0,
+    "max_width": 15.0,
+    "start_taper": 0.06,
+    "end_taper": 0.08,
+    "turn_width_gain": 0.216,
+    "horizontal_width_gain": 0.0,
+    "vertical_width_gain": 0.02,
+    "antialias_scale": 3.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u6c38_xingkai_20260613_085441_727754\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u6c38_xingkai_20260613_085441_727754\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_085440\\u6c38_xingkai_20260613_085441_727754\\plan.json"
+}

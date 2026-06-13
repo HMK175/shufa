@@ -1,0 +1,17 @@
+[
+  {"task": "写一个楷书风格的山", "char": "山", "style": "kaishu"},
+  {"task": "写一个行楷风格的山", "char": "山", "style": "xingkai"},
+  {"task": "写一个隶书风格的山", "char": "山", "style": "lishu"},
+  {"task": "写一个楷书风格的中", "char": "中", "style": "kaishu"},
+  {"task": "写一个行楷风格的中", "char": "中", "style": "xingkai"},
+  {"task": "写一个隶书风格的中", "char": "中", "style": "lishu"},
+  {"task": "写一个楷书风格的永", "char": "永", "style": "kaishu"},
+  {"task": "写一个行楷风格的永", "char": "永", "style": "xingkai"},
+  {"task": "写一个隶书风格的永", "char": "永", "style": "lishu"},
+  {"task": "写一个楷书风格的福", "char": "福", "style": "kaishu"},
+  {"task": "写一个行楷风格的福", "char": "福", "style": "xingkai"},
+  {"task": "写一个隶书风格的福", "char": "福", "style": "lishu"},
+  {"task": "写一个楷书风格的明", "char": "明", "style": "kaishu"},
+  {"task": "写一个行楷风格的明", "char": "明", "style": "xingkai"},
+  {"task": "写一个隶书风格的明", "char": "明", "style": "lishu"}
+]

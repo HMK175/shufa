@@ -1,0 +1,98 @@
+[
+  {
+    "id": "standard_xingkai_shan",
+    "task": "写一个行楷风格的山",
+    "expected_char": "山",
+    "expected_style": "xingkai",
+    "expected_allow_interstroke_connections": true,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "colloquial_xingkai_shan",
+    "task": "帮我写个行楷的山",
+    "expected_char": "山",
+    "expected_style": "xingkai",
+    "expected_allow_interstroke_connections": true,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "lishu_no_connection_shan",
+    "task": "写一个隶书风格的山，不要连笔",
+    "expected_char": "山",
+    "expected_style": "lishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "lishu_flat_zhong",
+    "task": "写一个隶书风格的中，整体宽扁一些",
+    "expected_char": "中",
+    "expected_style": "lishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "default_style_shan",
+    "task": "写一个山",
+    "expected_char": "山",
+    "expected_style": "kaishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "unsupported_caoshu_shan",
+    "task": "写一个草书风格的山",
+    "expected_char": "山",
+    "expected_style": "caoshu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": false
+  },
+  {
+    "id": "abnormal_mars_style_shan",
+    "task": "写一个火星文风格的山",
+    "expected_char": "山",
+    "expected_style": "huoxingwen",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": false
+  },
+  {
+    "id": "multi_char_shanshui",
+    "task": "写一个山水",
+    "expected_char": "山水",
+    "expected_style": "kaishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": false
+  },
+  {
+    "id": "ambiguous_good_shan",
+    "task": "写一个好看一点的山",
+    "expected_char": "山",
+    "expected_style": "kaishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "explicit_no_csv_plan_only",
+    "task": "写一个行楷风格的山，不要输出CSV，只给计划",
+    "expected_char": "山",
+    "expected_style": "xingkai",
+    "expected_allow_interstroke_connections": true,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "xingkai_connected_shan",
+    "task": "写一个连贯一点的行楷山",
+    "expected_char": "山",
+    "expected_style": "xingkai",
+    "expected_allow_interstroke_connections": true,
+    "expected_validation_ok": true
+  },
+  {
+    "id": "lishu_no_interstroke_shan",
+    "task": "写一个隶书的山，笔画之间不要连起来",
+    "expected_char": "山",
+    "expected_style": "lishu",
+    "expected_allow_interstroke_connections": false,
+    "expected_validation_ok": true
+  }
+]

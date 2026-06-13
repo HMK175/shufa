@@ -104,14 +104,12 @@ def insert_connections(
 ) -> list[np.ndarray]:
     if not allow_interstroke_connections or connection_strength <= 0:
         return [np.asarray(stroke, dtype=float) for stroke in strokes]
-    strength = min(max(float(connection_strength), 0.0), 1.0)
     out: list[np.ndarray] = []
     for idx, stroke in enumerate(strokes):
         if idx > 0 and len(out[-1]) and len(stroke):
             start = stroke[0]
             prev_end = out[-1][-1]
-            connector_end = prev_end * (1.0 - strength) + start * strength
-            out.append(np.vstack([prev_end, connector_end, start]))
+            out.append(np.vstack([prev_end, start]))
         out.append(np.asarray(stroke, dtype=float))
     return out
 
@@ -156,6 +154,35 @@ def mean_turning(strokes_yx: Sequence[np.ndarray]) -> float:
     return float(np.mean(turns))
 
 
+def turning_stats(strokes_yx: Sequence[np.ndarray]) -> dict[str, float]:
+    turns: list[float] = []
+    for stroke in strokes_yx:
+        pts = np.asarray(stroke, dtype=float)
+        if len(pts) < 3:
+            continue
+        delta = np.diff(pts, axis=0)
+        lengths = np.linalg.norm(delta, axis=1)
+        keep = lengths > 1e-9
+        delta = delta[keep]
+        if len(delta) < 2:
+            continue
+        angles = np.arctan2(delta[:, 0], delta[:, 1])
+        diff = np.diff(angles)
+        diff = (diff + math.pi) % (2.0 * math.pi) - math.pi
+        turns.extend(np.abs(diff).tolist())
+    if not turns:
+        return {
+            "mean_turning": 0.0,
+            "total_turning_angle": 0.0,
+            "max_turning_angle": 0.0,
+        }
+    return {
+        "mean_turning": round(float(np.mean(turns)), 6),
+        "total_turning_angle": round(float(np.sum(turns)), 6),
+        "max_turning_angle": round(float(np.max(turns)), 6),
+    }
+
+
 def trajectory_metrics(
     strokes_yx: Sequence[np.ndarray],
     image_size: int,
@@ -171,7 +198,7 @@ def trajectory_metrics(
         if allow_interstroke_connections and connection_strength > 1e-9
         else 0
     )
-    pen_up_count = max(0, int(stroke_count) - 1)
+    pen_up_count = max(0, int(stroke_count) - 1 - connection_count)
 
     if point_count:
         y0, x0 = np.min(points, axis=0)
@@ -197,7 +224,7 @@ def trajectory_metrics(
         "bounding_box_width": round(bbox_w, 3),
         "bounding_box_height": round(bbox_h, 3),
         "aspect_ratio": round(aspect_ratio, 6),
-        "mean_turning": round(mean_turning(strokes_yx), 6),
+        **turning_stats(strokes_yx),
         "connection_count": connection_count,
         "out_of_bounds": out_of_bounds,
     }
@@ -280,4 +307,43 @@ def write_style_compare(
                 ax.plot(pts[:, 1], pts[:, 0], "-", color=colors.get(style, "#333333"), linewidth=2.0)
                 ax.scatter([pts[0, 1]], [pts[0, 0]], color=colors.get(style, "#333333"), marker="o", s=12)
                 ax.scatter([pts[-1, 1]], [pts[-1, 0]], color=colors.get(style, "#333333"), marker="x", s=16)
+    canvas.print_png(str(path))
+
+
+def write_labeled_compare(
+    raw_strokes: Sequence[np.ndarray],
+    labeled_strokes: Sequence[tuple[str, Sequence[np.ndarray]]],
+    path: Path,
+    image_size: int,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not labeled_strokes:
+        return
+
+    fig = Figure(figsize=(4.2 * len(labeled_strokes), 4.4), dpi=140)
+    canvas = FigureCanvas(fig)
+    colors = ["#d62728", "#1f77b4", "#2ca02c", "#9467bd", "#ff7f0e", "#17becf"]
+    for idx, (label, strokes) in enumerate(labeled_strokes):
+        left = 0.05 + idx * (0.9 / len(labeled_strokes))
+        ax = fig.add_axes([left, 0.10, 0.78 / len(labeled_strokes), 0.78])
+        ax.set_title(label, fontsize=9)
+        ax.set_aspect("equal")
+        ax.set_xlim(0, image_size)
+        ax.set_ylim(image_size, 0)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.grid(True, color="#eeeeee", linewidth=0.5)
+
+        for raw in raw_strokes:
+            pts = np.asarray(raw, dtype=float)
+            if len(pts):
+                ax.plot(pts[:, 1], pts[:, 0], "--", color="#aaaaaa", linewidth=1.0, alpha=0.75)
+
+        color = colors[idx % len(colors)]
+        for stroke in strokes:
+            pts = np.asarray(stroke, dtype=float)
+            if len(pts):
+                ax.plot(pts[:, 1], pts[:, 0], "-", color=color, linewidth=2.0)
+                ax.scatter([pts[0, 1]], [pts[0, 0]], color=color, marker="o", s=12)
+                ax.scatter([pts[-1, 1]], [pts[-1, 0]], color=color, marker="x", s=16)
     canvas.print_png(str(path))

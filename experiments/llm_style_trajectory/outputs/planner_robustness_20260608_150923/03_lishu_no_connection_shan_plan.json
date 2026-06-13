@@ -1,0 +1,29 @@
+{
+  "task": "写一个隶书风格的山，不要连笔",
+  "char": "",
+  "style": "",
+  "style_params": {},
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile"
+  },
+  "planner_mode": "api",
+  "source": "api_unconfigured",
+  "warnings": [
+    "api planner not configured; set LLM_STYLE_PLANNER_API_KEY; use --fallback-to-mock for the rule-based planner"
+  ],
+  "notes": "",
+  "raw_response": null,
+  "validation": {
+    "ok": false,
+    "errors": [
+      "api planner not configured; set LLM_STYLE_PLANNER_API_KEY; use --fallback-to-mock for the rule-based planner"
+    ],
+    "warnings": []
+  }
+}

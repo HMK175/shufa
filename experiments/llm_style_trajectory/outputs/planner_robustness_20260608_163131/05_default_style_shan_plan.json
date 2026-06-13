@@ -1,0 +1,34 @@
+{
+  "task": "写一个山",
+  "char": "",
+  "style": "",
+  "style_params": {},
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile"
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [
+    "api planner request failed: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。"
+  ],
+  "notes": "",
+  "raw_response": null,
+  "request_status": "invalid",
+  "requested_style_raw": "",
+  "requested_chars_raw": "",
+  "mapped_style": "",
+  "rejection_reason": "api planner request failed: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "api planner request failed: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。"
+    ],
+    "warnings": []
+  }
+}

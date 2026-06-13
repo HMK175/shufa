@@ -1,0 +1,32 @@
+{
+  "task": "写一个隶书风格的山，不要连笔",
+  "char": "山",
+  "style": "lishu",
+  "stroke_count": 3,
+  "raw_points": 19,
+  "styled_points": 106,
+  "point_count": 106,
+  "path_length": 553.663,
+  "pen_up_count": 2,
+  "bounding_box_width": 258.278,
+  "bounding_box_height": 167.516,
+  "aspect_ratio": 1.54181,
+  "mean_turning": 0.069052,
+  "connection_count": 0,
+  "out_of_bounds": true,
+  "planner_mode": "api",
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.2744,
+    "vertical_scale": 0.779,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "trajectory_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\u5c71_lishu_20260608_145435\\trajectory.csv",
+  "preview_png": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\u5c71_lishu_20260608_145435\\preview.png",
+  "plan_json": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\u5c71_lishu_20260608_145435\\plan.json"
+}

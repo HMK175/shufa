@@ -1,0 +1,34 @@
+{
+  "task": "写一个火星文风格的山",
+  "char": "",
+  "style": "",
+  "style_params": {},
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile"
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [
+    "api planner request failed: timeout"
+  ],
+  "notes": "",
+  "raw_response": null,
+  "request_status": "invalid",
+  "requested_style_raw": "",
+  "requested_chars_raw": "",
+  "mapped_style": "",
+  "rejection_reason": "api planner request failed: timeout",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "api planner request failed: timeout"
+    ],
+    "warnings": []
+  }
+}

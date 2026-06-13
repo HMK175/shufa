@@ -1,0 +1,46 @@
+{
+  "task": "写一个草书风格的山",
+  "char": "山",
+  "style": "kaishu",
+  "style_params": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "User requested unsupported style 草书.",
+  "raw_response": "{\n  \"request_status\": \"unsupported\",\n  \"requested_style_raw\": \"草书\",\n  \"requested_chars_raw\": \"山\",\n  \"mapped_style\": null,\n  \"rejection_reason\": \"草书 style is not supported. Supported styles are: kaishu, xingkai, lishu.\",\n  \"char\": \"山\",\n  \"style\": null,\n  \"constraints\": null,\n  \"stroke_plan\": null,\n  \"notes\": \"User requested unsupported style 草书.\"\n}",
+  "request_status": "unsupported",
+  "requested_style_raw": "草书",
+  "requested_chars_raw": "山",
+  "mapped_style": "kaishu",
+  "rejection_reason": "unsupported style requested: 草书",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "unsupported style requested: 草书"
+    ],
+    "warnings": []
+  }
+}

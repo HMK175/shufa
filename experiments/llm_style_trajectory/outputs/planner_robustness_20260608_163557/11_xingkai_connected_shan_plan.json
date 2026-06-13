@@ -1,0 +1,44 @@
+{
+  "task": "写一个连贯一点的行楷山",
+  "char": "山",
+  "style": "xingkai",
+  "style_params": {
+    "smoothness": 0.42,
+    "resample_step": 5.0,
+    "horizontal_scale": 1.03,
+    "vertical_scale": 0.98,
+    "corner_rounding": 0.36,
+    "connection_strength": 0.32,
+    "allow_interstroke_connections": true,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": true,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "Parsed a semi-cursive request for 山. User requested more connected strokes; default xingkai profile allows connections.",
+  "raw_response": "{\n  \"request_status\": \"ok\",\n  \"requested_style_raw\": \"行楷\",\n  \"requested_chars_raw\": \"山\",\n  \"mapped_style\": \"xingkai\",\n  \"rejection_reason\": \"\",\n  \"char\": \"山\",\n  \"style\": \"xingkai\",\n  \"constraints\": {\n    \"allow_interstroke_connections\": true,\n    \"emphasize_flat_shape\": false\n  },\n  \"stroke_plan\": {\n    \"source\": \"makemeahanzi\",\n    \"order\": \"source_order\",\n    \"generator\": \"deterministic_style_profile\",\n    \"tools\": [\n      \"knowledge.get_glyph\",\n      \"trajectory_tools.build_styled_trajectory\"\n    ]\n  },\n  \"notes\": \"Parsed a semi-cursive request for 山. User requested more connected strokes; default xingkai profile allows connections.\"\n}",
+  "request_status": "ok",
+  "requested_style_raw": "行楷",
+  "requested_chars_raw": "山",
+  "mapped_style": "xingkai",
+  "rejection_reason": "",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

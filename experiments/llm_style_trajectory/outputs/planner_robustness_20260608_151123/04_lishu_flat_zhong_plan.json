@@ -1,0 +1,39 @@
+{
+  "task": "写一个隶书风格的中，整体宽扁一些",
+  "char": "中",
+  "style": "lishu",
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.2744,
+    "vertical_scale": 0.779,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": true
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "Parsed a clerical script request for 中 with emphasis on wide and flat shape.",
+  "raw_response": "{\"char\":\"中\",\"style\":\"lishu\",\"constraints\":{\"allow_interstroke_connections\":false,\"emphasize_flat_shape\":true},\"stroke_plan\":{\"source\":\"makemeahanzi\",\"order\":\"source_order\",\"generator\":\"deterministic_style_profile\",\"tools\":[\"knowledge.get_glyph\",\"trajectory_tools.build_styled_trajectory\"]},\"notes\":\"Parsed a clerical script request for 中 with emphasis on wide and flat shape.\"}",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

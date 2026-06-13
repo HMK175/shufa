@@ -1,0 +1,77 @@
+{
+  "csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_workspace_trajectory_resampled.csv",
+  "point_count": 275,
+  "segment_type_counts": {
+    "connector": 38,
+    "stroke": 237
+  },
+  "x_mm_range": [
+    -49.057031,
+    48.721406
+  ],
+  "y_mm_range": [
+    -49.392188,
+    49.392188
+  ],
+  "z_mm_range": [
+    0.0,
+    0.0
+  ],
+  "duration_estimate_s": 13.05282,
+  "path_length_mm": 359.530547,
+  "max_step_mm": 2.487672,
+  "max_step_3d_mm": 2.487672,
+  "max_xy_step_mm": 2.487672,
+  "max_z_step_mm": 0.0,
+  "stroke_count": 237,
+  "connector_count": 38,
+  "pen_up_move_count": 0,
+  "out_of_workspace_bounds": false,
+  "status": "finished",
+  "speed_scale": 1.0,
+  "display_stride": 5,
+  "no_path_objects": false,
+  "path_objects_enabled": true,
+  "auto_stop": true,
+  "simulation_stopped": true,
+  "dry_run": false,
+  "scope": "standard pen-tip scene only, no robot arm IK (pen-tip/sphere playback only)",
+  "scene_setup": "standard",
+  "paper_size_mm": 120.0,
+  "pen_tip_radius_mm": 1.5,
+  "axes_enabled": true,
+  "boundary_enabled": true,
+  "clear_previous_scene": true,
+  "coordinate_mapping": {
+    "X_m": "X_mm / 1000",
+    "Y_m": "Y_mm / 1000",
+    "Z_m": "Z_mm / 1000"
+  },
+  "workspace_bounds": {
+    "paper_half_size_mm": 60.0,
+    "x_range_mm": [
+      -49.057031,
+      48.721406
+    ],
+    "y_range_mm": [
+      -49.392188,
+      49.392188
+    ],
+    "z_range_mm": [
+      0.0,
+      0.0
+    ],
+    "x_within_bounds": true,
+    "y_within_bounds": true,
+    "xy_within_bounds": true,
+    "z_allowed_range_mm": [
+      0.0,
+      8.0
+    ],
+    "z_within_bounds": true,
+    "recommended_playback": true,
+    "warnings": []
+  },
+  "scene_warnings": [],
+  "recommended_playback": true
+}

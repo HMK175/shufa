@@ -1,0 +1,44 @@
+{
+  "task": "写一个隶书风格的山，不要连笔",
+  "char": "山",
+  "style": "lishu",
+  "style_params": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.18,
+    "vertical_scale": 0.82,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "mock",
+  "source": "mock_rule_based",
+  "warnings": [],
+  "notes": "Rule-based mock planner selected char=山, style=lishu, allow_interstroke_connections=False.",
+  "raw_response": null,
+  "request_status": "ok",
+  "requested_style_raw": "隶书",
+  "requested_chars_raw": "山",
+  "mapped_style": "lishu",
+  "rejection_reason": "",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

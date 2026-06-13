@@ -1,0 +1,44 @@
+{
+  "task": "写一个好看一点的山",
+  "char": "山",
+  "style": "kaishu",
+  "style_params": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "Defaulting to kaishu because no style was specified.",
+  "raw_response": "{\n  \"request_status\": \"ok\",\n  \"requested_style_raw\": \"\",\n  \"requested_chars_raw\": \"山\",\n  \"mapped_style\": \"kaishu\",\n  \"rejection_reason\": \"\",\n  \"char\": \"山\",\n  \"style\": \"kaishu\",\n  \"constraints\": {\n    \"allow_interstroke_connections\": false,\n    \"emphasize_flat_shape\": false\n  },\n  \"stroke_plan\": {\n    \"source\": \"makemeahanzi\",\n    \"order\": \"source_order\",\n    \"generator\": \"deterministic_style_profile\",\n    \"tools\": [\n      \"knowledge.get_glyph\",\n      \"trajectory_tools.build_styled_trajectory\"\n    ]\n  },\n  \"notes\": \"Defaulting to kaishu because no style was specified.\"\n}",
+  "request_status": "ok",
+  "requested_style_raw": "",
+  "requested_chars_raw": "山",
+  "mapped_style": "kaishu",
+  "rejection_reason": "",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  }
+}

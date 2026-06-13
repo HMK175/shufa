@@ -1,0 +1,40 @@
+{
+  "task": "写一个草书风格的山",
+  "char": "山",
+  "style": "caoshu",
+  "style_params": {
+    "allow_interstroke_connections": false,
+    "connection_strength": 0.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "mock",
+  "source": "mock_rule_based",
+  "warnings": [],
+  "notes": "Rule-based mock planner selected char=山, style=caoshu, allow_interstroke_connections=False.",
+  "raw_response": null,
+  "request_status": "unsupported",
+  "requested_style_raw": "草书",
+  "requested_chars_raw": "山",
+  "mapped_style": "caoshu",
+  "rejection_reason": "unsupported style requested: 草书",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "unsupported style requested: 草书",
+      "style is not available in style profiles: caoshu"
+    ],
+    "warnings": []
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "task": "写一个山水",
+  "char": "山",
+  "style": "kaishu",
+  "style_params": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "constraints": {
+    "allow_interstroke_connections": false,
+    "emphasize_flat_shape": false
+  },
+  "stroke_plan": {
+    "source": "makemeahanzi",
+    "order": "source_order",
+    "generator": "deterministic_style_profile",
+    "tools": [
+      "knowledge.get_glyph",
+      "trajectory_tools.build_styled_trajectory"
+    ]
+  },
+  "planner_mode": "api",
+  "source": "deepseek_v4_pro",
+  "warnings": [],
+  "notes": "Invalid request: 写一个山水 contains two characters 山 and 水.",
+  "raw_response": "{\n  \"request_status\": \"invalid\",\n  \"requested_style_raw\": \"\",\n  \"requested_chars_raw\": \"山水\",\n  \"mapped_style\": \"\",\n  \"rejection_reason\": \"Multiple characters provided; only single character is supported.\",\n  \"char\": \"\",\n  \"style\": \"\",\n  \"constraints\": {},\n  \"stroke_plan\": {},\n  \"notes\": \"Invalid request: 写一个山水 contains two characters 山 and 水.\"\n}",
+  "request_status": "invalid",
+  "requested_style_raw": "",
+  "requested_chars_raw": "山水",
+  "mapped_style": "kaishu",
+  "rejection_reason": "request must target one single target character, got: 山水",
+  "validation": {
+    "ok": false,
+    "errors": [
+      "request must target one single target character, got: 山水",
+      "request must target one single target character, got: 山水"
+    ],
+    "warnings": []
+  }
+}
