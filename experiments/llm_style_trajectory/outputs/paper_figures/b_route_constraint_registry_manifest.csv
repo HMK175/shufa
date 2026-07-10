@@ -1,0 +1,5 @@
+char,char_id,style,artifact_type,path,note
+山,u5c71,lishu,figure,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\b_route_constraint_registry_20260621_011822\figures\registry_probe_u5c71_lishu.png,component_first_safe
+风,u98ce,lishu,figure,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\b_route_constraint_registry_20260621_011822\figures\registry_probe_u98ce_lishu.png,fallback_first_reference_only
+,,,summary_json,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\b_route_constraint_registry_20260621_011822\b_route_constraint_registry.json,registry json
+,,,summary_csv,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\b_route_constraint_registry_20260621_011822\b_route_constraint_registry.csv,registry csv

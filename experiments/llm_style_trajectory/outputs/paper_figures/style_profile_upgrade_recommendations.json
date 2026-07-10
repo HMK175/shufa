@@ -1,0 +1,47 @@
+{
+  "phase_1": {
+    "goal": "font-outline-derived global shape and width parameters",
+    "parameters": [
+      "horizontal_scale",
+      "vertical_scale",
+      "base_width",
+      "stroke_width_distribution",
+      "horizontal_projection_distribution",
+      "vertical_projection_distribution",
+      "lishu_flatness"
+    ]
+  },
+  "phase_2": {
+    "goal": "char-level and component-level shape adaptation",
+    "parameters": [
+      "smoothness",
+      "corner_rounding",
+      "component_width_ratio",
+      "component_height_ratio",
+      "xingkai_connectedness_prior"
+    ]
+  },
+  "phase_3": {
+    "goal": "process priors from trajectories, robot constraints, or human feedback",
+    "parameters": [
+      "speed_scale",
+      "connection_strength",
+      "allow_interstroke_connections",
+      "pen_up_height",
+      "stroke_start_width_scale",
+      "stroke_mid_width_scale",
+      "stroke_end_width_scale",
+      "pressure_curve",
+      "connector_trigger",
+      "connector_shape",
+      "connector_width_scale"
+    ]
+  },
+  "do_not_estimate_from_static_font": [
+    "allow_interstroke_connections",
+    "pen_up_height",
+    "pressure_curve",
+    "real_robot_dynamics",
+    "speed_scale"
+  ]
+}

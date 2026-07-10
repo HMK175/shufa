@@ -1,0 +1,52 @@
+image=code\tune_set\mu.png
+char=mu
+subset=tune
+expected=
+method=legacy
+pred=9
+fallback=legacy_preferred_conservative_gate
+skeleton_px=4263
+endpoints=7
+junction_px=22
+junction_clusters=7
+final_count=7
+final_max_winding=1.77
+
+Legacy: count=9, max_w=1.82
+  S1: len=403.7, se=312.4, w=1.29, pts=354
+  S2: len=857.9, se=518.9, w=1.65, pts=562
+  S3: len=119.3, se=109.1, w=1.09, pts=107
+  S4: len=931.2, se=559.7, w=1.66, pts=541
+  S5: len=110.0, se=89.2, w=1.23, pts=104
+  S6: len=965.1, se=682.3, w=1.41, pts=870
+  S7: len=1023.7, se=925.1, w=1.11, pts=847
+  S8: len=1175.3, se=647.0, w=1.82, pts=1023
+  S9: len=695.3, se=646.0, w=1.08, pts=647
+
+Global: count=6, max_w=2.39
+  S1: len=2398.2, se=1005.2, w=2.39, pts=2056
+  S2: len=965.1, se=682.3, w=1.41, pts=870
+  S3: len=1706.2, se=1440.0, w=1.18, pts=1455
+  S4: len=862.9, se=816.5, w=1.06, pts=574
+  S5: len=172.0, se=123.1, w=1.40, pts=166
+  S6: len=557.7, se=547.7, w=1.02, pts=159
+
+Selected raw: count=9, max_w=1.82
+  S1: len=119.3, se=109.1, w=1.09, pts=107
+  S2: len=110.0, se=89.2, w=1.23, pts=104
+  S3: len=695.3, se=646.0, w=1.08, pts=647
+  S4: len=1023.7, se=925.1, w=1.11, pts=847
+  S5: len=1175.3, se=647.0, w=1.82, pts=1023
+  S6: len=857.9, se=518.9, w=1.65, pts=562
+  S7: len=931.2, se=559.7, w=1.66, pts=541
+  S8: len=965.1, se=682.3, w=1.41, pts=870
+  S9: len=403.7, se=312.4, w=1.29, pts=354
+
+Final: count=7, max_w=1.77
+  S1: len=665.1, se=645.8, w=1.03, pts=40
+  S2: len=987.3, se=925.6, w=1.07, pts=52
+  S3: len=1105.4, se=648.1, w=1.71, pts=63
+  S4: len=857.2, se=519.9, w=1.65, pts=34
+  S5: len=993.5, se=560.0, w=1.77, pts=33
+  S6: len=935.1, se=682.3, w=1.37, pts=53
+  S7: len=379.5, se=312.6, w=1.21, pts=21

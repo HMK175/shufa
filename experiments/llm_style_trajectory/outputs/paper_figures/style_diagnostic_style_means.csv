@@ -1,0 +1,4 @@
+style,sample_count,avg_aspect_ratio,avg_path_length,avg_connection_count,avg_connector_draw_length,avg_pen_up_move_length,avg_mean_width,avg_mean_pressure,avg_workspace_path_length_mm,avg_resampled_point_count,max_out_of_bounds_count
+kaishu,18,1.018672,786.158,0.0,0.0,524.004,9.0,1.0,614.139,335.944,0
+lishu,18,1.465173,783.776,0.0,0.0,522.929,10.0,1.0,612.518,358.889,0
+xingkai,18,1.070791,1314.104,6.056,525.944,0.0,7.488813,0.746659,615.987,438.222,0

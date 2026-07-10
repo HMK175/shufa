@@ -1,0 +1,11 @@
+char,char_id,style,font_path,skeleton_method,raw_component_count,clean_component_count,raw_endpoint_count,clean_endpoint_count,raw_branch_point_count,clean_branch_point_count,raw_skeleton_pixel_count,clean_skeleton_pixel_count,removed_component_count,merged_endpoint_count,pruned_branch_count,cleanup_status,warning
+山,u5c71,kaishu,C:\Windows\Fonts\simkai.ttf,skimage,1,1,6,4,12,10,354,344,0,0,2,success,
+山,u5c71,lishu,C:\Windows\Fonts\SIMLI.TTF,skimage,1,1,4,3,5,4,332,330,0,0,1,success,
+中,u4e2d,kaishu,C:\Windows\Fonts\simkai.ttf,skimage,1,1,7,6,29,28,498,492,0,0,1,success,
+中,u4e2d,lishu,C:\Windows\Fonts\SIMLI.TTF,skimage,1,1,3,2,17,16,427,424,0,0,1,success,
+人,u4eba,kaishu,C:\Windows\Fonts\simkai.ttf,skimage,1,1,4,3,4,3,263,258,0,0,1,success,
+人,u4eba,lishu,C:\Windows\Fonts\SIMLI.TTF,skimage,1,1,3,3,4,4,228,228,0,0,0,success,
+永,u6c38,kaishu,C:\Windows\Fonts\simkai.ttf,skimage,3,3,12,9,22,19,480,466,0,0,3,success,cleaned_skeleton_disconnected
+永,u6c38,lishu,C:\Windows\Fonts\SIMLI.TTF,skimage,3,3,10,8,12,10,462,457,0,0,2,success,cleaned_skeleton_disconnected
+风,u98ce,kaishu,C:\Windows\Fonts\simkai.ttf,skimage,2,2,9,7,16,14,577,569,0,0,2,success,cleaned_skeleton_disconnected
+风,u98ce,lishu,C:\Windows\Fonts\SIMLI.TTF,skimage,1,1,5,5,11,11,458,458,0,0,0,success,

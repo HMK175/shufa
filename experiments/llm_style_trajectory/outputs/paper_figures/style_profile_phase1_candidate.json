@@ -1,0 +1,45 @@
+{
+  "_status": "comparison_only_not_default",
+  "_source_estimates": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\style_profile_phase1_estimates_20260618_152952\\style_profile_phase1_estimates.json",
+  "_source_current_profile": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\configs\\style_profiles.json",
+  "_warning": "explicit comparison profile only; do not wire into default generation",
+  "_notes": "Only Phase 1 supported global scale hints are applied. Unsupported connector, pressure, speed, and pen-up parameters are preserved from current profile.",
+  "_phase1_base_width_hints": {
+    "kaishu": 6.320909,
+    "xingkai": 9.575023,
+    "lishu": 8.956169
+  },
+  "kaishu": {
+    "smoothness": 0.18,
+    "resample_step": 6.0,
+    "horizontal_scale": 1.0,
+    "vertical_scale": 1.0,
+    "corner_rounding": 0.12,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 1.0,
+    "pen_up_height": 8.0
+  },
+  "xingkai": {
+    "smoothness": 0.42,
+    "resample_step": 5.0,
+    "horizontal_scale": 0.979982,
+    "vertical_scale": 1.020427,
+    "corner_rounding": 0.36,
+    "connection_strength": 0.32,
+    "allow_interstroke_connections": true,
+    "speed_scale": 1.15,
+    "pen_up_height": 4.0
+  },
+  "lishu": {
+    "smoothness": 0.24,
+    "resample_step": 5.5,
+    "horizontal_scale": 1.198887,
+    "vertical_scale": 0.834107,
+    "corner_rounding": 0.18,
+    "connection_strength": 0.0,
+    "allow_interstroke_connections": false,
+    "speed_scale": 0.9,
+    "pen_up_height": 7.0
+  }
+}

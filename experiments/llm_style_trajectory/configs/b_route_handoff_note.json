@@ -1,0 +1,52 @@
+{
+  "date": "2026-06-21",
+  "route_map": {
+    "A": "stable_backbone",
+    "B": "registry_gated_adaptation_trial_only",
+    "C": "reference_pack_only"
+  },
+  "b_route_formal_entry": [
+    "experiments/llm_style_trajectory/src/b_route_constraint_registry.py",
+    "experiments/llm_style_trajectory/src/b_route_registry_gated_probe.py",
+    "experiments/llm_style_trajectory/src/section_constraints_package.py",
+    "experiments/llm_style_trajectory/src/font_reference_constraints_package.py"
+  ],
+  "constraint_levels": {
+    "usable_for_adaptation": [
+      "bbox_aspect",
+      "lower_half_width_ratio",
+      "left_right_spread",
+      "bbox_center_shift_x",
+      "bbox_center_shift_y"
+    ],
+    "reference_only": [
+      "component_count",
+      "endpoint_count",
+      "branch_count",
+      "connectedness_hint"
+    ],
+    "blocked": [
+      "raw_skeleton_path",
+      "unordered_skeleton_segments",
+      "high-complexity skeleton graphs"
+    ]
+  },
+  "reading_order": [
+    "CURRENT_PROJECT_GUIDE.md",
+    "experiments/llm_style_trajectory/docs/trajectory_style_route_decision_report.md",
+    "experiments/llm_style_trajectory/outputs/paper_figures/b_route_constraint_registry_index.md",
+    "experiments/llm_style_trajectory/outputs/paper_figures/section_constraints_package_index.md",
+    "experiments/llm_style_trajectory/outputs/paper_figures/font_reference_constraints_index.md"
+  ],
+  "boundary": [
+    "no_new_algorithm",
+    "no_trajectory_generation",
+    "no_default_pipeline_change",
+    "no_api",
+    "no_coppeliasim",
+    "no_aubo",
+    "no_sdk",
+    "no_code_data_modification",
+    "no_legacy_modification"
+  ]
+}

@@ -1,0 +1,836 @@
+{
+  "status": "reference_constraints_only_not_used_by_default",
+  "date": "2026-06-19",
+  "default_pipeline_integration": false,
+  "adapted_trajectory_generated": false,
+  "formal_trajectory_generated": false,
+  "scope": "H2 font reference constraints package for hybrid route; no point movement",
+  "samples": [
+    {
+      "char": "山",
+      "char_id": "u5c71",
+      "style": "kaishu",
+      "font_path": "C:\\Windows\\Fonts\\simkai.ttf",
+      "overall_recommendation": "candidate_for_bounded_B_adaptation",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.087591,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "lower_half_width_ratio": {
+          "value": 0.973154,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "left_right_spread": {
+          "value": 0.993289,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_x": {
+          "value": 0.003906,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.003906,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_endpoint_count": {
+          "value": 6.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_branch_count": {
+          "value": 12.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_complexity_score": {
+          "value": 0.5793,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "人",
+      "char_id": "u4eba",
+      "style": "kaishu",
+      "font_path": "C:\\Windows\\Fonts\\simkai.ttf",
+      "overall_recommendation": "candidate_for_bounded_B_adaptation",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.345588,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "lower_half_width_ratio": {
+          "value": 1.0,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "left_right_spread": {
+          "value": 0.994536,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_x": {
+          "value": 0.003906,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.013672,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "high",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "low",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_endpoint_count": {
+          "value": 4.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_branch_count": {
+          "value": 4.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_complexity_score": {
+          "value": 0.29435,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "中",
+      "char_id": "u4e2d",
+      "style": "kaishu",
+      "font_path": "C:\\Windows\\Fonts\\simkai.ttf",
+      "overall_recommendation": "visual_reference_only_high_risk",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 0.744444,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "lower_half_width_ratio": {
+          "value": 0.80597,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "left_right_spread": {
+          "value": 0.992537,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "bbox_center_shift_x": {
+          "value": 0.001953,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.001953,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_endpoint_count": {
+          "value": 7.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_branch_count": {
+          "value": 29.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_complexity_score": {
+          "value": 1.0,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "山",
+      "char_id": "u5c71",
+      "style": "lishu",
+      "font_path": "C:\\Windows\\Fonts\\SIMLI.TTF",
+      "overall_recommendation": "candidate_for_bounded_B_adaptation",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.375,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "medium",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "lower_half_width_ratio": {
+          "value": 1.0,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "medium",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "left_right_spread": {
+          "value": 0.993506,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "medium",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_x": {
+          "value": -0.009766,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "medium",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.025391,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "medium",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_endpoint_count": {
+          "value": 4.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_branch_count": {
+          "value": 5.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_complexity_score": {
+          "value": 0.3514,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "medium",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "medium",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "中",
+      "char_id": "u4e2d",
+      "style": "lishu",
+      "font_path": "C:\\Windows\\Fonts\\SIMLI.TTF",
+      "overall_recommendation": "visual_reference_with_limited_constraints",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.195312,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "lower_half_width_ratio": {
+          "value": 0.96732,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "left_right_spread": {
+          "value": 0.993464,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_x": {
+          "value": -0.003906,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.005859,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_endpoint_count": {
+          "value": 3.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_branch_count": {
+          "value": 17.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_complexity_score": {
+          "value": 0.68815,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "永",
+      "char_id": "u6c38",
+      "style": "lishu",
+      "font_path": "C:\\Windows\\Fonts\\SIMLI.TTF",
+      "overall_recommendation": "visual_reference_only_high_risk",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.560976,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "lower_half_width_ratio": {
+          "value": 1.0,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "left_right_spread": {
+          "value": 0.994792,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "bbox_center_shift_x": {
+          "value": 0.001953,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.003906,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_component_count": {
+          "value": 3.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_endpoint_count": {
+          "value": 10.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_branch_count": {
+          "value": 12.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "skeleton_complexity_score": {
+          "value": 1.0,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "connectedness_hint": {
+          "value": "disconnected_or_multi_component",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    },
+    {
+      "char": "风",
+      "char_id": "u98ce",
+      "style": "lishu",
+      "font_path": "C:\\Windows\\Fonts\\SIMLI.TTF",
+      "overall_recommendation": "candidate_for_bounded_B_adaptation",
+      "warnings": [],
+      "constraints": {
+        "bbox_aspect": {
+          "value": 1.631579,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "lower_half_width_ratio": {
+          "value": 1.0,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "left_right_spread": {
+          "value": 0.994624,
+          "unit": "ratio",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_x": {
+          "value": -0.005859,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "bbox_center_shift_y": {
+          "value": -0.017578,
+          "unit": "normalized_image",
+          "source": "font_mask",
+          "confidence": "low",
+          "recommended_use": "usable_for_adaptation",
+          "risk_level": "medium",
+          "note": "Use only as bounded, low-weight future B constraint; do not hard-pull points."
+        },
+        "skeleton_component_count": {
+          "value": 1.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_endpoint_count": {
+          "value": 5.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_branch_count": {
+          "value": 11.0,
+          "unit": "count",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "skeleton_complexity_score": {
+          "value": 0.5821,
+          "unit": "score_0_1",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "connectedness_hint": {
+          "value": "relatively_clean",
+          "unit": "category",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "visual_reference_only",
+          "risk_level": "high",
+          "note": "Use for complexity diagnosis and manual visual audit, not direct adaptation."
+        },
+        "raw_skeleton_path": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        },
+        "unordered_skeleton_segments": {
+          "value": 1.0,
+          "unit": "presence_flag",
+          "source": "font_skeleton",
+          "confidence": "low",
+          "recommended_use": "unsafe_for_direct_use",
+          "risk_level": "high",
+          "note": "Do not drive point movement directly; requires manual audit and cleanup."
+        }
+      }
+    }
+  ]
+}

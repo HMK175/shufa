@@ -1,0 +1,39 @@
+image=code\tune_set\tian.png
+char=tian
+subset=tune
+expected=
+method=legacy+prior
+pred=5
+fallback=global_high_winding;closed_prior_split_frame_detour
+skeleton_px=4265
+endpoints=4
+junction_px=17
+junction_clusters=7
+final_count=5
+final_max_winding=2.47
+
+Legacy: count=4, max_w=3.39
+  S1: len=293.8, se=266.0, w=1.10, pts=267
+  S2: len=1761.1, se=519.8, w=3.39, pts=1566
+  S3: len=1248.0, se=482.0, w=2.59, pts=876
+  S4: len=1711.0, se=1202.1, w=1.42, pts=1505
+
+Global: count=4, max_w=8.02
+  S1: len=222.4, se=210.5, w=1.06, pts=211
+  S2: len=2859.9, se=356.8, w=8.02, pts=2545
+  S3: len=293.8, se=266.0, w=1.10, pts=267
+  S4: len=1984.8, se=448.9, w=4.42, pts=1776
+
+Selected raw: count=5, max_w=2.59
+  S1: len=293.8, se=266.0, w=1.10, pts=267
+  S2: len=846.7, se=774.7, w=1.09, pts=762
+  S3: len=914.4, se=551.8, w=1.66, pts=805
+  S4: len=1248.0, se=482.0, w=2.59, pts=876
+  S5: len=1711.0, se=1202.1, w=1.42, pts=1505
+
+Final: count=5, max_w=2.47
+  S1: len=276.0, se=266.1, w=1.04, pts=19
+  S2: len=796.0, se=775.2, w=1.03, pts=54
+  S3: len=871.9, se=551.8, w=1.58, pts=57
+  S4: len=1194.2, se=482.9, w=2.47, pts=62
+  S5: len=1719.0, se=1202.1, w=1.43, pts=107

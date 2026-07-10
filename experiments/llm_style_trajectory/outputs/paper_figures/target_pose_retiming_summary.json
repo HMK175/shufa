@@ -1,0 +1,153 @@
+{
+  "source_csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses.csv",
+  "smoothed_csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses_smoothed.csv",
+  "original_point_count": 275,
+  "retimed_point_count": 271,
+  "removed_duplicate_count": 4,
+  "geometry_path_length_before_m": 0.359530546527,
+  "geometry_path_length_after_m": 0.359530546527,
+  "path_length_delta_m": 0.0,
+  "iterations_used": 3,
+  "final_time_scale": 1.953125,
+  "retiming_success": true,
+  "before_motion_summary": {
+    "source_csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses.csv",
+    "input_kind": "target_pose",
+    "required_fields_present": true,
+    "missing_fields": [],
+    "point_count": 275,
+    "duration_s": 13.0528205,
+    "path_length_m": 0.359530547,
+    "dt_min_s": 0.0,
+    "dt_max_s": 0.075515783,
+    "dt_mean_s": 0.047638031,
+    "dt_nonpositive_count": 4,
+    "time_source": "provided",
+    "time_monotonic": false,
+    "max_step_3d_m": 0.002487672,
+    "max_speed_m_s": 0.04,
+    "max_speed_jump_m_s": 0.025,
+    "max_accel_m_s2": 0.533536284,
+    "max_jerk_m_s3": 11.386446091,
+    "jerk_peak_count": 6,
+    "quaternion_norm_min": 1.0,
+    "quaternion_norm_max": 1.0,
+    "quaternion_normalized": true,
+    "orientation_fixed_or_smooth": true,
+    "has_nan_or_inf": false,
+    "segment_counts": {
+      "connector": 38,
+      "stroke": 237
+    },
+    "segment_stats": {
+      "connector": {
+        "point_count": 38,
+        "max_speed_m_s": 0.04,
+        "max_accel_m_s2": 0.247804265,
+        "max_jerk_m_s3": 4.093798811
+      },
+      "stroke": {
+        "point_count": 237,
+        "max_speed_m_s": 0.04,
+        "max_accel_m_s2": 0.533536284,
+        "max_jerk_m_s3": 11.386446091
+      }
+    },
+    "x_m_range": [
+      -0.049057031,
+      0.048721406
+    ],
+    "y_m_range": [
+      -0.049392188,
+      0.049392188
+    ],
+    "z_m_range": [
+      0.0,
+      0.0
+    ],
+    "thresholds": {
+      "max_speed_m_s": 0.1,
+      "max_accel_m_s2": 0.5,
+      "max_jerk_m_s3": 5.0,
+      "max_speed_jump_m_s": 0.05
+    },
+    "recommended_for_coppeliasim_playback": false,
+    "recommended_for_ik_dry_run": false,
+    "warnings": [],
+    "failure_reasons": [
+      "time is not strictly increasing or contains dt <= 0",
+      "max_accel_m_s2 0.533536 exceeds threshold 0.500000",
+      "max_jerk_m_s3 11.386446 exceeds threshold 5.000000"
+    ],
+    "scope": "motion continuity dry-run only; not real robot dynamics, not IK, not joint-space velocity/acceleration/torque checking, and not real robot control"
+  },
+  "after_motion_summary": {
+    "source_csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses_smoothed.csv",
+    "input_kind": "target_pose",
+    "required_fields_present": true,
+    "missing_fields": [],
+    "point_count": 271,
+    "duration_s": 22.039876274,
+    "path_length_m": 0.359530547,
+    "dt_min_s": 0.059084524,
+    "dt_max_s": 0.194349397,
+    "dt_mean_s": 0.081629171,
+    "dt_nonpositive_count": 0,
+    "time_source": "provided",
+    "time_monotonic": true,
+    "max_step_3d_m": 0.002487672,
+    "max_speed_m_s": 0.01792,
+    "max_speed_jump_m_s": 0.01792,
+    "max_accel_m_s2": 0.274132141,
+    "max_jerk_m_s3": 4.193553547,
+    "jerk_peak_count": 0,
+    "quaternion_norm_min": 1.0,
+    "quaternion_norm_max": 1.0,
+    "quaternion_normalized": true,
+    "orientation_fixed_or_smooth": true,
+    "has_nan_or_inf": false,
+    "segment_counts": {
+      "connector": 36,
+      "stroke": 235
+    },
+    "segment_stats": {
+      "connector": {
+        "point_count": 36,
+        "max_speed_m_s": 0.0128,
+        "max_accel_m_s2": 0.027066832,
+        "max_jerk_m_s3": 0.143088626
+      },
+      "stroke": {
+        "point_count": 235,
+        "max_speed_m_s": 0.01792,
+        "max_accel_m_s2": 0.274132141,
+        "max_jerk_m_s3": 4.193553547
+      }
+    },
+    "x_m_range": [
+      -0.049057031,
+      0.048721406
+    ],
+    "y_m_range": [
+      -0.049392188,
+      0.049392188
+    ],
+    "z_m_range": [
+      0.0,
+      0.0
+    ],
+    "thresholds": {
+      "max_speed_m_s": 0.1,
+      "max_accel_m_s2": 0.5,
+      "max_jerk_m_s3": 5.0,
+      "max_speed_jump_m_s": 0.05
+    },
+    "recommended_for_coppeliasim_playback": true,
+    "recommended_for_ik_dry_run": true,
+    "warnings": [],
+    "failure_reasons": [],
+    "scope": "motion continuity dry-run only; not real robot dynamics, not IK, not joint-space velocity/acceleration/torque checking, and not real robot control"
+  },
+  "failure_reasons": [],
+  "scope": "offline target-pose retiming only; no IK, no SDK, no robot connection, no robot command"
+}

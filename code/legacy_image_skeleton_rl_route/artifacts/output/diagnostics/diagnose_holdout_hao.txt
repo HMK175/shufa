@@ -1,0 +1,54 @@
+image=code\holdout_set\hao.png
+char=hao
+subset=holdout
+expected=6
+method=legacy
+pred=10
+fallback=global_count_not_expected_for_complex
+skeleton_px=4495
+endpoints=10
+junction_px=23
+junction_clusters=9
+final_count=6
+final_max_winding=3.26
+
+Legacy: count=9, max_w=4.92
+  S1: len=403.9, se=368.7, w=1.10, pts=368
+  S2: len=1116.6, se=852.1, w=1.31, pts=738
+  S3: len=1401.5, se=582.2, w=2.41, pts=835
+  S4: len=1711.9, se=929.4, w=1.84, pts=1290
+  S5: len=109.1, se=96.3, w=1.13, pts=96
+  S6: len=201.0, se=186.5, w=1.08, pts=166
+  S7: len=370.8, se=343.1, w=1.08, pts=344
+  S8: len=1043.1, se=211.9, w=4.92, pts=900
+  S9: len=225.2, se=211.0, w=1.07, pts=210
+
+Global: count=8, max_w=2.90
+  S1: len=1687.6, se=582.2, w=2.90, pts=1425
+  S2: len=403.9, se=368.7, w=1.10, pts=368
+  S3: len=1116.6, se=852.1, w=1.31, pts=738
+  S4: len=370.8, se=343.1, w=1.08, pts=344
+  S5: len=843.1, se=324.6, w=2.60, pts=700
+  S6: len=758.3, se=673.0, w=1.13, pts=676
+  S7: len=225.2, se=211.0, w=1.07, pts=210
+  S8: len=408.4, se=371.2, w=1.10, pts=346
+
+Selected raw: count=10, max_w=2.41
+  S1: len=225.2, se=211.0, w=1.07, pts=210
+  S2: len=109.1, se=96.3, w=1.13, pts=96
+  S3: len=408.4, se=371.2, w=1.10, pts=346
+  S4: len=201.0, se=186.5, w=1.08, pts=166
+  S5: len=403.9, se=368.7, w=1.10, pts=368
+  S6: len=370.8, se=343.1, w=1.08, pts=344
+  S7: len=1116.6, se=852.1, w=1.31, pts=738
+  S8: len=1401.5, se=582.2, w=2.41, pts=835
+  S9: len=634.8, se=325.3, w=1.95, pts=555
+  S10: len=1711.9, se=929.4, w=1.84, pts=1290
+
+Final: count=6, max_w=3.26
+  S1: len=800.7, se=245.7, w=3.26, pts=44
+  S2: len=379.8, se=369.3, w=1.03, pts=22
+  S3: len=349.6, se=343.0, w=1.02, pts=21
+  S4: len=2666.5, se=1044.6, w=2.55, pts=123
+  S5: len=1297.4, se=583.3, w=2.22, pts=52
+  S6: len=594.7, se=324.9, w=1.83, pts=34

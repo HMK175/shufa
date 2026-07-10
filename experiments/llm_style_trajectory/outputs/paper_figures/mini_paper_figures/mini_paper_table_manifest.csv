@@ -1,0 +1,4 @@
+﻿table_id,filename,source_path,paper_section,caption_draft,status,notes
+table1,table1_retiming_before_after.md,batch_20260613_154131/u5c71_xingkai_20260613_154132_009898/target_pose_retiming_summary.json,motion continuity and retiming,Raw vs smoothed target pose continuity metrics.,generated,retiming 修复时间单调性、加速度和 jerk 的 conservative dry-run gate。
+table2,table2_robot_precheck_summary.md,paper_figures/aubo_i5_ik_feasibility_smoothed_summary.json,robot-interface precheck chain,Robot-interface dry-run precheck summary.,generated,只说明 dry-run precheck，不是真实机器人控制。
+table3,table3_external_functional_comparison.md,configs/mini_paper_experiment_matrix.json,external functional comparison,Functional comparison with representative trajectory/style-generation method types.,generated,功能维度对比，不编造外部数值结果。

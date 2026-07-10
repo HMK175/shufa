@@ -1,0 +1,208 @@
+{
+  "date": "2026-06-19",
+  "scope": "design only; no algorithm implementation; no parameter tuning; no default pipeline integration",
+  "default_route": "A",
+  "optional_modules": [
+    "B",
+    "C"
+  ],
+  "human_audit_required": true,
+  "robot_pipeline_entry_rule": "Only stable Route A outputs, or future explicitly promoted trajectories that pass human visual audit, workspace checks, resampling, motion continuity, and retiming gates, may enter robot dry-run precheck. B/C diagnostic outputs must not directly enter execution or robot files.",
+  "module_contracts": [
+    {
+      "module_id": "A",
+      "module_name": "stable trajectory backbone",
+      "input": [
+        "planner plan",
+        "MakeMeAHanzi median strokes",
+        "style profile",
+        "style modifiers"
+      ],
+      "output": [
+        "median trajectory",
+        "stroke_id",
+        "stroke order",
+        "stroke breaks",
+        "bbox/path metrics"
+      ],
+      "allowed_to_modify": [
+        "style parameters through existing white-list mapping",
+        "execution attributes downstream"
+      ],
+      "not_allowed_to_modify": [
+        "LLM must not output CSV points",
+        "must not infer font skeleton paths as default trajectory"
+      ],
+      "current_status": "default baseline",
+      "risk_level": "low"
+    },
+    {
+      "module_id": "B",
+      "module_name": "bounded adaptation module",
+      "input": [
+        "Route A trajectory",
+        "font mask or skeleton reference",
+        "alpha/bbox/anchor/component constraints",
+        "human audit decisions"
+      ],
+      "output": [
+        "trial-only adapted CSV",
+        "adaptation metrics",
+        "visual compare figure",
+        "warnings"
+      ],
+      "allowed_to_modify": [
+        "point positions within movement caps",
+        "trial-only diagnostic outputs"
+      ],
+      "not_allowed_to_modify": [
+        "stroke_count",
+        "stroke_order",
+        "stroke_breaks",
+        "formal trajectory.csv",
+        "default pipeline"
+      ],
+      "current_status": "diagnostic prototypes completed",
+      "risk_level": "medium"
+    },
+    {
+      "module_id": "C",
+      "module_name": "font reference / candidate basis module",
+      "input": [
+        "local font file",
+        "glyph mask",
+        "skeleton",
+        "MakeMeAHanzi median for comparison"
+      ],
+      "output": [
+        "font mask metrics",
+        "skeleton candidates",
+        "path extraction diagnostics",
+        "selected style references",
+        "visual audit manifest"
+      ],
+      "allowed_to_modify": [
+        "diagnostic reference data",
+        "visual audit packages",
+        "future constraint hints"
+      ],
+      "not_allowed_to_modify": [
+        "execution input",
+        "Route A replacement",
+        "robot input",
+        "default pipeline"
+      ],
+      "current_status": "diagnostic prototypes completed",
+      "risk_level": "high"
+    },
+    {
+      "module_id": "H",
+      "module_name": "human visual audit gate",
+      "input": [
+        "modifier figures",
+        "font skeleton candidates",
+        "B adaptation compare figures",
+        "C path extraction compare figures",
+        "execution render/debug figures"
+      ],
+      "output": [
+        "manual decision",
+        "issue tags",
+        "accepted/rejected references",
+        "next action"
+      ],
+      "allowed_to_modify": [
+        "decision records",
+        "candidate status"
+      ],
+      "not_allowed_to_modify": [
+        "cannot be bypassed by single numeric metric"
+      ],
+      "current_status": "required process rule",
+      "risk_level": "medium"
+    }
+  ],
+  "prototype_options": [
+    {
+      "id": "H1",
+      "name": "A median plus B bounded adaptation",
+      "inputs": [
+        "Route A median trajectory",
+        "font mask/skeleton reference",
+        "bounded adaptation constraints",
+        "manual audit decision"
+      ],
+      "outputs": [
+        "trial-only adapted CSV",
+        "compare figures",
+        "projection/aspect/shift/path metrics"
+      ],
+      "success_criteria": [
+        "stroke_count unchanged",
+        "stroke_order unchanged",
+        "no formal trajectory.csv",
+        "manual audit accepts visual result",
+        "no repeated shift-cap failure"
+      ],
+      "risk": "medium",
+      "recommended": false,
+      "reason": "Existing B prototypes show promise for light cases but strong lishu adaptation still hits caps."
+    },
+    {
+      "id": "H2",
+      "name": "A median plus C font reference constraints only",
+      "inputs": [
+        "Route A median trajectory",
+        "C font mask/skeleton diagnostics",
+        "selected visual audit results",
+        "font-derived feature summaries"
+      ],
+      "outputs": [
+        "font_reference_constraint_package.json",
+        "font_reference_constraint_report.md",
+        "sample_reference_manifest.csv"
+      ],
+      "success_criteria": [
+        "no trajectory point modification",
+        "no formal trajectory.csv",
+        "clear allowed/rejected reference fields",
+        "manual audit confirms selected references are meaningful",
+        "defines safe inputs for future B adaptation"
+      ],
+      "risk": "low-to-medium",
+      "recommended": true,
+      "reason": "Safest next step because it clarifies which C-derived evidence may constrain B before more point movement is attempted."
+    },
+    {
+      "id": "H3",
+      "name": "A baseline plus C-derived style exemplar visualization",
+      "inputs": [
+        "Route A output",
+        "selected font masks/skeletons",
+        "style diagnostics"
+      ],
+      "outputs": [
+        "side-by-side figures",
+        "style gap labels",
+        "human evaluation templates"
+      ],
+      "success_criteria": [
+        "useful paper evidence",
+        "no trajectory modification",
+        "clear limitation framing"
+      ],
+      "risk": "low",
+      "recommended": false,
+      "reason": "Useful for paper writing but less method-forward than H2."
+    }
+  ],
+  "recommended_next_prototype": "H2",
+  "paper_framing": "hybrid style-aware trajectory generation framework: stable median-stroke backbone plus audited font-derived style references and optional bounded adaptation modules",
+  "explicit_boundaries": [
+    "Do not implement a new generation algorithm in this design step.",
+    "Do not change style_profiles.json or run_demo.py defaults.",
+    "Do not connect B/C outputs to execution, workspace, CoppeliaSim, AUBO, SDK, or robot files.",
+    "LLM planners must not generate CSV, trajectory points, robot poses, or robot commands.",
+    "Manual visual audit is mandatory for visual style claims."
+  ]
+}

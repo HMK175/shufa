@@ -1,0 +1,42 @@
+image=code\tune_set\zhong.png
+char=zhong
+subset=tune
+expected=4
+method=legacy+prior
+pred=4
+fallback=global_count_not_expected_for_complex;closed_prior_safe_count_merge
+skeleton_px=4063
+endpoints=6
+junction_px=19
+junction_clusters=7
+final_count=4
+final_max_winding=1.91
+
+Legacy: count=7, max_w=2.15
+  S1: len=162.0, se=152.4, w=1.06, pts=127
+  S2: len=1244.3, se=695.9, w=1.79, pts=972
+  S3: len=352.5, se=333.0, w=1.06, pts=332
+  S4: len=1148.4, se=907.3, w=1.27, pts=1037
+  S5: len=1074.8, se=500.7, w=2.15, pts=802
+  S6: len=394.0, se=366.4, w=1.08, pts=366
+  S7: len=283.3, se=268.0, w=1.06, pts=269
+
+Global: count=6, max_w=2.63
+  S1: len=1728.1, se=1269.1, w=1.36, pts=1585
+  S2: len=447.4, se=379.5, w=1.18, pts=396
+  S3: len=1391.1, se=529.4, w=2.63, pts=1247
+  S4: len=145.9, se=135.6, w=1.08, pts=120
+  S5: len=889.2, se=417.0, w=2.13, pts=761
+  S6: len=295.2, se=277.3, w=1.06, pts=273
+
+Selected raw: count=4, max_w=1.98
+  S1: len=1244.3, se=695.9, w=1.79, pts=972
+  S2: len=748.4, se=502.2, w=1.49, pts=697
+  S3: len=447.4, se=379.5, w=1.18, pts=395
+  S4: len=2312.7, se=1170.8, w=1.98, pts=1838
+
+Final: count=4, max_w=1.91
+  S1: len=1174.6, se=695.9, w=1.69, pts=74
+  S2: len=717.6, se=502.8, w=1.43, pts=53
+  S3: len=429.9, se=379.6, w=1.13, pts=30
+  S4: len=2236.3, se=1170.7, w=1.91, pts=141

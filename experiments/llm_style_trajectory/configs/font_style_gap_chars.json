@@ -1,0 +1,29 @@
+{
+  "chars": [
+    "山",
+    "中",
+    "永",
+    "大",
+    "小",
+    "人",
+    "明",
+    "林",
+    "好",
+    "和",
+    "花",
+    "思",
+    "音",
+    "景",
+    "国",
+    "风",
+    "福",
+    "德"
+  ],
+  "styles": [
+    "kaishu",
+    "xingkai",
+    "lishu"
+  ],
+  "font_sources": "experiments/llm_style_trajectory/configs/style_sources.json",
+  "trajectory_diagnostics_dir": "experiments/llm_style_trajectory/outputs/style_diagnostics_20260617_200746"
+}

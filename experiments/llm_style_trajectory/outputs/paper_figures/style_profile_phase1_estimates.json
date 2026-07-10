@@ -1,0 +1,190 @@
+{
+  "_status": "readonly_estimate_not_used_by_default",
+  "_source": "font_style_gap_analysis_20260618_144838",
+  "_warning": "not wired into generation pipeline",
+  "_scope": "Phase 1 font-outline estimates only; no trajectory generation and no default profile replacement.",
+  "styles": {
+    "kaishu": {
+      "aspect_ratio_target": {
+        "value": 1.029878,
+        "source": "font_bbox/font_aspect",
+        "method": "mean_font_aspect_ratio",
+        "confidence": "medium",
+        "notes": "Target aspect from static font outline; not a complete structure model."
+      },
+      "horizontal_scale_hint": {
+        "value": 1.0,
+        "source": "font_bbox/font_aspect",
+        "method": "sqrt(mean_font_aspect_ratio / kaishu_mean_font_aspect_ratio)",
+        "confidence": "medium",
+        "notes": "Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales."
+      },
+      "vertical_scale_hint": {
+        "value": 1.0,
+        "source": "font_bbox/font_aspect",
+        "method": "1 / horizontal_scale_hint",
+        "confidence": "medium",
+        "notes": "Paired inverse of horizontal_scale_hint; use only as a readonly candidate."
+      },
+      "base_width_hint": {
+        "value": 6.320909,
+        "source": "font_distance_transform",
+        "method": "mean_font_stroke_width",
+        "confidence": "medium",
+        "notes": "Mean stroke width from font distance transform; needs visual normalization before use."
+      },
+      "stroke_width_distribution": {
+        "mean": 6.320909,
+        "std": 3.571692,
+        "cv": 0.56506,
+        "source": "font_distance_transform",
+        "method": "mean/std/cv of font_stroke_width statistics",
+        "confidence": "medium",
+        "notes": "Readonly style width distribution hint; not an execution taper model."
+      },
+      "projection_summary": {
+        "horizontal_projection_spread_mean": 40.00861,
+        "horizontal_projection_spread_std": 4.277135,
+        "vertical_projection_spread_mean": 41.444313,
+        "vertical_projection_spread_std": 4.67382,
+        "source": "font_projection_spread",
+        "method": "summary spread only, not full distribution",
+        "confidence": "medium",
+        "notes": "Only spread hints are available in current font_style_gap_summary.csv."
+      },
+      "current_profile_reference": {
+        "horizontal_scale": 1.0,
+        "vertical_scale": 1.0,
+        "trajectory_aspect_ratio": 1.018672,
+        "trajectory_mean_width": 9.0
+      }
+    },
+    "lishu": {
+      "aspect_ratio_target": {
+        "value": 1.480275,
+        "source": "font_bbox/font_aspect",
+        "method": "mean_font_aspect_ratio",
+        "confidence": "medium",
+        "notes": "Target aspect from static font outline; not a complete structure model."
+      },
+      "horizontal_scale_hint": {
+        "value": 1.198887,
+        "source": "font_bbox/font_aspect",
+        "method": "sqrt(mean_font_aspect_ratio / kaishu_mean_font_aspect_ratio)",
+        "confidence": "medium",
+        "notes": "Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales."
+      },
+      "vertical_scale_hint": {
+        "value": 0.834107,
+        "source": "font_bbox/font_aspect",
+        "method": "1 / horizontal_scale_hint",
+        "confidence": "medium",
+        "notes": "Paired inverse of horizontal_scale_hint; use only as a readonly candidate."
+      },
+      "base_width_hint": {
+        "value": 8.956169,
+        "source": "font_distance_transform",
+        "method": "mean_font_stroke_width",
+        "confidence": "medium",
+        "notes": "Mean stroke width from font distance transform; needs visual normalization before use."
+      },
+      "stroke_width_distribution": {
+        "mean": 8.956169,
+        "std": 5.249675,
+        "cv": 0.586152,
+        "source": "font_distance_transform",
+        "method": "mean/std/cv of font_stroke_width statistics",
+        "confidence": "medium",
+        "notes": "Readonly style width distribution hint; not an execution taper model."
+      },
+      "projection_summary": {
+        "horizontal_projection_spread_mean": 44.204892,
+        "horizontal_projection_spread_std": 2.204107,
+        "vertical_projection_spread_mean": 30.991576,
+        "vertical_projection_spread_std": 2.814626,
+        "source": "font_projection_spread",
+        "method": "summary spread only, not full distribution",
+        "confidence": "medium",
+        "notes": "Only spread hints are available in current font_style_gap_summary.csv."
+      },
+      "current_profile_reference": {
+        "horizontal_scale": 1.18,
+        "vertical_scale": 0.82,
+        "trajectory_aspect_ratio": 1.465173,
+        "trajectory_mean_width": 10.0
+      },
+      "lishu_flatness": {
+        "value": 1.43733,
+        "source": "font_bbox/font_aspect",
+        "method": "lishu_mean_font_aspect_ratio / kaishu_mean_font_aspect_ratio",
+        "confidence": "medium",
+        "notes": "Flatness can be estimated globally, but real lishu needs component and stroke-level evidence."
+      }
+    },
+    "xingkai": {
+      "aspect_ratio_target": {
+        "value": 0.989059,
+        "source": "font_bbox/font_aspect",
+        "method": "mean_font_aspect_ratio",
+        "confidence": "low",
+        "notes": "Target aspect from static font outline; not a complete structure model."
+      },
+      "horizontal_scale_hint": {
+        "value": 0.979982,
+        "source": "font_bbox/font_aspect",
+        "method": "sqrt(mean_font_aspect_ratio / kaishu_mean_font_aspect_ratio)",
+        "confidence": "low",
+        "notes": "Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales."
+      },
+      "vertical_scale_hint": {
+        "value": 1.020427,
+        "source": "font_bbox/font_aspect",
+        "method": "1 / horizontal_scale_hint",
+        "confidence": "low",
+        "notes": "Paired inverse of horizontal_scale_hint; use only as a readonly candidate."
+      },
+      "base_width_hint": {
+        "value": 9.575023,
+        "source": "font_distance_transform",
+        "method": "mean_font_stroke_width",
+        "confidence": "medium",
+        "notes": "Mean stroke width from font distance transform; needs visual normalization before use."
+      },
+      "stroke_width_distribution": {
+        "mean": 9.575023,
+        "std": 5.78707,
+        "cv": 0.604392,
+        "source": "font_distance_transform",
+        "method": "mean/std/cv of font_stroke_width statistics",
+        "confidence": "medium",
+        "notes": "Readonly style width distribution hint; not an execution taper model."
+      },
+      "projection_summary": {
+        "horizontal_projection_spread_mean": 36.659894,
+        "horizontal_projection_spread_std": 5.044552,
+        "vertical_projection_spread_mean": 38.661425,
+        "vertical_projection_spread_std": 5.06238,
+        "source": "font_projection_spread",
+        "method": "summary spread only, not full distribution",
+        "confidence": "medium",
+        "notes": "Only spread hints are available in current font_style_gap_summary.csv."
+      },
+      "current_profile_reference": {
+        "horizontal_scale": 1.03,
+        "vertical_scale": 0.98,
+        "trajectory_aspect_ratio": 1.070791,
+        "trajectory_mean_width": 7.488813
+      }
+    }
+  },
+  "unsupported_from_static_font": [
+    "connection_strength",
+    "allow_interstroke_connections",
+    "connector_trigger",
+    "connector_shape",
+    "pressure_curve",
+    "speed_scale",
+    "pen_up_height",
+    "real_robot_dynamics"
+  ]
+}

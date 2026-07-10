@@ -1,0 +1,3 @@
+char,char_id,style,registry_strategy,fallback_used,used_constraints,bbox_aspect_before,bbox_aspect_after,lower_half_width_before,lower_half_width_after,max_point_shift_px,path_length_ratio,stroke_count_preserved,warning,recommended_for_visual_followup,trial_only
+山,u5c71,lishu,component_first_safe,False,bbox_aspect;lower_half_width_ratio;left_right_spread;bbox_center_shift_x;bbox_center_shift_y,0.945007,1.048676,187.343097,199.553901,9.845336,0.989006,True,,True,True
+风,u98ce,lishu,fallback_first_reference_only,True,bbox_aspect;lower_half_width_ratio;left_right_spread;bbox_center_shift_x;bbox_center_shift_y,1.188427,1.306963,215.04,223.297536,8.824495,0.973699,True,,True,True

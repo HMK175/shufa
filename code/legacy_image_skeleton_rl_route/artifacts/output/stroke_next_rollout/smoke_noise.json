@@ -1,0 +1,28 @@
+{
+  "image_size": 64,
+  "base_channels": 4,
+  "in_channels": 3,
+  "train_stroke_samples": 1,
+  "val_stroke_samples": 1,
+  "test_stroke_samples": 0,
+  "val_mean_dice": 4.098360761872755e-09,
+  "best_threshold": 0.3,
+  "val_threshold_sweep": {
+    "0.3": 0.11244239658117294,
+    "0.4": 4.098360761872755e-09,
+    "0.5": 4.098360761872755e-09,
+    "0.6": 4.098360761872755e-09,
+    "0.7": 4.098360761872755e-09
+  },
+  "pos_weight": 12.0,
+  "dice_weight": 0.5,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "overfit_count": 1,
+  "previous_mask_noise": {
+    "dropout_prob": 0.1,
+    "morph_prob": 0.2,
+    "false_positive_prob": 0.2,
+    "false_positive_ratio": 0.002
+  }
+}

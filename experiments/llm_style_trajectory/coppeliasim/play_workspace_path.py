@@ -30,12 +30,22 @@ PAPER_WIDTH_MM = PAPER_WIDTH_M * 1000.0
 PAPER_HEIGHT_MM = PAPER_HEIGHT_M * 1000.0
 DEFAULT_PAPER_SIZE_MM = 120.0
 DEFAULT_PEN_TIP_RADIUS_MM = 1.5
+DEFAULT_TOOL_MODEL = "none"
+DEFAULT_TOOL_LENGTH_MM = 120.0
+DEFAULT_TOOL_RADIUS_MM = 4.0
+DEFAULT_TCP_OFFSET_MM = 0.0
 DEFAULT_Z_MAX_MM = 8.0
 OBJECT_PREFIX = "llm_style_trajectory"
 HANDLE_SIGNAL = f"{OBJECT_PREFIX}_handles_json"
 RESULT_JSON_NAME = "coppeliasim_playback_result.json"
 RESULT_MD_NAME = "coppeliasim_playback_result.md"
+TOOL_MODEL_RESULT_JSON_NAME = "coppeliasim_tool_model_result.json"
+TOOL_MODEL_RESULT_MD_NAME = "coppeliasim_tool_model_result.md"
 SCOPE_NOTE = "standard pen-tip scene only, no robot arm IK (pen-tip/sphere playback only)"
+TOOL_SCOPE_NOTE = (
+    "simple pen/tool visual sanity check only; no AUBO i5 robot model, no IK, "
+    "no dynamics simulation, and no real robot control"
+)
 
 
 def mm_to_m(value_mm: float | int | str) -> float:
@@ -52,6 +62,19 @@ def _int(value: Any) -> int:
     if value is None or value == "":
         return 0
     return int(float(value))
+
+
+def parse_mm_triplet(value: str | list[float] | tuple[float, float, float]) -> list[float]:
+    if isinstance(value, (list, tuple)):
+        parts = list(value)
+    else:
+        parts = [part.strip() for part in str(value).replace(";", ",").split(",")]
+    if len(parts) != 3:
+        raise argparse.ArgumentTypeError("--base-frame-origin-mm must contain three comma-separated values")
+    try:
+        return [float(part) for part in parts]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--base-frame-origin-mm values must be numeric") from exc
 
 
 def load_workspace_path(csv_path: Path | str) -> list[dict[str, Any]]:
@@ -188,6 +211,12 @@ def build_playback_result(
     axes_enabled: bool = False,
     boundary_enabled: bool = False,
     clear_previous_scene: bool = False,
+    tool_model: str = DEFAULT_TOOL_MODEL,
+    show_tool_frame: bool = False,
+    tool_length_mm: float = DEFAULT_TOOL_LENGTH_MM,
+    tool_radius_mm: float = DEFAULT_TOOL_RADIUS_MM,
+    tcp_offset_mm: float = DEFAULT_TCP_OFFSET_MM,
+    base_frame_origin_mm: list[float] | tuple[float, float, float] | None = None,
 ) -> dict[str, Any]:
     scene_report = build_scene_report(
         summary,
@@ -197,6 +226,15 @@ def build_playback_result(
         axes_enabled=axes_enabled,
         boundary_enabled=boundary_enabled,
         clear_previous_scene=clear_previous_scene,
+    )
+    tool_report = build_tool_model_report(
+        scene_report,
+        tool_model=tool_model,
+        show_tool_frame=show_tool_frame,
+        tool_length_mm=tool_length_mm,
+        tool_radius_mm=tool_radius_mm,
+        tcp_offset_mm=tcp_offset_mm,
+        base_frame_origin_mm=base_frame_origin_mm or [0.0, 0.0, 0.0],
     )
     result = dict(summary)
     result.update(
@@ -210,13 +248,15 @@ def build_playback_result(
             "auto_stop": bool(auto_stop),
             "simulation_stopped": bool(simulation_stopped),
             "dry_run": bool(dry_run),
-            "scope": SCOPE_NOTE,
+            "scope": tool_report["scope"],
             **scene_report,
+            **tool_report,
         }
     )
     bounds = result["workspace_bounds"]
     result["out_of_workspace_bounds"] = not bool(bounds["xy_within_bounds"])
     result["recommended_playback"] = bool(bounds["recommended_playback"])
+    result["warnings"] = list(dict.fromkeys(result.get("scene_warnings", []) + result.get("tool_warnings", [])))
     return result
 
 
@@ -272,6 +312,80 @@ def build_scene_report(
     }
 
 
+def build_tool_model_report(
+    scene_report: dict[str, Any],
+    *,
+    tool_model: str = DEFAULT_TOOL_MODEL,
+    show_tool_frame: bool = False,
+    tool_length_mm: float = DEFAULT_TOOL_LENGTH_MM,
+    tool_radius_mm: float = DEFAULT_TOOL_RADIUS_MM,
+    tcp_offset_mm: float = DEFAULT_TCP_OFFSET_MM,
+    base_frame_origin_mm: list[float] | tuple[float, float, float] | None = None,
+) -> dict[str, Any]:
+    base_origin = [float(value) for value in (base_frame_origin_mm or [0.0, 0.0, 0.0])]
+    warnings: list[str] = []
+    normalized_tool_model = str(tool_model or DEFAULT_TOOL_MODEL)
+    if normalized_tool_model not in {"none", "simple-pen"}:
+        warnings.append(f"Unsupported tool_model for calibration report: {normalized_tool_model}")
+    if normalized_tool_model == "simple-pen":
+        if float(tool_length_mm) <= 0:
+            warnings.append("simple-pen tool_length_mm must be positive")
+        if float(tool_radius_mm) <= 0:
+            warnings.append("simple-pen tool_radius_mm must be positive")
+        if abs(float(tcp_offset_mm)) > float(tool_length_mm):
+            warnings.append("tcp_offset_mm is larger than the visual tool length")
+
+    paper_frame = {
+        "name": "paper_frame",
+        "origin": "center of the square paper plane at Z=0",
+        "axes": {
+            "X": "positive CSV/workspace X on the paper plane",
+            "Y": "positive CSV/workspace Y on the paper plane",
+            "Z": "up from the paper plane",
+        },
+        "unit": "mm in CSV, converted to m in CoppeliaSim",
+    }
+    workspace_frame = {
+        "name": "workspace_frame",
+        "origin_mm": base_origin,
+        "relationship_to_paper_frame": "coincident with paper_frame in the current standard scene, plus optional base_frame_origin_mm offset metadata",
+        "mapping": scene_report["coordinate_mapping"],
+    }
+    tool_tcp_frame = {
+        "name": "tool_tcp_frame",
+        "origin": "trajectory point is treated as the writing TCP / pen tip",
+        "tool_axis": "simple-pen body is visualized along +Z from the pen tip",
+        "orientation_convention": "robot_target_poses currently uses fixed roll=180deg, pitch=0deg, yaw=0deg for a vertical-down writing pose",
+        "tcp_offset_mm": float(tcp_offset_mm),
+    }
+    recommended = bool(scene_report["workspace_bounds"]["recommended_playback"]) and not warnings
+    scope = TOOL_SCOPE_NOTE if normalized_tool_model == "simple-pen" or show_tool_frame else SCOPE_NOTE
+    return {
+        "tool_model": normalized_tool_model,
+        "show_tool_frame": bool(show_tool_frame),
+        "tool_length_mm": float(tool_length_mm),
+        "tool_radius_mm": float(tool_radius_mm),
+        "tcp_offset_mm": float(tcp_offset_mm),
+        "base_frame_origin_mm": base_origin,
+        "coordinate_frames": {
+            "paper_frame": paper_frame,
+            "workspace_frame": workspace_frame,
+            "tool_tcp_frame": tool_tcp_frame,
+        },
+        "paper_frame": paper_frame,
+        "workspace_frame": workspace_frame,
+        "tcp_convention": {
+            "csv_xyz": "X_mm/Y_mm/Z_mm are the pen-tip TCP target in the paper/workspace frame",
+            "tool_body": "simple-pen cylinder is only a visual orientation aid and is not a collision or dynamics object",
+            "tcp_offset_mm": float(tcp_offset_mm),
+            "orientation": tool_tcp_frame["orientation_convention"],
+        },
+        "recommended_for_coordinate_calibration": recommended,
+        "tool_warnings": warnings,
+        "scope": scope,
+    }
+
+
 def _playback_result_markdown(result: dict[str, Any]) -> str:
     fields = [
         "status",
@@ -302,6 +416,19 @@ def _playback_result_markdown(result: dict[str, Any]) -> str:
         "workspace_bounds",
         "recommended_playback",
         "scene_warnings",
+        "tool_model",
+        "show_tool_frame",
+        "tool_length_mm",
+        "tool_radius_mm",
+        "tcp_offset_mm",
+        "base_frame_origin_mm",
+        "coordinate_frames",
+        "paper_frame",
+        "workspace_frame",
+        "tcp_convention",
+        "recommended_for_coordinate_calibration",
+        "tool_warnings",
+        "warnings",
         "scope",
     ]
     lines = [
@@ -325,11 +452,16 @@ def _playback_result_markdown(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def write_playback_result(result: dict[str, Any], out_dir: Path | str) -> dict[str, str]:
+def write_playback_result(
+    result: dict[str, Any],
+    out_dir: Path | str,
+    *,
+    tool_model_result: bool = False,
+) -> dict[str, str]:
     target = Path(out_dir)
     target.mkdir(parents=True, exist_ok=True)
-    json_path = target / RESULT_JSON_NAME
-    md_path = target / RESULT_MD_NAME
+    json_path = target / (TOOL_MODEL_RESULT_JSON_NAME if tool_model_result else RESULT_JSON_NAME)
+    md_path = target / (TOOL_MODEL_RESULT_MD_NAME if tool_model_result else RESULT_MD_NAME)
     json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     md_path.write_text(_playback_result_markdown(result), encoding="utf-8")
     return {"result_json": str(json_path), "result_md": str(md_path)}
@@ -485,6 +617,73 @@ def _draw_axes(sim: Any, paper_size_mm: float) -> list[Any]:
     ]
 
 
+def _create_tool_frame_axis(sim: Any, color: list[float]) -> Any:
+    drawing_lines = getattr(sim, "drawing_lines", 1)
+    return sim.addDrawingObject(drawing_lines, 2.0, 0.0, -1, 1, color)
+
+
+def _create_simple_pen_tool(
+    sim: Any,
+    *,
+    tool_length_mm: float,
+    tool_radius_mm: float,
+    tcp_offset_mm: float,
+    show_tool_frame: bool,
+) -> dict[str, Any]:
+    length_m = max(float(tool_length_mm) / 1000.0, 0.001)
+    radius_m = max(float(tool_radius_mm) / 1000.0, 0.00025)
+    diameter_m = radius_m * 2.0
+    cylinder = _call_first(
+        sim,
+        [
+            ("createPrimitiveShape", (getattr(sim, "primitiveshape_cylinder", 2), [diameter_m, diameter_m, length_m], 0)),
+            ("createPureShape", (2, 8, [diameter_m, diameter_m, length_m], 0.0, None)),
+        ],
+    )
+    _set_alias(sim, cylinder, f"{OBJECT_PREFIX}_simple_pen_body")
+    sim.setObjectPosition(cylinder, -1, [0.0, 0.0, length_m / 2.0 + float(tcp_offset_mm) / 1000.0])
+
+    axis_handles: list[Any] = []
+    if show_tool_frame:
+        axis_handles = [
+            _create_tool_frame_axis(sim, [1.0, 0.0, 0.0]),
+            _create_tool_frame_axis(sim, [0.0, 0.8, 0.0]),
+            _create_tool_frame_axis(sim, [0.0, 0.2, 1.0]),
+        ]
+        for idx, handle in enumerate(axis_handles):
+            _set_alias(sim, handle, f"{OBJECT_PREFIX}_tool_tcp_axis_{idx}")
+
+    return {
+        "body": cylinder,
+        "axis_handles": axis_handles,
+        "length_m": length_m,
+        "tcp_offset_m": float(tcp_offset_mm) / 1000.0,
+        "handles": [cylinder, *axis_handles],
+    }
+
+
+def _update_simple_pen_tool(sim: Any, tool: dict[str, Any], position_m: tuple[float, float, float]) -> None:
+    x, y, z = position_m
+    offset = float(tool.get("tcp_offset_m", 0.0))
+    length = float(tool.get("length_m", 0.12))
+    body = tool.get("body")
+    if body is not None:
+        sim.setObjectPosition(body, -1, [x, y, z + offset + length / 2.0])
+
+    axis_handles = tool.get("axis_handles", [])
+    if axis_handles:
+        axis_len = min(0.03, max(0.01, length * 0.25))
+        origin = (x, y, z + offset)
+        endpoints = [
+            (x + axis_len, y, z + offset),
+            (x, y + axis_len, z + offset),
+            (x, y, z + offset + axis_len),
+        ]
+        for handle, end in zip(axis_handles, endpoints):
+            _safe_call(sim.addDrawingObjectItem, handle, None)
+            _safe_call(sim.addDrawingObjectItem, handle, [*origin, *end])
+
+
 def _create_standard_scene(
     sim: Any,
     *,
@@ -493,6 +692,11 @@ def _create_standard_scene(
     show_axes: bool,
     show_boundary: bool,
     clear_previous_scene: bool,
+    tool_model: str = DEFAULT_TOOL_MODEL,
+    show_tool_frame: bool = False,
+    tool_length_mm: float = DEFAULT_TOOL_LENGTH_MM,
+    tool_radius_mm: float = DEFAULT_TOOL_RADIUS_MM,
+    tcp_offset_mm: float = DEFAULT_TCP_OFFSET_MM,
 ) -> dict[str, Any]:
     if clear_previous_scene:
         _clear_previous_scene(sim)
@@ -502,6 +706,16 @@ def _create_standard_scene(
         handles.append(_draw_boundary(sim, paper_size_mm))
     if show_axes:
         handles.extend(_draw_axes(sim, paper_size_mm))
+    if tool_model == "simple-pen":
+        tool = _create_simple_pen_tool(
+            sim,
+            tool_length_mm=tool_length_mm,
+            tool_radius_mm=tool_radius_mm,
+            tcp_offset_mm=tcp_offset_mm,
+            show_tool_frame=show_tool_frame,
+        )
+        objects["tool"] = tool
+        handles.extend(tool.get("handles", []))
     objects["handles"] = handles
     return objects
 
@@ -548,6 +762,11 @@ def play_path(
     show_axes: bool = False,
     show_boundary: bool = False,
     clear_previous_scene: bool = False,
+    tool_model: str = DEFAULT_TOOL_MODEL,
+    show_tool_frame: bool = False,
+    tool_length_mm: float = DEFAULT_TOOL_LENGTH_MM,
+    tool_radius_mm: float = DEFAULT_TOOL_RADIUS_MM,
+    tcp_offset_mm: float = DEFAULT_TCP_OFFSET_MM,
 ) -> dict[str, Any]:
     points = load_workspace_path(csv_path)
     if not points:
@@ -563,6 +782,11 @@ def play_path(
         show_axes=show_axes,
         show_boundary=show_boundary,
         clear_previous_scene=clear_previous_scene,
+        tool_model=tool_model,
+        show_tool_frame=show_tool_frame,
+        tool_length_mm=tool_length_mm,
+        tool_radius_mm=tool_radius_mm,
+        tcp_offset_mm=tcp_offset_mm,
     )
     handles = list(objects.get("handles", []))
     if not no_path_objects:
@@ -577,6 +801,8 @@ def play_path(
     prev = points[0]
     for cur in points:
         sim.setObjectPosition(objects["pen"], -1, list(cur["position_m"]))
+        if "tool" in objects:
+            _update_simple_pen_tool(sim, objects["tool"], cur["position_m"])
         step_mm = _distance_mm(prev, cur)
         speed = max(cur.get("speed_mm_s") or 1.0, 1e-9) * max(speed_scale, 1e-9)
         time.sleep(min(0.1, step_mm / speed))
@@ -605,6 +831,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pen-tip-radius-mm", type=float, default=DEFAULT_PEN_TIP_RADIUS_MM)
     parser.add_argument("--show-axes", action="store_true")
     parser.add_argument("--show-boundary", action="store_true")
+    parser.add_argument("--tool-model", choices=["none", "simple-pen"], default=DEFAULT_TOOL_MODEL)
+    parser.add_argument("--show-tool-frame", action="store_true")
+    parser.add_argument("--tool-length-mm", type=float, default=DEFAULT_TOOL_LENGTH_MM)
+    parser.add_argument("--tool-radius-mm", type=float, default=DEFAULT_TOOL_RADIUS_MM)
+    parser.add_argument("--tcp-offset-mm", type=float, default=DEFAULT_TCP_OFFSET_MM)
+    parser.add_argument("--base-frame-origin-mm", type=parse_mm_triplet, default=[0.0, 0.0, 0.0])
     parser.add_argument(
         "--display-stride",
         type=int,
@@ -624,6 +856,7 @@ def main(argv: list[str] | None = None) -> None:
 
     csv_path = Path(args.csv)
     result_out_dir = Path(args.result_out_dir) if args.result_out_dir else csv_path.parent
+    tool_model_result = args.tool_model != "none" or args.show_tool_frame
     if args.dry_run:
         result = build_playback_result(
             csv_path,
@@ -641,8 +874,14 @@ def main(argv: list[str] | None = None) -> None:
             axes_enabled=args.show_axes,
             boundary_enabled=args.show_boundary,
             clear_previous_scene=args.clear_previous_scene,
+            tool_model=args.tool_model,
+            show_tool_frame=args.show_tool_frame,
+            tool_length_mm=args.tool_length_mm,
+            tool_radius_mm=args.tool_radius_mm,
+            tcp_offset_mm=args.tcp_offset_mm,
+            base_frame_origin_mm=args.base_frame_origin_mm,
         )
-        result.update(write_playback_result(result, result_out_dir))
+        result.update(write_playback_result(result, result_out_dir, tool_model_result=tool_model_result))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return
 
@@ -659,6 +898,11 @@ def main(argv: list[str] | None = None) -> None:
             show_axes=args.show_axes,
             show_boundary=args.show_boundary,
             clear_previous_scene=args.clear_previous_scene,
+            tool_model=args.tool_model,
+            show_tool_frame=args.show_tool_frame,
+            tool_length_mm=args.tool_length_mm,
+            tool_radius_mm=args.tool_radius_mm,
+            tcp_offset_mm=args.tcp_offset_mm,
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -680,8 +924,14 @@ def main(argv: list[str] | None = None) -> None:
         axes_enabled=args.show_axes,
         boundary_enabled=args.show_boundary,
         clear_previous_scene=args.clear_previous_scene,
+        tool_model=args.tool_model,
+        show_tool_frame=args.show_tool_frame,
+        tool_length_mm=args.tool_length_mm,
+        tool_radius_mm=args.tool_radius_mm,
+        tcp_offset_mm=args.tcp_offset_mm,
+        base_frame_origin_mm=args.base_frame_origin_mm,
     )
-    result.update(write_playback_result(result, result_out_dir))
+    result.update(write_playback_result(result, result_out_dir, tool_model_result=tool_model_result))
     if not args.auto_stop:
         print(
             "playback finished, but CoppeliaSim simulation may still be running; "

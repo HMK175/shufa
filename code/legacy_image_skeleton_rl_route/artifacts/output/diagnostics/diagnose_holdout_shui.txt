@@ -1,0 +1,43 @@
+image=code\holdout_set\shui.png
+char=shui
+subset=holdout
+expected=4
+method=legacy
+pred=8
+fallback=global_count_not_expected_for_complex
+skeleton_px=3696
+endpoints=7
+junction_px=9
+junction_clusters=5
+final_count=4
+final_max_winding=3.12
+
+Legacy: count=7, max_w=10.68
+  S1: len=1221.0, se=571.9, w=2.13, pts=995
+  S2: len=1214.2, se=652.9, w=1.86, pts=916
+  S3: len=83.5, se=74.1, w=1.13, pts=75
+  S4: len=598.6, se=565.5, w=1.06, pts=236
+  S5: len=1229.7, se=740.0, w=1.66, pts=990
+  S6: len=955.2, se=89.5, w=10.68, pts=880
+  S7: len=96.4, se=89.5, w=1.08, pts=80
+
+Global: count=3, max_w=2.78
+  S1: len=3164.4, se=1137.9, w=2.78, pts=2665
+  S2: len=1221.0, se=571.9, w=2.13, pts=995
+  S3: len=1557.0, se=1083.0, w=1.44, pts=1401
+
+Selected raw: count=8, max_w=2.13
+  S1: len=525.8, se=451.9, w=1.16, pts=480
+  S2: len=83.5, se=74.1, w=1.13, pts=75
+  S3: len=1221.0, se=571.9, w=2.13, pts=995
+  S4: len=1229.7, se=740.0, w=1.66, pts=990
+  S5: len=1214.2, se=652.9, w=1.86, pts=916
+  S6: len=429.4, se=400.3, w=1.07, pts=401
+  S7: len=598.6, se=565.5, w=1.06, pts=236
+  S8: len=96.4, se=89.5, w=1.08, pts=80
+
+Final: count=4, max_w=3.12
+  S1: len=2052.2, se=656.7, w=3.12, pts=134
+  S2: len=1154.8, se=572.7, w=2.02, pts=74
+  S3: len=1183.4, se=741.0, w=1.60, pts=73
+  S4: len=585.5, se=567.4, w=1.03, pts=17

@@ -1,57 +1,108 @@
-# 书法机器人轨迹生成项目
+﻿# 书法机器人项目接手说明
 
-## 项目概述
+## 当前主线
 
-针对书法机器人书写轨迹人工示教成本高、轨迹还原度不足的问题，提出一种结合图像骨架提取和强化学习局部优化的笔画轨迹生成方法。
+当前项目默认主线已经从早期的“图像骨架提取 + 强化学习局部优化”切换到：
 
-**核心流程**：输入字形图像 → 图像预处理 → 骨架提取 → 初始轨迹生成 → 强化学习优化 → 机器人末端轨迹输出
-
-**定位**：不做完整汉字生成，不做复杂大模型。只做"给定笔画/字形图像后，机器人如何写得更像"。面向工程实现的轻量化方案：骨架提取 + RL局部优化。适用于中文普刊、专硕毕业要求。
-
-## 技术栈
-
-- Python 3.8+, OpenCV, NumPy, Matplotlib, PyTorch (RL部分)
-- 仿真环境：二维平面轨迹仿真，可映射到机械臂工作空间
-
-## 项目结构
-
-```
-shufa/
-├── README.md              # 项目说明
-├── PROJECT_LOG.md         # 项目日志
-├── TODO.md                # 待办事项
-├── PAPER_OUTLINE.md       # 论文大纲
-├── EXPERIMENT_RECORD.md   # 实验记录
-├── METHOD_NOTES.md        # 方法笔记
-├── ROBOT_TEST_PLAN.md     # 机器人测试计划
-├── references/            # 参考文献和PDF
-│   ├── downloads/         # 已下载PDF
-│   └── import_to_zotero.py
-└── code/                  # 代码
-    ├── pipeline.py        # 主流程
-    ├── skeleton.py        # 骨架提取
-    ├── trajectory.py      # 轨迹生成
-    ├── utils.py           # 工具函数
-    └── gen_test_image.py  # 测试图像生成
+```text
+自然语言输入
+-> LLM/mock planner
+-> request boundary validation
+-> style_modifiers
+-> style profile + 本地白名单映射
+-> Make Me a Hanzi median 笔画
+-> trajectory.csv
+-> execution_trajectory.csv
+-> robot_workspace_trajectory.csv
+-> robot_workspace_trajectory_resampled.csv
+-> CoppeliaSim standard pen-tip/sphere scene playback
+-> robot_target_poses.csv
+-> AUBO i5 dry-run command plan
+-> AUBO i5 IK feasibility dry-run
 ```
 
-## 当前进度
+主线代码位于：
 
-- [x] 已完成最小 pipeline：图片 → 二值化 → 骨架提取 → 轨迹 → 平滑 → CSV输出
-- [ ] 强化学习轨迹优化模块（DDPG）待实现
-- [ ] 对比实验待完成
-- [ ] 论文正文待撰写
+```text
+experiments/llm_style_trajectory/
+```
 
-## Zotero 文献管理
+## 新对话优先阅读
 
-- Zotero 数据目录：`D:\basic data\zotero`（非默认路径，通过 `extensions.zotero.dataDir` 配置）
-- 书法机器人文献集合 collectionID = 5
-- 所有 Zotero 操作使用 `D:\basic data\zotero\zotero.sqlite`
-- 参考文献管理脚本：`references/import_to_zotero.py`
+切换新对话或新代码线程时，优先阅读：
 
-## 两机协作说明
+1. `CURRENT_PROJECT_GUIDE.md`
+2. `experiments/llm_style_trajectory/README.md`
+3. `experiments/llm_style_trajectory/outputs/paper_figures/paper_experiment_index.md`
+4. `AUBO_I5_PLATFORM_NOTES.md`
+5. `ROBOT_TEST_PLAN.md`
 
-此 AGENTS.md 随 git 同步。在两台电脑上：
-- Zotero 数据目录路径可能不同，需根据实际机器调整
-- Python 环境需各自配置
-- 其他项目文件结构保持一致即可
+如需追溯完整实验过程，再读：
+
+```text
+LLM_STYLE_TRAJECTORY_STAGE_SUMMARY.md
+PROJECT_LOG.md
+EXPERIMENT_RECORD.md
+```
+
+## 旧路线归档
+
+早期路线文档已经归档到：
+
+```text
+docs/legacy_image_skeleton_rl_route/
+```
+
+这些文档记录旧的“图像骨架提取 + RL 优化”思路。除非要追溯项目早期方案，否则不要把它们作为当前路线依据。
+
+旧路线代码也已归档到：
+
+```text
+code/legacy_image_skeleton_rl_route/
+```
+
+`code/data/makemeahanzi/` 是当前路线仍可能使用的共享数据，不要移动。
+
+## 图像到笔画路线边界
+
+图像到笔画 / 书写行为恢复路线目前**不是这个默认主线线程的推进方向**。
+
+在当前默认主线线程里，它只用于：
+
+- 后续结果对比
+- 图像 / 指标复核
+- 论文中的相关讨论、局限性或未来工作说明
+
+但这条限制**只约束当前默认主线线程**。  
+如果未来明确开设“图像到笔画 / 书写行为恢复”的独立专责线程，则该线程可以把它作为独立研究路线推进，不受本条限制。
+
+换句话说：
+
+- 当前线程：不要把它混入 A-route / B-route 的默认开发决策
+- 独立图像线程：可以单独负责这条路线
+
+## 人工看图规则
+
+对于轨迹图、渲染图、风格对比图、CoppeliaSim 截图等结果，不能只看指标就默认效果好。  
+如果数据层看起来正常，但图像直观效果可能不佳，请明确提示用户进行人工目检。
+
+风格差异、连笔外观、笔画宽度、布局自然度这类判断，优先以图像直观效果和人工校验为准，数值指标只作为辅助证据。
+
+## 工作边界
+
+- 默认不要修改 `code/legacy_image_skeleton_rl_route/scripts/stroke.py` /
+  `code/legacy_image_skeleton_rl_route/scripts/pipeline.py`
+- 默认不要在 `code/` 根目录新增新实验脚本
+- 当前实验新增内容优先放在 `experiments/llm_style_trajectory/`
+- LLM/API planner 不直接生成 CSV、轨迹点或机器人命令
+- AUBO i5 相关工作当前只做到 dry-run command plan 和 IK feasibility dry-run；不要连接真实机械臂，不要求真实 IK，不要调用 SDK 运动命令
+- 不要打印、记录或提交 API key
+
+## 常用验证
+
+```powershell
+python -m pytest experiments\llm_style_trajectory\tests -q
+Test-Path code\legacy_image_skeleton_rl_route\scripts\stroke.py
+Test-Path code\legacy_image_skeleton_rl_route\scripts\pipeline.py
+Test-Path code\data\makemeahanzi\graphics.txt
+```

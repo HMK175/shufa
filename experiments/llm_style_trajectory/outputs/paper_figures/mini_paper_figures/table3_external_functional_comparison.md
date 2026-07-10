@@ -1,0 +1,9 @@
+# Table 3. External functional comparison
+
+| 方法类型 | 需要示教数据 | 自然语言输入 | 可解释 modifier | execution trajectory | retiming/motion gate | robot-interface dry-run | 风格真实性上限 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 传统图像骨架提取法 | 否 | 否 | 否 | 通常否 | 否 | 否 | 受输入图像和骨架质量限制 |
+| 示教轨迹学习法 | 是 | 否 | 通常否 | 是 | 可扩展 | 可扩展 | 受示教数据覆盖限制 |
+| 强化学习局部优化法 | 可选 | 否 | 通常否 | 可输出 | 需额外设计 | 可扩展 | 受奖励函数和初始轨迹限制 |
+| 字体/图像风格迁移法 | 否或弱 | 否 | 通常否 | 通常否 | 否 | 否 | 静态视觉强，书写过程弱 |
+| 本文方法 | 否 | 是 | 是 | 是 | 是 | dry-run | 受 median strokes 与参数化 profile 限制 |

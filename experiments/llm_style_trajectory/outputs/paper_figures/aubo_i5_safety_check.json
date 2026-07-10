@@ -1,0 +1,33 @@
+{
+  "point_count": 275,
+  "command_count": 277,
+  "source_csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses.csv",
+  "max_step_m": 0.002488,
+  "max_speed_m_s": 0.04,
+  "max_accel_m_s2_estimate": 0.0,
+  "xy_range_m": {
+    "x": [
+      -0.049057,
+      0.048721
+    ],
+    "y": [
+      -0.049392,
+      0.049392
+    ]
+  },
+  "z_range_m": [
+    0.0,
+    0.0
+  ],
+  "quaternion_normalized": true,
+  "time_monotonic": true,
+  "has_nan_or_inf": false,
+  "workspace_hint": "Conservative paper-workspace hint only: expected XY near +/-60mm paper frame and Z near 0..8mm. This is not an AUBO i5 reachability or collision check.",
+  "segment_counts": {
+    "connector": 38,
+    "stroke": 237
+  },
+  "recommended_for_sdk_dry_run": true,
+  "warnings": [],
+  "scope": "AUBO i5 dry-run command plan only; no IK, no SDK import, no connection, no real robot control"
+}

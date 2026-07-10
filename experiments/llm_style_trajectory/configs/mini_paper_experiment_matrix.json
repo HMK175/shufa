@@ -1,0 +1,280 @@
+{
+  "paper_focus": "自然语言约束驱动的书法机器人参数化轨迹生成与执行前检查方法",
+  "forbidden_claims": [
+    "不声称已经完成真实书法风格学习",
+    "不声称已经完成真实机器人书写",
+    "不声称已经完成图像到轨迹的风格迁移",
+    "不声称已经完成 AUBO i5 真实 IK 或实机控制"
+  ],
+  "experiments": [
+    {
+      "id": "A",
+      "name": "natural_language_modifier_controllability",
+      "baseline": "fixed profile / no modifier",
+      "ours": "modifier-controlled local whitelist parameter mapping",
+      "metrics": [
+        "connection_count",
+        "connector_draw_length",
+        "aspect_ratio",
+        "bbox_width",
+        "bbox_height",
+        "mean_turning",
+        "total_turning_angle",
+        "stroke_width_range"
+      ],
+      "figures": [
+        "modifier connection ablation",
+        "modifier shape ablation",
+        "modifier smoothness ablation"
+      ],
+      "status": "partially_available",
+      "priority": 1,
+      "notes": "用于支撑自然语言约束有效性；需要人工确认图像观感。"
+    },
+    {
+      "id": "B",
+      "name": "xingkai_connector_rule_comparison",
+      "baseline": "all_adjacent connector baseline",
+      "variants": [
+        "candidate_default_v1 conservative connector + simple_taper",
+        "candidate_default_v2 balanced connector + slight_curve + xingkai_expressive_taper"
+      ],
+      "metrics": [
+        "connection_count",
+        "connector_draw_length",
+        "kaishu_lishu_connector_violations",
+        "human_connector_naturalness"
+      ],
+      "figures": [
+        "xingkai_balanced_compare_connector_levels"
+      ],
+      "status": "available_needs_manual_feedback_table",
+      "priority": 1,
+      "known_results": {
+        "baseline_connection_count_sum": 58,
+        "conservative_connection_count_sum": 5,
+        "balanced_connection_count_sum": 10,
+        "baseline_connector_draw_length_sum": 4938.116,
+        "conservative_connector_draw_length_sum": 349.252,
+        "balanced_connector_draw_length_sum": 586.339
+      },
+      "notes": "balanced v2 已有用户人工反馈：变化不激进、曲线 connector 更像带过去，但仍不作为全局默认。"
+    },
+    {
+      "id": "C",
+      "name": "execution_width_pressure_comparison",
+      "baseline": "fixed width / flat pressure execution",
+      "ours": "simple_taper / xingkai_expressive_taper execution",
+      "metrics": [
+        "stroke_width_range",
+        "mean_width",
+        "mean_pressure",
+        "connector_mean_width",
+        "connector_mean_pressure",
+        "human_thickness_visibility"
+      ],
+      "figures": [
+        "width_pressure_visualization",
+        "execution_refinement before_after figures"
+      ],
+      "status": "available",
+      "priority": 2,
+      "notes": "用于证明 execution layer 比中心线轨迹更能表达书写执行状态。"
+    },
+    {
+      "id": "D",
+      "name": "motion_continuity_and_retiming",
+      "baseline": "raw robot_target_poses.csv",
+      "ours": "robot_target_poses_smoothed.csv",
+      "metrics": [
+        "dt_nonpositive_count",
+        "max_speed_m_s",
+        "max_accel_m_s2",
+        "max_jerk_m_s3",
+        "recommended_for_coppeliasim_playback",
+        "recommended_for_ik_dry_run"
+      ],
+      "figures": [
+        "motion_continuity_report",
+        "target_pose_retiming_report"
+      ],
+      "status": "available",
+      "priority": 1,
+      "known_results": {
+        "raw_dt_nonpositive_count": 4,
+        "smoothed_dt_nonpositive_count": 0,
+        "raw_max_accel_m_s2": 0.533536284,
+        "smoothed_max_accel_m_s2": 0.274132141,
+        "raw_max_jerk_m_s3": 11.386446091,
+        "smoothed_max_jerk_m_s3": 4.193553547,
+        "smoothed_recommended_for_coppeliasim_playback": true,
+        "smoothed_recommended_for_ik_dry_run": true
+      },
+      "notes": "保守 dry-run gate，不代表真实机器人动力学阈值。"
+    },
+    {
+      "id": "E",
+      "name": "robot_interface_precheck_chain",
+      "baseline": "only 2D centerline trajectory",
+      "ours": "execution trajectory -> workspace mapping -> resampling -> target poses -> retiming -> command adapter dry-run -> IK feasibility dry-run",
+      "metrics": [
+        "out_of_bounds",
+        "max_step_mm",
+        "max_xy_step_mm",
+        "max_z_step_mm",
+        "recommended_for_sdk_dry_run",
+        "recommended_for_real_ik_check",
+        "warnings"
+      ],
+      "figures": [
+        "workspace previews",
+        "CoppeliaSim simple pen/tool dry-run result",
+        "AUBO command adapter smoothed index",
+        "AUBO IK feasibility smoothed index"
+      ],
+      "status": "available",
+      "priority": 2,
+      "notes": "只能写 dry-run 和执行前检查，不能写真实 IK 或实机控制。"
+    },
+    {
+      "id": "F",
+      "name": "font_outline_gap_and_style_profile_dataization",
+      "baseline": "current style profile",
+      "analysis": "font style gap / Phase 1 readonly estimates / comparison-only candidate profile",
+      "metrics": [
+        "font_aspect",
+        "trajectory_aspect",
+        "aspect_gap",
+        "component_count",
+        "unsupported_parameter_count"
+      ],
+      "figures": [
+        "font_style_gap_analysis",
+        "style_profile_phase1_estimates",
+        "phase1_profile_comparison"
+      ],
+      "status": "analysis_available",
+      "priority": 3,
+      "notes": "适合放限制与未来工作；不建议作为已完成风格学习主结果。"
+    }
+  ],
+  "external_functional_comparison": {
+    "dimensions": [
+      "needs_demonstration_data",
+      "natural_language_input",
+      "interpretable_modifiers",
+      "execution_trajectory_output",
+      "workspace_mapping",
+      "retiming_motion_gate",
+      "robot_interface_dry_run",
+      "style_authenticity_ceiling",
+      "implementation_complexity_data_dependency"
+    ],
+    "methods": [
+      {
+        "method_type": "traditional_image_skeleton_extraction",
+        "needs_demonstration_data": "no",
+        "natural_language_input": "no",
+        "interpretable_modifiers": "no",
+        "execution_trajectory_output": "usually_no",
+        "workspace_mapping": "usually_no",
+        "retiming_motion_gate": "no",
+        "robot_interface_dry_run": "no",
+        "style_authenticity_ceiling": "limited_by_image_and_skeleton_quality",
+        "implementation_complexity_data_dependency": "medium_image_processing"
+      },
+      {
+        "method_type": "demonstration_trajectory_learning",
+        "needs_demonstration_data": "yes",
+        "natural_language_input": "no",
+        "interpretable_modifiers": "usually_no",
+        "execution_trajectory_output": "yes",
+        "workspace_mapping": "extendable",
+        "retiming_motion_gate": "extendable",
+        "robot_interface_dry_run": "extendable",
+        "style_authenticity_ceiling": "limited_by_demonstration_coverage",
+        "implementation_complexity_data_dependency": "high_requires_trajectory_collection"
+      },
+      {
+        "method_type": "reinforcement_learning_local_optimization",
+        "needs_demonstration_data": "optional",
+        "natural_language_input": "no",
+        "interpretable_modifiers": "usually_no",
+        "execution_trajectory_output": "possible",
+        "workspace_mapping": "extendable",
+        "retiming_motion_gate": "requires_extra_design",
+        "robot_interface_dry_run": "extendable",
+        "style_authenticity_ceiling": "limited_by_reward_and_initial_trajectory",
+        "implementation_complexity_data_dependency": "high_training_and_reward_tuning"
+      },
+      {
+        "method_type": "font_or_image_style_transfer",
+        "needs_demonstration_data": "no_or_weak",
+        "natural_language_input": "no",
+        "interpretable_modifiers": "usually_no",
+        "execution_trajectory_output": "usually_no",
+        "workspace_mapping": "no",
+        "retiming_motion_gate": "no",
+        "robot_interface_dry_run": "no",
+        "style_authenticity_ceiling": "strong_static_visual_style_weak_writing_process",
+        "implementation_complexity_data_dependency": "medium_high_font_or_image_data"
+      },
+      {
+        "method_type": "this_method",
+        "needs_demonstration_data": "no",
+        "natural_language_input": "yes",
+        "interpretable_modifiers": "yes",
+        "execution_trajectory_output": "yes",
+        "workspace_mapping": "yes",
+        "retiming_motion_gate": "yes",
+        "robot_interface_dry_run": "yes",
+        "style_authenticity_ceiling": "limited_by_makemeahanzi_median_and_parameterized_profile",
+        "implementation_complexity_data_dependency": "medium_local_data_and_rule_mapping"
+      }
+    ]
+  },
+  "existing_result_paths": {
+    "style_diagnostics": "experiments/llm_style_trajectory/outputs/paper_figures/style_diagnostics_index.md",
+    "style_visual_audit": "experiments/llm_style_trajectory/outputs/paper_figures/style_visual_audit_index.md",
+    "connector_brush_visual_diagnostics": "experiments/llm_style_trajectory/outputs/paper_figures/connector_brush_visual_diagnostics_index.md",
+    "width_pressure_visualization": "experiments/llm_style_trajectory/outputs/paper_figures/width_pressure_visualization_index.md",
+    "execution_refinement": "experiments/llm_style_trajectory/outputs/paper_figures/execution_refinement_index.md",
+    "xingkai_balanced": "experiments/llm_style_trajectory/outputs/paper_figures/xingkai_balanced_experiment_index.md",
+    "motion_continuity": "experiments/llm_style_trajectory/outputs/paper_figures/motion_continuity_check_index.md",
+    "target_pose_retiming": "experiments/llm_style_trajectory/outputs/paper_figures/target_pose_retiming_index.md",
+    "coppeliasim_tool_model": "experiments/llm_style_trajectory/outputs/paper_figures/coppeliasim_tool_model_index.md",
+    "aubo_command_adapter_smoothed": "experiments/llm_style_trajectory/outputs/paper_figures/aubo_i5_command_adapter_smoothed_index.md",
+    "aubo_ik_feasibility_smoothed": "experiments/llm_style_trajectory/outputs/paper_figures/aubo_i5_ik_feasibility_smoothed_index.md",
+    "font_style_gap_analysis": "experiments/llm_style_trajectory/outputs/paper_figures/font_style_gap_analysis_index.md",
+    "style_profile_upgrade_plan": "experiments/llm_style_trajectory/outputs/paper_figures/style_profile_upgrade_plan_index.md",
+    "style_profile_phase1_estimates": "experiments/llm_style_trajectory/outputs/paper_figures/style_profile_phase1_estimates_index.md",
+    "phase1_profile_comparison": "experiments/llm_style_trajectory/outputs/paper_figures/phase1_profile_comparison_index.md"
+  },
+  "minimum_next_tasks": [
+    "固定 modifier controllability 论文图",
+    "固定 xingkai connector rule baseline/v1/v2 论文图",
+    "整理 width/pressure 与 execution refinement 论文图",
+    "整理 raw vs smoothed target poses 指标表",
+    "整理 external functional comparison table",
+    "补人工看图评价表",
+    "将 font gap / Phase 1 readonly estimates 放入限制与后续工作"
+  ],
+  "recommended_paper_figures": [
+    "system_pipeline_overview",
+    "modifier_controllability_triptych",
+    "xingkai_connector_rule_ablation",
+    "execution_width_pressure_visualization",
+    "motion_continuity_retiming_before_after"
+  ],
+  "recommended_paper_tables": [
+    "external_functional_comparison",
+    "core_ablation_metric_summary",
+    "manual_visual_evaluation"
+  ],
+  "boundaries": [
+    "当前方法是参数化控制，不是真实书法风格学习",
+    "Make Me a Hanzi median strokes 限制真实风格上限",
+    "字体轮廓不等于真实书写轨迹",
+    "AUBO i5 仍停留在 dry-run，不是实机验证"
+  ]
+}

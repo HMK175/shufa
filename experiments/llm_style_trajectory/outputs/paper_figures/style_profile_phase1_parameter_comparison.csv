@@ -1,0 +1,20 @@
+style,parameter,current_value,phase1_hint,delta,source,confidence,use_recommendation,notes
+kaishu,horizontal_scale,1.0,1.0,0.0,font_bbox/font_aspect,medium,readonly_review_only,Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales.
+kaishu,vertical_scale,1.0,1.0,0.0,font_bbox/font_aspect,medium,readonly_review_only,Paired inverse of horizontal_scale_hint; use only as a readonly candidate.
+kaishu,base_width,,6.320909,,font_distance_transform,medium,readonly_review_only,Mean stroke width from font distance transform; needs visual normalization before use.
+kaishu,stroke_width_distribution,,"{""mean"": 6.320909, ""std"": 3.571692, ""cv"": 0.56506}",,font_distance_transform,medium,readonly_review_only,Readonly style width distribution hint; not an execution taper model.
+kaishu,horizontal_projection_distribution,,40.00861,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.
+kaishu,vertical_projection_distribution,,41.444313,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.
+lishu,horizontal_scale,1.18,1.198887,0.018887,font_bbox/font_aspect,medium,readonly_review_only,Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales.
+lishu,vertical_scale,0.82,0.834107,0.014107,font_bbox/font_aspect,medium,readonly_review_only,Paired inverse of horizontal_scale_hint; use only as a readonly candidate.
+lishu,base_width,,8.956169,,font_distance_transform,medium,readonly_review_only,Mean stroke width from font distance transform; needs visual normalization before use.
+lishu,stroke_width_distribution,,"{""mean"": 8.956169, ""std"": 5.249675, ""cv"": 0.586152}",,font_distance_transform,medium,readonly_review_only,Readonly style width distribution hint; not an execution taper model.
+lishu,horizontal_projection_distribution,,44.204892,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.
+lishu,vertical_projection_distribution,,30.991576,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.
+lishu,lishu_flatness,,1.43733,,font_bbox/font_aspect,medium,readonly_review_only,"Flatness can be estimated globally, but real lishu needs component and stroke-level evidence."
+xingkai,horizontal_scale,1.03,0.979982,-0.050018,font_bbox/font_aspect,low,readonly_review_only,Derived as sqrt(style_font_aspect / kaishu_font_aspect); aspect alone cannot uniquely determine X/Y scales.
+xingkai,vertical_scale,0.98,1.020427,0.040427,font_bbox/font_aspect,low,readonly_review_only,Paired inverse of horizontal_scale_hint; use only as a readonly candidate.
+xingkai,base_width,,9.575023,,font_distance_transform,medium,readonly_review_only,Mean stroke width from font distance transform; needs visual normalization before use.
+xingkai,stroke_width_distribution,,"{""mean"": 9.575023, ""std"": 5.78707, ""cv"": 0.604392}",,font_distance_transform,medium,readonly_review_only,Readonly style width distribution hint; not an execution taper model.
+xingkai,horizontal_projection_distribution,,36.659894,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.
+xingkai,vertical_projection_distribution,,38.661425,,font_projection_spread,medium,readonly_review_only,Only spread hints are available in current font_style_gap_summary.csv.

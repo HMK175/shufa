@@ -1,0 +1,54 @@
+image=code\holdout_set\pin.png
+char=pin
+subset=holdout
+expected=9
+method=global
+pred=9
+fallback=none
+skeleton_px=4239
+endpoints=6
+junction_px=6
+junction_clusters=5
+final_count=9
+final_max_winding=1.95
+
+Legacy: count=6, max_w=3.28
+  S1: len=575.1, se=506.5, w=1.14, pts=487
+  S2: len=1179.5, se=360.1, w=3.28, pts=1031
+  S3: len=485.7, se=433.9, w=1.12, pts=415
+  S4: len=964.1, se=323.0, w=2.98, pts=840
+  S5: len=1156.0, se=402.2, w=2.87, pts=765
+  S6: len=819.1, se=397.2, w=2.06, pts=700
+
+Global: count=9, max_w=3.28
+  S1: len=575.1, se=506.5, w=1.14, pts=487
+  S2: len=1099.3, se=440.1, w=2.50, pts=957
+  S3: len=485.7, se=433.9, w=1.12, pts=415
+  S4: len=1179.5, se=360.1, w=3.28, pts=1031
+  S5: len=305.4, se=282.2, w=1.08, pts=277
+  S6: len=93.8, se=84.2, w=1.11, pts=84
+  S7: len=324.6, se=303.5, w=1.07, pts=302
+  S8: len=820.5, se=397.0, w=2.07, pts=701
+  S9: len=129.3, se=120.6, w=1.07, pts=105
+
+Selected raw: count=9, max_w=3.28
+  S1: len=324.6, se=303.5, w=1.07, pts=302
+  S2: len=305.4, se=282.2, w=1.08, pts=277
+  S3: len=575.1, se=506.5, w=1.14, pts=487
+  S4: len=129.3, se=120.6, w=1.07, pts=105
+  S5: len=1179.5, se=360.1, w=3.28, pts=1031
+  S6: len=1099.3, se=440.1, w=2.50, pts=957
+  S7: len=820.5, se=397.0, w=2.07, pts=701
+  S8: len=93.8, se=84.2, w=1.11, pts=84
+  S9: len=485.7, se=433.9, w=1.12, pts=415
+
+Final: count=9, max_w=1.95
+  S1: len=315.5, se=305.8, w=1.03, pts=21
+  S2: len=285.5, se=282.4, w=1.01, pts=20
+  S3: len=542.0, se=506.2, w=1.07, pts=35
+  S4: len=287.0, se=279.0, w=1.03, pts=20
+  S5: len=823.7, se=483.0, w=1.71, pts=54
+  S6: len=263.8, se=255.0, w=1.03, pts=18
+  S7: len=802.8, se=544.7, w=1.47, pts=51
+  S8: len=773.0, se=397.2, w=1.95, pts=50
+  S9: len=417.6, se=390.0, w=1.07, pts=27

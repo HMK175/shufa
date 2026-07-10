@@ -1,0 +1,50 @@
+{
+  "status": "visual_redraw_only_not_used_by_default",
+  "figure_count": 3,
+  "output_dir": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\b_route_visuals_cn_20260621_143505",
+  "label_map": {
+    "original median": "原始中位轨迹",
+    "conservative": "保守版",
+    "balanced": "平衡版",
+    "known positive reference": "已知正例参考",
+    "font sections (top_mid_bottom_fallback)": "字体分区（上/中/下回退）",
+    "median + section labels": "中位轨迹 + 分区标签",
+    "top_band": "上区",
+    "mid_band": "中区",
+    "bottom_band": "下区"
+  },
+  "artifacts": [
+    {
+      "artifact_name": "h1_lite_u5c71_kaishu_lishu_contrast_cn.png",
+      "source_artifact": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\h1_lite_style_contrast_20260619_234043\\contrast\\h1_lite_u5c71_kaishu_lishu_contrast.png",
+      "output_path": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\b_route_visuals_cn_20260621_143505\\h1_lite_u5c71_kaishu_lishu_contrast_cn.png",
+      "status": "visual_redraw_only_not_used_by_default",
+      "difference_overlay": true,
+      "inset_zoom": true,
+      "notes": "山/kaishu vs 山/lishu 的同字风格对照，新增底部放大和叠加差异。"
+    },
+    {
+      "artifact_name": "h1_lite_u98ce_lishu_risk_contrast_cn.png",
+      "source_artifact": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\h1_lite_feng_lishu_risk_trial_20260620_212829\\contrast\\h1_lite_u98ce_lishu_risk_contrast.png",
+      "output_path": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\b_route_visuals_cn_20260621_143505\\h1_lite_u98ce_lishu_risk_contrast_cn.png",
+      "status": "visual_redraw_only_not_used_by_default",
+      "difference_overlay": true,
+      "inset_zoom": true,
+      "notes": "风/lishu 风险试验，新增 conservative / balanced 与局部展开放大。"
+    },
+    {
+      "artifact_name": "hybrid_section_compare_cn.png",
+      "source_artifact": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\hybrid_section_refinement_20260620_215513\\u98ce_lishu\\hybrid_section_compare.png",
+      "output_path": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\b_route_visuals_cn_20260621_143505\\hybrid_section_compare_cn.png",
+      "status": "visual_redraw_only_not_used_by_default",
+      "difference_overlay": true,
+      "inset_zoom": true,
+      "notes": "风/lishu hybrid section 图，补了中文分区标签与局部放大。"
+    }
+  ],
+  "visually_subtle_artifacts": [
+    "h1_lite_u5c71_kaishu_lishu_contrast_cn.png",
+    "h1_lite_u98ce_lishu_risk_contrast_cn.png"
+  ],
+  "best_manual_review_artifact": "hybrid_section_compare_cn.png"
+}

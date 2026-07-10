@@ -1,0 +1,52 @@
+image=code\tune_set\yong.png
+char=yong
+subset=tune
+expected=5
+method=legacy
+pred=9
+fallback=global_overcovers_skeleton
+skeleton_px=4733
+endpoints=10
+junction_px=22
+junction_clusters=9
+final_count=5
+final_max_winding=3.22
+
+Legacy: count=9, max_w=3.45
+  S1: len=638.5, se=185.1, w=3.45, pts=431
+  S2: len=995.7, se=865.9, w=1.15, pts=575
+  S3: len=1614.0, se=814.9, w=1.98, pts=1213
+  S4: len=116.3, se=103.0, w=1.13, pts=104
+  S5: len=843.2, se=640.1, w=1.32, pts=655
+  S6: len=160.5, se=148.6, w=1.08, pts=142
+  S7: len=320.3, se=295.3, w=1.08, pts=296
+  S8: len=1420.3, se=543.0, w=2.62, pts=1157
+  S9: len=125.1, se=123.0, w=1.02, pts=124
+
+Global: count=8, max_w=999.00
+  S1: len=300.5, se=208.1, w=1.44, pts=162
+  S2: len=2519.1, se=426.9, w=5.90, pts=1926
+  S3: len=410.6, se=0.0, w=999.00, pts=369
+  S4: len=1420.3, se=543.0, w=2.62, pts=1157
+  S5: len=695.9, se=293.4, w=2.37, pts=588
+  S6: len=1653.0, se=1105.5, w=1.50, pts=1277
+  S7: len=1373.2, se=1131.8, w=1.21, pts=1071
+  S8: len=518.3, se=450.1, w=1.15, pts=451
+
+Selected raw: count=9, max_w=3.45
+  S1: len=995.7, se=865.9, w=1.15, pts=575
+  S2: len=320.3, se=295.3, w=1.08, pts=296
+  S3: len=125.1, se=123.0, w=1.02, pts=124
+  S4: len=638.5, se=185.1, w=3.45, pts=431
+  S5: len=116.3, se=103.0, w=1.13, pts=104
+  S6: len=1420.3, se=543.0, w=2.62, pts=1157
+  S7: len=1614.0, se=814.9, w=1.98, pts=1213
+  S8: len=843.2, se=640.1, w=1.32, pts=655
+  S9: len=160.5, se=148.6, w=1.08, pts=142
+
+Final: count=5, max_w=3.22
+  S1: len=2533.9, se=1502.5, w=1.69, pts=120
+  S2: len=305.0, se=295.8, w=1.03, pts=19
+  S3: len=596.1, se=185.3, w=3.22, pts=28
+  S4: len=1344.1, se=543.2, w=2.47, pts=77
+  S5: len=943.5, se=657.1, w=1.44, pts=53

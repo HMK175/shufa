@@ -1,0 +1,153 @@
+{
+  "csv": "experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_workspace_trajectory_resampled.csv",
+  "point_count": 275,
+  "segment_type_counts": {
+    "connector": 38,
+    "stroke": 237
+  },
+  "x_mm_range": [
+    -49.057031,
+    48.721406
+  ],
+  "y_mm_range": [
+    -49.392188,
+    49.392188
+  ],
+  "z_mm_range": [
+    0.0,
+    0.0
+  ],
+  "duration_estimate_s": 13.05282,
+  "path_length_mm": 359.530547,
+  "max_step_mm": 2.487672,
+  "max_step_3d_mm": 2.487672,
+  "max_xy_step_mm": 2.487672,
+  "max_z_step_mm": 0.0,
+  "stroke_count": 237,
+  "connector_count": 38,
+  "pen_up_move_count": 0,
+  "out_of_workspace_bounds": false,
+  "status": "dry_run",
+  "speed_scale": 1.0,
+  "display_stride": 5,
+  "no_path_objects": false,
+  "path_objects_enabled": true,
+  "auto_stop": true,
+  "simulation_stopped": false,
+  "dry_run": true,
+  "scope": "simple pen/tool visual sanity check only; no AUBO i5 robot model, no IK, no dynamics simulation, and no real robot control",
+  "scene_setup": "standard",
+  "paper_size_mm": 120.0,
+  "pen_tip_radius_mm": 1.5,
+  "axes_enabled": false,
+  "boundary_enabled": false,
+  "clear_previous_scene": false,
+  "coordinate_mapping": {
+    "X_m": "X_mm / 1000",
+    "Y_m": "Y_mm / 1000",
+    "Z_m": "Z_mm / 1000"
+  },
+  "workspace_bounds": {
+    "paper_half_size_mm": 60.0,
+    "x_range_mm": [
+      -49.057031,
+      48.721406
+    ],
+    "y_range_mm": [
+      -49.392188,
+      49.392188
+    ],
+    "z_range_mm": [
+      0.0,
+      0.0
+    ],
+    "x_within_bounds": true,
+    "y_within_bounds": true,
+    "xy_within_bounds": true,
+    "z_allowed_range_mm": [
+      0.0,
+      8.0
+    ],
+    "z_within_bounds": true,
+    "recommended_playback": true,
+    "warnings": []
+  },
+  "scene_warnings": [],
+  "tool_model": "simple-pen",
+  "show_tool_frame": true,
+  "tool_length_mm": 120.0,
+  "tool_radius_mm": 4.0,
+  "tcp_offset_mm": 0.0,
+  "base_frame_origin_mm": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "coordinate_frames": {
+    "paper_frame": {
+      "name": "paper_frame",
+      "origin": "center of the square paper plane at Z=0",
+      "axes": {
+        "X": "positive CSV/workspace X on the paper plane",
+        "Y": "positive CSV/workspace Y on the paper plane",
+        "Z": "up from the paper plane"
+      },
+      "unit": "mm in CSV, converted to m in CoppeliaSim"
+    },
+    "workspace_frame": {
+      "name": "workspace_frame",
+      "origin_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "relationship_to_paper_frame": "coincident with paper_frame in the current standard scene, plus optional base_frame_origin_mm offset metadata",
+      "mapping": {
+        "X_m": "X_mm / 1000",
+        "Y_m": "Y_mm / 1000",
+        "Z_m": "Z_mm / 1000"
+      }
+    },
+    "tool_tcp_frame": {
+      "name": "tool_tcp_frame",
+      "origin": "trajectory point is treated as the writing TCP / pen tip",
+      "tool_axis": "simple-pen body is visualized along +Z from the pen tip",
+      "orientation_convention": "robot_target_poses currently uses fixed roll=180deg, pitch=0deg, yaw=0deg for a vertical-down writing pose",
+      "tcp_offset_mm": 0.0
+    }
+  },
+  "paper_frame": {
+    "name": "paper_frame",
+    "origin": "center of the square paper plane at Z=0",
+    "axes": {
+      "X": "positive CSV/workspace X on the paper plane",
+      "Y": "positive CSV/workspace Y on the paper plane",
+      "Z": "up from the paper plane"
+    },
+    "unit": "mm in CSV, converted to m in CoppeliaSim"
+  },
+  "workspace_frame": {
+    "name": "workspace_frame",
+    "origin_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "relationship_to_paper_frame": "coincident with paper_frame in the current standard scene, plus optional base_frame_origin_mm offset metadata",
+    "mapping": {
+      "X_m": "X_mm / 1000",
+      "Y_m": "Y_mm / 1000",
+      "Z_m": "Z_mm / 1000"
+    }
+  },
+  "tcp_convention": {
+    "csv_xyz": "X_mm/Y_mm/Z_mm are the pen-tip TCP target in the paper/workspace frame",
+    "tool_body": "simple-pen cylinder is only a visual orientation aid and is not a collision or dynamics object",
+    "tcp_offset_mm": 0.0,
+    "orientation": "robot_target_poses currently uses fixed roll=180deg, pitch=0deg, yaw=0deg for a vertical-down writing pose"
+  },
+  "recommended_for_coordinate_calibration": true,
+  "tool_warnings": [],
+  "recommended_playback": true,
+  "warnings": []
+}

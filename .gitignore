@@ -5,9 +5,19 @@ __pycache__/
 *.jpg
 .pytest_cache/
 .env
+.venvs/
+.uv_cache/
+.uv_python/
+.pip_cache/
+.mplconfig/
+.agents/
+.codex/
+.tmp_*.py
+tmp_*.png
 references/downloads/
 references/external/
 .claude/
+external_repos/
 
 # Model checkpoints
 *.pt
@@ -16,6 +26,11 @@ references/external/
 
 # Generated output
 code/output/
+offline_stroke_recovery_mvp/outputs/
+experiments/llm_style_trajectory/outputs/*/
+!experiments/llm_style_trajectory/outputs/paper_figures/
+!experiments/llm_style_trajectory/outputs/paper_figures/**
+presentation/*_assets/
 
 # Datasets (images)
 code/stroke_cls_dataset/

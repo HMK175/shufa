@@ -1,0 +1,95 @@
+{
+  "connector_rules": {
+    "baseline": {
+      "mode": "all_adjacent",
+      "description": "old behavior"
+    },
+    "conservative": {
+      "mode": "distance_angle_gate",
+      "max_connector_distance_ratio": 0.45,
+      "max_connector_distance_abs": 160.0,
+      "max_turn_angle_deg": 150.0,
+      "skip_if_crosses_bbox_center": false,
+      "min_stroke_endpoint_distance": 5.0,
+      "connect_every_n": 2
+    },
+    "balanced": {
+      "mode": "distance_angle_gate",
+      "max_connector_distance_ratio": 0.42,
+      "max_connector_distance_abs": 135.0,
+      "max_turn_angle_deg": 145.0,
+      "skip_if_crosses_bbox_center": false,
+      "min_stroke_endpoint_distance": 4.0,
+      "connect_every_n": 1,
+      "prefer_short_connectors": true,
+      "short_connector_quantile": 0.7,
+      "description": "middle ground between all_adjacent and conservative"
+    }
+  },
+  "stroke_width_profiles": {
+    "flat": {
+      "mode": "constant"
+    },
+    "simple_taper": {
+      "mode": "sinusoidal_taper",
+      "start_width_scale": 0.78,
+      "mid_width_scale": 1.12,
+      "end_width_scale": 0.82,
+      "start_pressure_scale": 0.82,
+      "mid_pressure_scale": 1.0,
+      "end_pressure_scale": 0.88
+    },
+    "xingkai_expressive_taper": {
+      "mode": "sinusoidal_taper",
+      "start_width_scale": 0.72,
+      "mid_width_scale": 1.16,
+      "end_width_scale": 0.78,
+      "start_pressure_scale": 0.78,
+      "mid_pressure_scale": 1.0,
+      "end_pressure_scale": 0.84,
+      "description": "light xingkai-only local taper enhancement for diagnostics"
+    }
+  },
+  "connector_shapes": {
+    "straight": {
+      "mode": "straight"
+    },
+    "slight_curve": {
+      "mode": "quadratic_bezier",
+      "offset_ratio": 0.12,
+      "max_offset": 18.0,
+      "resample_points": 5
+    }
+  },
+  "visualization": {
+    "background_color": "#f7f7f2",
+    "stroke_light_color": "#6baed6",
+    "stroke_dark_color": "#08306b",
+    "connector_light_color": "#b07d62",
+    "connector_dark_color": "#5a2a1a",
+    "pen_up_color": "#bdbdbd",
+    "min_alpha": 0.55,
+    "min_visible_linewidth": 1.2
+  },
+  "candidate_defaults": {
+    "candidate_default_v1": {
+      "connector_rule": "conservative",
+      "stroke_width_profile": "simple_taper",
+      "visualization": "default",
+      "status": "accepted_for_next_round_candidate",
+      "human_feedback": "connector more natural but slightly sparse; stroke taper visible; no lishu connector observed",
+      "date": "2026-06-18",
+      "notes": "Marked as a candidate execution-layer default for the next round only. It is not the global default yet and needs more samples before promotion."
+    },
+    "candidate_default_v2": {
+      "connector_rule": "balanced",
+      "connector_shape": "slight_curve",
+      "stroke_width_profile": "xingkai_expressive_taper",
+      "visualization": "default",
+      "status": "accepted_for_next_round_candidate",
+      "human_feedback": "Balanced adds only mild extra connections; Fu keeps one connection but changes its position; curved connector feels like carrying the stroke through; acceptable as candidate but not for simulation writing yet.",
+      "date": "2026-06-18",
+      "notes": "Marked as the next-round balanced xingkai execution-layer candidate. It is not the global default and does not replace candidate_default_v1."
+    }
+  }
+}

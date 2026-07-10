@@ -1,0 +1,88 @@
+{
+  "status": "trial_only_not_used_by_default",
+  "default_policy": "registry_gated_adaptation_only",
+  "entries": [
+    {
+      "char": "山",
+      "style": "lishu",
+      "strategy_selected": "component_first_safe",
+      "section_strategy": "hybrid_component_first",
+      "fallback_used": false,
+      "usable_constraints": [
+        "bbox_aspect",
+        "lower_half_width_ratio",
+        "left_right_spread",
+        "bbox_center_shift_x",
+        "bbox_center_shift_y"
+      ],
+      "reference_only_constraints": [
+        "component_count",
+        "endpoint_count",
+        "branch_count",
+        "connectedness_hint",
+        "skeleton_complexity_score"
+      ],
+      "blocked_constraints": [
+        "raw_skeleton_path",
+        "unordered_skeleton_segments"
+      ],
+      "max_shift_cap": 15,
+      "human_review_required": true,
+      "recommended_next_use": "B_safe_input",
+      "source_h2_status": "candidate_for_bounded_B_adaptation",
+      "source_section_status": "B_safe_input",
+      "note": "Best candidate for bounded B adaptation using component bbox first and safe constraints only."
+    },
+    {
+      "char": "风",
+      "style": "lishu",
+      "strategy_selected": "fallback_first_reference_only",
+      "section_strategy": "hybrid_component_first",
+      "fallback_used": true,
+      "usable_constraints": [
+        "bbox_aspect",
+        "lower_half_width_ratio",
+        "left_right_spread",
+        "bbox_center_shift_x",
+        "bbox_center_shift_y"
+      ],
+      "reference_only_constraints": [
+        "component_count",
+        "endpoint_count",
+        "branch_count",
+        "connectedness_hint",
+        "skeleton_complexity_score"
+      ],
+      "blocked_constraints": [
+        "raw_skeleton_path",
+        "unordered_skeleton_segments"
+      ],
+      "max_shift_cap": 12,
+      "human_review_required": true,
+      "recommended_next_use": "fallback_first_reference_only",
+      "source_h2_status": "candidate_for_bounded_B_adaptation",
+      "source_section_status": "fallback_first_reference_only",
+      "note": "Use fallback-first section guidance and keep as conservative reference-only input."
+    }
+  ],
+  "usable_constraints": [
+    "bbox_aspect",
+    "lower_half_width_ratio",
+    "left_right_spread",
+    "bbox_center_shift_x",
+    "bbox_center_shift_y"
+  ],
+  "reference_only_constraints": [
+    "component_count",
+    "endpoint_count",
+    "branch_count",
+    "connectedness_hint",
+    "skeleton_complexity_score"
+  ],
+  "blocked_constraints": [
+    "raw_skeleton_path",
+    "unordered_skeleton_segments"
+  ],
+  "source_h2": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\font_reference_constraints_20260619_230426\\font_reference_constraints.json",
+  "source_section_package": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\section_constraints_package_20260621_003023\\section_constraints_package.json"
+}

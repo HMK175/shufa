@@ -1,0 +1,48 @@
+{
+  "point_count": 271,
+  "source_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses_smoothed.csv",
+  "source_target_pose_csv": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\robot_target_poses_smoothed.csv",
+  "source_target_pose_kind": "smoothed",
+  "source_retiming_summary": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\target_pose_retiming_summary.json",
+  "source_retimming_summary": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\target_pose_retiming_summary.json",
+  "source_motion_continuity_after_retiming": "D:\\sw data\\vscode\\shufa\\experiments\\llm_style_trajectory\\outputs\\batch_20260613_154131\\u5c71_xingkai_20260613_154132_009898\\motion_continuity_after_retiming_summary.json",
+  "xy_range_m": {
+    "x": [
+      -0.049057,
+      0.048721
+    ],
+    "y": [
+      -0.049392,
+      0.049392
+    ]
+  },
+  "z_range_m": [
+    0.0,
+    0.0
+  ],
+  "radius_range_m": [
+    0.000756,
+    0.064444
+  ],
+  "max_step_m": 0.002488,
+  "max_speed_m_s": 0.01792,
+  "time_monotonic": true,
+  "quaternion_normalized": true,
+  "has_nan_or_inf": false,
+  "required_fields_present": true,
+  "missing_fields": [],
+  "within_conservative_envelope": true,
+  "recommended_for_real_ik_check": true,
+  "warnings": [],
+  "scope": "AUBO i5 IK feasibility dry-run only; not real IK, not SDK, not robot control",
+  "envelope_hint": {
+    "origin_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "min_radius_m": 0.0,
+    "max_radius_m": 0.9,
+    "note": "Conservative radius envelope only; not joint-level IK, collision, singularity, or joint-limit checking."
+  }
+}

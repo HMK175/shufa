@@ -1,0 +1,6 @@
+char,char_id,style,component_count,endpoint_count,branch_point_count,extracted_segment_count,total_path_length_px,longest_segment_length_px,short_segment_count,unhandled_component_count,candidate_order_method,recommended_for_next_stage,warning
+山,u5c71,kaishu,1,4,10,7,355.296465,102.142136,10,0,component_order_longest_first,True,short_segments_filtered:10
+人,u4eba,kaishu,1,3,3,4,318.788888,145.23759,2,0,component_order_longest_first,True,short_segments_filtered:2
+中,u4e2d,kaishu,1,6,28,14,496.681241,82.828427,36,0,component_order_longest_first,True,high_branch_count;short_segments_filtered:36
+山,u5c71,lishu,1,3,4,4,335.526912,126.556349,4,0,component_order_longest_first,True,short_segments_filtered:4
+永,u6c38,lishu,3,8,10,8,505.232539,94.284271,12,0,component_order_longest_first,True,multi_component_skeleton;short_segments_filtered:12

@@ -1,0 +1,35 @@
+image=code\holdout_set\ri.png
+char=ri
+subset=holdout
+expected=4
+method=legacy
+pred=4
+fallback=global_count_farther_from_expected
+skeleton_px=3286
+endpoints=5
+junction_px=5
+junction_clusters=3
+final_count=3
+final_max_winding=1.55
+
+Legacy: count=4, max_w=1.64
+  S1: len=14.4, se=14.0, w=1.03, pts=15
+  S2: len=938.9, se=684.1, w=1.37, pts=838
+  S3: len=1566.9, se=956.3, w=1.64, pts=1408
+  S4: len=1068.2, se=702.4, w=1.52, pts=976
+
+Global: count=3, max_w=2.73
+  S1: len=14.4, se=14.0, w=1.03, pts=15
+  S2: len=1847.5, se=820.7, w=2.25, pts=1672
+  S3: len=2189.1, se=802.2, w=2.73, pts=1976
+
+Selected raw: count=4, max_w=1.64
+  S1: len=14.4, se=14.0, w=1.03, pts=15
+  S2: len=938.9, se=684.1, w=1.37, pts=838
+  S3: len=1566.9, se=956.3, w=1.64, pts=1408
+  S4: len=1068.2, se=702.4, w=1.52, pts=976
+
+Final: count=3, max_w=1.55
+  S1: len=902.1, se=683.2, w=1.32, pts=78
+  S2: len=1482.5, se=956.3, w=1.55, pts=131
+  S3: len=1033.7, se=702.6, w=1.47, pts=90

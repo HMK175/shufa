@@ -1,0 +1,8 @@
+﻿metric,raw_target_poses,smoothed_target_poses
+point_count,275,271
+duration_s,13.0528205,22.039876274
+dt_nonpositive_count,4,0
+max_speed_m_s,0.04,0.01792
+max_accel_m_s2,0.533536284,0.274132141
+max_jerk_m_s3,11.386446091,4.193553547
+recommended_for_ik_dry_run,false,true

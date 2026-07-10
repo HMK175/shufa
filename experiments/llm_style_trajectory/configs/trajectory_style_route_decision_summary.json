@@ -1,0 +1,125 @@
+{
+  "date": "2026-06-19",
+  "scope": "route decision evidence consolidation only; no new generation algorithm; no default pipeline change",
+  "routes": [
+    {
+      "route_id": "A",
+      "name": "MakeMeAHanzi median + style profile",
+      "status": "stable_baseline",
+      "recommended_use": "Use as the current default system backbone and robot dry-run/precheck route.",
+      "strengths": [
+        "Stable and reproducible",
+        "Preserves MakeMeAHanzi stroke order",
+        "Supports execution trajectory, workspace mapping, resampling, CoppeliaSim pen-tip playback, robot target poses, AUBO i5 command dry-run, and IK feasibility dry-run",
+        "Suitable for demonstrating natural-language constraints and deterministic orchestration"
+      ],
+      "limitations": [
+        "Visual style strength remains limited",
+        "Xingkai resembles kaishu centerline plus procedural connectors",
+        "Lishu resembles globally widened and flattened kaishu skeleton",
+        "Modifier connection, shape, and smoothness figures are controllable but not visually strong enough to claim mature style generation"
+      ],
+      "main_evidence": [
+        "experiments/llm_style_trajectory/outputs/style_diagnostics_20260617_200746/",
+        "experiments/llm_style_trajectory/outputs/batch_20260613_154131/",
+        "experiments/llm_style_trajectory/outputs/paper_figures/mini_paper_figures/",
+        "experiments/llm_style_trajectory/outputs/paper_figures/aubo_i5_command_adapter_smoothed_index.md",
+        "experiments/llm_style_trajectory/outputs/paper_figures/aubo_i5_ik_feasibility_smoothed_index.md"
+      ],
+      "paper_role": "Main system baseline and robot precheck backbone",
+      "do_not_claim": [
+        "high-quality real calligraphy style generation",
+        "learned style transfer",
+        "real robot writing validation"
+      ]
+    },
+    {
+      "route_id": "B",
+      "name": "Median + font skeleton/mask adaptation",
+      "status": "safe_style_adaptation_research_direction",
+      "recommended_use": "Continue only as bounded diagnostic adaptation that preserves MakeMeAHanzi stroke order.",
+      "strengths": [
+        "Preserves MakeMeAHanzi stroke order and stroke breaks",
+        "Avoids full stroke-order recovery",
+        "Works as a light morphology adaptation route for low-risk samples such as ren/kaishu",
+        "Can provide a bridge between stable median strokes and font-derived style references"
+      ],
+      "limitations": [
+        "Alpha-only projection improves distance but not strong style structure",
+        "Shan/lishu remains difficult: projection improves but aspect and lower-half structure improve only slightly",
+        "Structure and component variants hit shift caps",
+        "Increasing alpha or global pulling is not a good direction"
+      ],
+      "main_evidence": [
+        "experiments/llm_style_trajectory/outputs/median_font_alignment_20260619_145307/",
+        "experiments/llm_style_trajectory/outputs/median_font_adaptation_v2_20260619_154351/",
+        "experiments/llm_style_trajectory/outputs/lishu_structure_adaptation_v3_20260619_155525/",
+        "experiments/llm_style_trajectory/outputs/lishu_component_alignment_20260619_160805/"
+      ],
+      "paper_role": "Exploratory style adaptation evidence and limitation analysis",
+      "do_not_claim": [
+        "complete strong-style transfer",
+        "real lishu structure modeling",
+        "default-ready trajectory generation"
+      ]
+    },
+    {
+      "route_id": "C",
+      "name": "Font skeleton derived path",
+      "status": "style_basis_research_only",
+      "recommended_use": "Use as manually screened small-sample style-basis evidence; do not connect to the default pipeline.",
+      "strengths": [
+        "Strongest visible font-style signal in selected samples",
+        "Shows glyph structure that global scaling cannot express",
+        "Useful for style-basis diagnostics and future hybrid design"
+      ],
+      "limitations": [
+        "Stroke order recovery is difficult",
+        "Path segments can be fragmented",
+        "Branch points, endpoints, and disconnected components are risky for complex characters",
+        "Approaches the old image-skeleton route and can inherit its generalization problems"
+      ],
+      "main_evidence": [
+        "experiments/llm_style_trajectory/outputs/font_outline_basis_feasibility_20260619_115008/",
+        "experiments/llm_style_trajectory/outputs/font_outline_basis_audit_20260619_120211/",
+        "experiments/llm_style_trajectory/outputs/font_skeleton_cleanup_prototype_20260619_122355/",
+        "experiments/llm_style_trajectory/outputs/font_skeleton_path_extraction_20260619_123527/",
+        "experiments/llm_style_trajectory/outputs/font_derived_trajectory_trial_20260619_125428/",
+        "experiments/llm_style_trajectory/outputs/font_skeleton_stroke_ordering_20260619_132543/"
+      ],
+      "paper_role": "Future-work and style-basis diagnostic evidence",
+      "do_not_claim": [
+        "ready-to-use official trajectory basis",
+        "reliable real stroke order",
+        "robust complex-character generalization"
+      ]
+    }
+  ],
+  "current_recommendation": "Keep Route A as the stable baseline and robot precheck backbone; treat Route B as bounded style adaptation research; treat Route C as manually screened style-basis evidence. Next, design a hybrid route before adding more generation algorithms.",
+  "next_options": [
+    {
+      "option_id": 1,
+      "name": "Hybrid route design spec",
+      "priority": "recommended",
+      "description": "Write a design-only specification where A provides stroke order and execution chain, B provides bounded adaptation, and C provides font-outline style reference."
+    },
+    {
+      "option_id": 2,
+      "name": "Small Route C expansion",
+      "priority": "optional",
+      "description": "Expand only simple kaishu/lishu samples under manual screening; do not handle xingkai or complex characters yet."
+    },
+    {
+      "option_id": 3,
+      "name": "Paper minimum mainline",
+      "priority": "optional",
+      "description": "Use Route A as the system paper backbone and present B/C as limitation-driven exploratory evidence."
+    }
+  ],
+  "explicit_boundaries": [
+    "Do not continue blind connector/taper tuning as the main route.",
+    "Do not connect font skeleton derived paths to the default pipeline now.",
+    "Do not claim high-quality real calligraphy style generation.",
+    "AUBO i5 work remains dry-run/precheck only, not real IK or physical robot writing."
+  ]
+}

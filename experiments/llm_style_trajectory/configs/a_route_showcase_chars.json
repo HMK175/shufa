@@ -1,0 +1,14 @@
+{
+  "simple_chars": ["人", "大", "川", "山", "中", "永"],
+  "medium_chars": ["明", "和", "林", "风", "国", "好"],
+  "complex_chars": ["德", "福", "静", "康", "学", "书"],
+  "style_overview_chars": ["人", "大", "川", "山", "中", "永", "明", "和", "林", "风", "国", "好", "德", "福", "静", "康", "学", "书"],
+  "style_overview_grid_chars": ["人", "山", "中", "永", "明", "和", "林", "国", "福"],
+  "connection_control_chars": ["国", "德", "福", "和"],
+  "behavior_control_chars": ["国", "德", "福"],
+  "execution_display_chars": ["国", "德", "福", "和", "山", "中"],
+  "shape_control_chars": ["中", "山"],
+  "smoothness_supplementary_chars": ["永"],
+  "styles": ["kaishu", "xingkai", "lishu"],
+  "behavior_control_labels_cn": ["抬笔过渡", "弱连续过渡", "连续带笔过渡"]
+}

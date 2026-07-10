@@ -1,0 +1,4 @@
+style,sample_count,mean_font_aspect_ratio,mean_trajectory_aspect_ratio,mean_abs_aspect_ratio_gap,mean_font_connected_component_count,mean_trajectory_connection_count,mean_font_stroke_width,mean_trajectory_mean_width
+kaishu,18,1.029878,1.018672,0.058451,2.888889,0.0,6.320909,9.0
+xingkai,18,0.989059,1.070791,0.126632,1.555556,6.055556,9.575023,7.488813
+lishu,18,1.480275,1.465173,0.110869,2.5,0.0,8.956169,10.0

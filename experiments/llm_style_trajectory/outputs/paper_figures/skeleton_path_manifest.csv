@@ -1,0 +1,6 @@
+char,char_id,style,figure_path,extracted_segment_count,recommended_for_next_stage,warning
+山,u5c71,kaishu,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\font_skeleton_path_extraction_20260619_123527\figures\path_extraction_u5c71_kaishu.png,7,True,short_segments_filtered:10
+人,u4eba,kaishu,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\font_skeleton_path_extraction_20260619_123527\figures\path_extraction_u4eba_kaishu.png,4,True,short_segments_filtered:2
+中,u4e2d,kaishu,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\font_skeleton_path_extraction_20260619_123527\figures\path_extraction_u4e2d_kaishu.png,14,True,high_branch_count;short_segments_filtered:36
+山,u5c71,lishu,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\font_skeleton_path_extraction_20260619_123527\figures\path_extraction_u5c71_lishu.png,4,True,short_segments_filtered:4
+永,u6c38,lishu,D:\sw data\vscode\shufa\experiments\llm_style_trajectory\outputs\font_skeleton_path_extraction_20260619_123527\figures\path_extraction_u6c38_lishu.png,8,True,multi_component_skeleton;short_segments_filtered:12

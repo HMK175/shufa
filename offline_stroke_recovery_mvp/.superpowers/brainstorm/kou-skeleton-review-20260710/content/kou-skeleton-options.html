@@ -1,0 +1,90 @@
+<style>
+  .diagnosis-grid { display:grid; grid-template-columns: 1.1fr 1fr; gap:18px; margin:18px 0 26px; }
+  .diagram { background:#fff; border:1px solid #d8dee8; border-radius:12px; padding:12px; }
+  .diagram svg { width:100%; height:260px; display:block; background:#f8fafc; border-radius:8px; }
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card-image svg { width:100%; height:230px; display:block; background:#fff; }
+  .note { font-size:13px; color:#64748b; line-height:1.55; }
+  .recommended { color:#087f5b; font-weight:700; }
+  .metric { display:inline-block; margin:4px 6px 0 0; padding:3px 7px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; }
+  @media (max-width: 900px) { .diagnosis-grid, .cards { grid-template-columns:1fr; } }
+</style>
+
+<h2>“口”骨架：先修哪里？</h2>
+<p class="subtitle">黑色淡影是输入字形；彩色线是三笔中心轨迹。当前最明确的问题位于第二笔右上角。</p>
+
+<div class="diagnosis-grid">
+  <div class="diagram">
+    <div class="label">当前三笔骨架</div>
+    <svg viewBox="0 0 70 60" preserveAspectRatio="xMidYMid meet">
+      <image href="kou-input.png" x="0" y="0" width="70" height="60" opacity="0.24"/>
+      <polyline points="9.78,13.92 10.37,16.94 10.86,18.79 11.30,20.62 11.72,22.52 12.11,24.48 12.49,26.50 12.84,28.60 13.17,30.76 13.47,32.98 13.75,35.28 14.01,37.63 14.25,40.06 14.46,42.55 14.65,45.10 14.73,45.98 15.07,49.97" fill="none" stroke="#ef4444" stroke-width="1.25"/>
+      <polyline points="7.80,14.14 9.78,13.92 13.07,13.48 14.83,13.33 16.81,13.15 18.99,12.92 21.37,12.65 23.97,12.34 26.77,11.98 29.77,11.59 32.98,11.15 36.40,10.68 40.02,10.16 43.85,9.60 47.88,9.00 52.12,8.36 56.56,7.68 55.72,8.06 54.88,8.43 54.03,8.81 53.19,9.19 52.35,9.56 51.51,9.94 50.67,10.31 49.82,10.69 48.98,11.07 49.84,11.12 50.66,11.18 51.43,11.25 52.15,11.33 52.83,11.41 53.46,11.50 54.05,11.60 54.58,11.71 55.08,11.82 55.52,11.94 55.92,12.07 56.27,12.20 56.58,12.35 56.84,12.50 57.05,12.65 58.02,14.05 57.48,14.60 56.93,15.44 56.44,16.47 55.96,17.69 55.50,19.13 55.05,20.79 54.59,22.68 54.14,24.79 53.69,27.14 53.23,29.71 52.78,32.52 52.33,35.57 51.87,38.85 51.42,42.30 50.93,44.19" fill="none" stroke="#1d4ed8" stroke-width="1.25"/>
+      <polyline points="14.73,45.98 19.82,45.73 23.04,45.60 26.10,45.47 29.03,45.36 31.82,45.24 34.47,45.14 36.99,45.04 39.36,44.95 41.60,44.86 43.70,44.79 45.67,44.72 47.49,44.65 49.18,44.59 50.73,44.54 50.93,44.19 54.91,43.79" fill="none" stroke="#059669" stroke-width="1.25"/>
+      <circle cx="53.5" cy="10.4" r="6.2" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="2 1"/>
+      <text x="32" y="3.8" font-size="3.3" fill="#991b1b">先到最右 → 回退约 8 px → 再向右下</text>
+    </svg>
+  </div>
+  <div class="diagram">
+    <div class="label">诊断结论</div>
+    <h3>不是单纯“太直”，而是右上角存在重叠回折环</h3>
+    <p class="note">横折由两段重叠轨迹直接拼接。第二笔包含 3 个不应出现的尖锐转向，最小方向余弦约为 −0.96。渲染加粗后，这个小回环会膨胀成右上角的大肉块，也会强化“记号笔框”的感觉。</p>
+    <span class="metric">回退距离 ≈ 8 px</span>
+    <span class="metric">错误尖转向 = 3</span>
+    <span class="metric">当前横折 57 点</span>
+    <p class="note">左竖和底横也有采样折线感，但优先级低于清除这个拓扑错误。</p>
+  </div>
+</div>
+
+<h3>请选择第一轮骨架修复的约束强度</h3>
+<p class="subtitle">点击一个方案。这里先只讨论中心线，不调整宽度和笔锋。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 70 60">
+        <image href="kou-input.png" x="0" y="0" width="70" height="60" opacity="0.25"/>
+        <polyline points="9.78,13.92 10.37,16.94 10.86,18.79 11.30,20.62 11.72,22.52 12.11,24.48 12.49,26.50 12.84,28.60 13.17,30.76 13.47,32.98 13.75,35.28 14.01,37.63 14.25,40.06 14.46,42.55 14.65,45.10 15.07,49.97" fill="none" stroke="#ef4444" stroke-width="1.2"/>
+        <polyline points="7.80,14.14 9.78,13.92 13.07,13.48 18.99,12.92 26.77,11.98 36.40,10.68 47.88,9.00 56.56,7.68 57.48,14.60 56.93,15.44 55.96,17.69 55.05,20.79 54.14,24.79 53.23,29.71 52.33,35.57 51.42,42.30 50.93,44.19" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+        <polyline points="14.73,45.98 23.04,45.60 31.82,45.24 41.60,44.86 49.18,44.59 54.91,43.79" fill="none" stroke="#059669" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>A　只删重叠回折</h3>
+      <p>切掉右上角重复前缀，其他原始折线全部保留。</p>
+      <p class="note">改动最小，但顶部、两竖和底横仍有阶梯感。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 70 60">
+        <image href="kou-input.png" x="0" y="0" width="70" height="60" opacity="0.25"/>
+        <path d="M 9.78 13.92 C 10.2 24, 11.8 39, 15.07 49.97" fill="none" stroke="#ef4444" stroke-width="1.2"/>
+        <path d="M 7.80 14.14 C 21 14, 43 10, 56.56 7.68 Q 58.6 10.5, 57.48 14.60 C 56.3 24, 53.8 37, 50.93 44.19" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+        <path d="M 14.73 45.98 C 28 46.4, 43 45.2, 54.91 43.79" fill="none" stroke="#059669" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>B　去重叠 + 分腿平滑</h3>
+      <p><span class="recommended">推荐</span>：固定端点和交点出锋，横、竖分别做受限平滑，横折只保留一个转角。</p>
+      <p class="note">能消除阶梯感，同时仍贴合这张输入图的倾斜和弧度。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 70 60">
+        <image href="kou-input.png" x="0" y="0" width="70" height="60" opacity="0.25"/>
+        <path d="M 10 13 C 10.5 26, 12 40, 14.5 50" fill="none" stroke="#ef4444" stroke-width="1.2"/>
+        <path d="M 8 14 C 25 12, 44 9, 57 8 Q 59 11, 57.5 15 C 56 26, 54 37, 51 44" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+        <path d="M 15 46 C 30 46, 44 45, 55 44" fill="none" stroke="#059669" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>C　先验模板重构</h3>
+      <p>主要采用 MakeMeAHanzi 中线形状，再缩放、吸附到输入。</p>
+      <p class="note">最规整，但更像标准模板，可能丢掉原字的个性。</p>
+    </div>
+  </div>
+</div>

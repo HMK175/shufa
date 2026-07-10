@@ -1,0 +1,3 @@
+char,char_id,style,strategy_selected,section_strategy,fallback_used,usable_constraint_count,reference_only_constraint_count,blocked_constraint_count,max_shift_cap,human_review_required,recommended_next_use,note
+山,u5c71,lishu,component_first_safe,hybrid_component_first,False,5,5,2,15,True,B_safe_input,Best candidate for bounded B adaptation using component bbox first and safe constraints only.
+风,u98ce,lishu,fallback_first_reference_only,hybrid_component_first,True,5,5,2,12,True,fallback_first_reference_only,Use fallback-first section guidance and keep as conservative reference-only input.

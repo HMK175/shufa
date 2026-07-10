@@ -1,0 +1,14 @@
+{
+  "samples": [
+    {"id": "yi", "name": "yi"},
+    {"id": "shi", "name": "shi"},
+    {"id": "kou", "name": "kou"},
+    {"id": "zhong", "name": "zhong"},
+    {"id": "yong", "name": "yong"},
+    {"id": "xin", "name": "xin"},
+    {"id": "zhi", "name": "zhi"},
+    {"id": "wo", "name": "wo"},
+    {"id": "long", "name": "long"},
+    {"id": "shu", "name": "shu"}
+  ]
+}

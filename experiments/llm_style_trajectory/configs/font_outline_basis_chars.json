@@ -1,0 +1,6 @@
+{
+  "chars": ["山", "中", "永", "人", "国", "德", "福", "明", "和", "风"],
+  "styles": ["kaishu", "xingkai", "lishu"],
+  "font_sources": "style_sources.json",
+  "image_size": 256
+}

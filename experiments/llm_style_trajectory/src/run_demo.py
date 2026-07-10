@@ -112,6 +112,20 @@ def safe_char_id(char: str) -> str:
     return f"u{ord(char):04x}"
 
 
+def relabel_variants_for_modifier_context(
+    summaries: list[dict],
+    variants: list[tuple[str, list]],
+    modifier_key: str,
+    default_label: str,
+) -> list[tuple[str, list]]:
+    relabeled: list[tuple[str, list]] = []
+    for summary, (_, styled) in zip(summaries, variants):
+        modifiers = summary.get("style_modifiers", {}) if isinstance(summary.get("style_modifiers"), dict) else {}
+        label = str(modifiers.get(modifier_key) or default_label)
+        relabeled.append((label, styled))
+    return relabeled
+
+
 def run_task(
     task_text: str,
     output_root: Path | str = DEFAULT_OUTPUT,
@@ -365,7 +379,13 @@ def run_batch(
             for row in char_summaries
         ):
             shape_path = batch_dir / f"modifier_ablation_shape_{safe_char_id(char)}.png"
-            write_labeled_compare(raw_by_char[char], variants, shape_path, image_size=image_size)
+            shape_variants = relabel_variants_for_modifier_context(
+                char_summaries,
+                variants,
+                modifier_key="shape_emphasis",
+                default_label="normal",
+            )
+            write_labeled_compare(raw_by_char[char], shape_variants, shape_path, image_size=image_size)
             shape_compare_paths[char] = str(shape_path)
         if any(
             isinstance(row.get("style_modifiers"), dict)

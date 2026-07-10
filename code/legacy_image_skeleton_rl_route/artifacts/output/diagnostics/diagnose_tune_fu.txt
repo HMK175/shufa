@@ -1,0 +1,73 @@
+image=code\tune_set\fu.png
+char=fu
+subset=tune
+expected=13
+method=legacy
+pred=16
+fallback=global_high_winding
+skeleton_px=6585
+endpoints=11
+junction_px=38
+junction_clusters=16
+final_count=13
+final_max_winding=4.59
+
+Legacy: count=16, max_w=3.99
+  S1: len=1611.7, se=741.9, w=2.17, pts=1141
+  S2: len=912.6, se=437.6, w=2.09, pts=612
+  S3: len=339.5, se=147.1, w=2.31, pts=231
+  S4: len=827.0, se=319.1, w=2.59, pts=658
+  S5: len=117.0, se=101.5, w=1.15, pts=94
+  S6: len=535.0, se=507.2, w=1.05, pts=408
+  S7: len=479.7, se=134.2, w=3.58, pts=258
+  S8: len=393.6, se=362.0, w=1.09, pts=354
+  S9: len=748.4, se=187.6, w=3.99, pts=696
+  S10: len=203.6, se=187.6, w=1.09, pts=176
+  S11: len=473.0, se=188.7, w=2.51, pts=407
+  S12: len=1493.7, se=480.7, w=3.11, pts=1327
+  ... 4 more
+
+Global: count=16, max_w=23.06
+  S1: len=1267.0, se=831.4, w=1.52, pts=998
+  S2: len=940.9, se=40.8, w=23.06, pts=850
+  S3: len=1204.3, se=506.1, w=2.38, pts=1038
+  S4: len=700.1, se=473.3, w=1.48, pts=357
+  S5: len=272.4, se=260.3, w=1.05, pts=261
+  S6: len=766.4, se=571.4, w=1.34, pts=685
+  S7: len=130.4, se=125.2, w=1.04, pts=126
+  S8: len=262.4, se=240.4, w=1.09, pts=241
+  S9: len=117.0, se=101.5, w=1.15, pts=94
+  S10: len=510.4, se=440.8, w=1.16, pts=441
+  S11: len=495.5, se=431.8, w=1.15, pts=434
+  S12: len=168.0, se=156.2, w=1.08, pts=157
+  ... 4 more
+
+Selected raw: count=16, max_w=3.99
+  S1: len=393.6, se=362.0, w=1.09, pts=354
+  S2: len=495.5, se=431.8, w=1.15, pts=434
+  S3: len=202.0, se=187.6, w=1.08, pts=181
+  S4: len=510.4, se=440.8, w=1.16, pts=441
+  S5: len=535.0, se=507.2, w=1.05, pts=408
+  S6: len=203.6, se=187.6, w=1.09, pts=176
+  S7: len=479.7, se=134.2, w=3.58, pts=258
+  S8: len=339.5, se=147.1, w=2.31, pts=231
+  S9: len=1611.7, se=741.9, w=2.17, pts=1141
+  S10: len=748.4, se=187.6, w=3.99, pts=696
+  S11: len=906.8, se=481.2, w=1.88, pts=803
+  S12: len=473.0, se=188.7, w=2.51, pts=407
+  ... 4 more
+
+Final: count=13, max_w=4.59
+  S1: len=607.7, se=387.9, w=1.57, pts=17
+  S2: len=321.9, se=188.8, w=1.70, pts=8
+  S3: len=857.5, se=218.8, w=3.92, pts=29
+  S4: len=512.8, se=508.2, w=1.01, pts=15
+  S5: len=964.5, se=417.8, w=2.31, pts=31
+  S6: len=455.7, se=134.8, w=3.38, pts=9
+  S7: len=120.9, se=119.0, w=1.02, pts=4
+  S8: len=1573.9, se=742.3, w=2.12, pts=42
+  S9: len=312.6, se=260.1, w=1.20, pts=10
+  S10: len=856.6, se=482.7, w=1.77, pts=29
+  S11: len=447.2, se=188.7, w=2.37, pts=15
+  S12: len=1897.2, se=413.1, w=4.59, pts=63
+  ... 1 more

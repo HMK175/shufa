@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
+from execution_refinement import refine_execution_rows
 from trajectory_tools import apply_style_transform, linear_resample, smooth_polyline, stroke_path_length
 
 
@@ -103,6 +104,11 @@ def build_execution_trajectory(
     brush_params: dict[str, Any],
     style_modifiers: dict[str, str] | None,
     image_size: int,
+    *,
+    style: str = "",
+    connector_rule: dict[str, Any] | None = None,
+    stroke_width_profile: dict[str, Any] | None = None,
+    connector_shape: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     base = _base_strokes(raw_strokes_yx, style_params, image_size)
     rows: list[dict[str, Any]] = []
@@ -174,6 +180,16 @@ def build_execution_trajectory(
             is_connector=0,
             segment_type="stroke",
             connection_preference=connection_preference,
+        )
+    if connector_rule is not None or stroke_width_profile is not None or connector_shape is not None:
+        rows = refine_execution_rows(
+            rows,
+            style=style,
+            style_modifiers=style_modifiers,
+            connector_rule=connector_rule,
+            stroke_width_profile=stroke_width_profile,
+            connector_shape=connector_shape,
+            pen_up_height=pen_up_height,
         )
     return rows
 
