@@ -19,6 +19,8 @@ references/downloads/
 references/external/
 .claude/
 external_repos/
+experiments/target_glyph_generation/data/
+experiments/target_glyph_generation/outputs/
 
 # Model checkpoints
 *.pt

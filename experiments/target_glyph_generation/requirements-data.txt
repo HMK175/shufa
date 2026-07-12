@@ -1,0 +1,4 @@
+Pillow>=10,<12
+fonttools>=4.50,<5
+PyYAML>=6,<7
+pytest>=8,<9
