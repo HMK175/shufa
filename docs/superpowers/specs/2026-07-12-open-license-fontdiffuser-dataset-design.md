@@ -60,12 +60,18 @@
 
 ## 目录与清单设计
 
-大体积字体二进制文件和渲染图像不纳入版本控制。新增数据集工具放在当前实验目录下：
+大体积字体二进制文件和渲染图像不纳入版本控制。第 3 章“目标字图像生成”作为独立实验目录，不与现有轨迹/执行链路混放：
 
 ```text
-experiments/llm_style_trajectory/
-  data/fontdiffuser_open_dataset/       # 本地数据集根目录，Git 忽略
-    fonts/                               # 原始字体文件，不提交
+experiments/target_glyph_generation/
+  README.md
+  docs/
+  configs/
+  src/
+  scripts/
+  tests/
+  data/fontdiffuser_open_dataset/        # 本地数据集根目录，Git 忽略
+    fonts/                                # 原始字体文件，不提交
     rendered/
       ContentImage/<character>.png
       TargetImage/<font_id>/<font_id>+<character>.png
@@ -75,6 +81,9 @@ experiments/llm_style_trajectory/
       splits.json
       render_failures.csv
       dataset_summary.json
+  outputs/                                # 审计图、评估结果和检查点，Git 忽略
+
+external_repos/FontDiffuser/              # 上游基线代码，不混入本项目修改
 ```
 
 `fonts.csv` 记录 `font_id`、显示名称、版本、来源 URL、许可证标识、本地文件 SHA-256、公共字符覆盖率和接收状态。`characters.csv` 记录 Unicode 字符、数据划分和复杂度代理量。`splits.json` 记录风格、字符、参考字符和随机种子的完整划分。
