@@ -12,6 +12,7 @@ __pycache__/
 .mplconfig/
 .agents/
 .codex/
+.worktrees/
 .tmp_*.py
 tmp_*.png
 references/downloads/
