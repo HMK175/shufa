@@ -1,0 +1,9 @@
+canvas_size: 256
+character_seed: 20260713
+train_characters: 800
+validation_characters: 100
+test_characters: 100
+minimum_train_styles: 20
+validation_styles: 3
+test_styles: 5
+reference_count: 1
