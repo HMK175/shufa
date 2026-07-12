@@ -1,71 +1,71 @@
-# Open-License FontDiffuser Dataset Design
+# 开源许可 FontDiffuser 数据集设计规格
 
-**Date:** 2026-07-12
+**日期：** 2026-07-12
 
-## Goal
+## 目标
 
-Build a reproducible, image-only Chinese font-generation dataset for a FontDiffuser baseline and a later structure-preserving improvement. The dataset must use only fonts with explicit permission for this research use and must support evaluation on unseen characters and unseen font styles.
+构建一个可复现、仅依赖图像的中文字体生成数据集，用于复现 FontDiffuser 基线，并为后续“结构保持”改进提供统一实验数据。数据集只使用许可明确、允许本研究用途的字体，并能够评估未见字符和未见字体风格上的效果。
 
-## Scope
+## 本次范围
 
-This design covers dataset sourcing, rendering, manifests, split rules, and validation. It does not download commercial fonts, train FontDiffuser, modify FontDiffuser, recover trajectories, or connect a robot.
+本规格只覆盖数据来源、字体渲染、清单文件、数据划分与质量验证。不覆盖商业字体下载、FontDiffuser 训练、FontDiffuser 模型修改、轨迹恢复或机器人连接。
 
-## Licensing policy
+## 许可规则
 
-Accept a font only when its source, version, and license can be recorded in a manifest and the license is one of:
+只有在来源、版本和许可证均能记录到清单中的字体才可接收。可接受的许可包括：
 
-- SIL Open Font License (OFL);
-- Apache License 2.0;
-- another explicit license that permits the required research use, rendering, and storage of generated glyph images.
+- SIL Open Font License（OFL）；
+- Apache License 2.0；
+- 其他明确允许本研究所需的渲染、生成字图存储与科研使用的许可证。
 
-Do not use Foundertype or any font with an unclear license unless the rights holder gives written permission that explicitly covers batch rendering, model training, server-side training, and paper figures. Do not redistribute font binaries. The dataset manifest records source URLs and license text or license-file hashes instead.
+不使用 Foundertype（方正）或其他许可含糊的字体。除非权利人提供书面许可，明确覆盖批量渲染、模型训练、服务器训练和论文图示。不得再分发字体二进制文件；数据清单只记录来源 URL、许可证文本或许可证文件哈希。
 
-## Dataset contract
+## 数据样本定义
 
-Every target font must cover the same 1,000-character common set. For every target character, the dataset provides:
+每个目标字体必须覆盖同一份 1,000 字公共字符表。每一个目标字符对应：
 
 ```text
-content image:     canonical source font rendering of the target character
-style reference:   a different character rendered with the target font
-target image:      target character rendered with the target font
+内容图：使用固定的标准源字体渲染该目标字符
+风格参考图：使用目标字体渲染的另一个字符
+目标图：使用目标字体渲染该目标字符
 ```
 
-The stored images are grayscale, black glyphs on white backgrounds, normalized to a square 256 px canvas. FontDiffuser can resize these canonical images to its model resolution during loading. No colour decoration or InstructPix2Pix processing is included.
+存储图像统一为灰度、白底黑字、256 px 正方形画布。FontDiffuser 在加载时可再缩放到模型输入分辨率。数据集中不包含彩色装饰效果，也不包含 InstructPix2Pix 后处理。
 
-## Split protocol
+## 数据划分
 
-Character IDs are globally fixed and disjoint:
+字符集合全局固定且彼此不重叠：
 
-| Split | Count | Purpose |
+| 划分 | 数量 | 用途 |
 |---|---:|---|
-| train characters | 800 | model optimisation |
-| validation characters | 100 | model selection |
-| test characters | 100 | final reported evaluation |
+| 训练字符 | 800 | 模型优化 |
+| 验证字符 | 100 | 模型选择 |
+| 测试字符 | 100 | 最终结果报告 |
 
-The initial target-font objective is at least 28 styles:
+初始目标字体数量至少为 28 种：
 
-| Split | Minimum count | Purpose |
+| 划分 | 最少数量 | 用途 |
 |---|---:|---|
-| train styles | 20 | FontDiffuser training; exceeds its phase-2 17-style requirement |
-| validation styles | 3 | hyperparameter and failure analysis only |
-| test styles | 5 | unseen-style evaluation |
+| 训练风格 | 20 | FontDiffuser 训练；超过其第二阶段至少 17 种风格的要求 |
+| 验证风格 | 3 | 仅用于调参与失败分析 |
+| 测试风格 | 5 | 未见风格评估 |
 
-For validation and test styles, exactly one support character is fixed per evaluation run. That support character is never the target character. A deterministic seed produces the same support-target pairs for every compared method.
+验证和测试风格的每次评估固定使用 1 个参考字符，且参考字符不能等于目标字符。所有对比方法使用同一随机种子生成相同的“参考字—目标字”配对。
 
-The final benchmark reports:
+最终报告包括：
 
-- seen-style, unseen-character results;
-- unseen-style, unseen-character results as the primary few-shot result;
-- optionally unseen-style, seen-character results when adequate samples exist.
+- 已见风格下的未见字符结果；
+- 未见风格、未见字符结果，作为主要 few-shot 结果；
+- 数据量足够时，补充未见风格、已见字符结果。
 
-## Directory and manifest design
+## 目录与清单设计
 
-Large font binaries and rendered images stay outside version control. New dataset tooling belongs under the current experiment area:
+大体积字体二进制文件和渲染图像不纳入版本控制。新增数据集工具放在当前实验目录下：
 
 ```text
 experiments/llm_style_trajectory/
-  data/fontdiffuser_open_dataset/       # ignored local dataset root
-    fonts/                               # source font binaries, not committed
+  data/fontdiffuser_open_dataset/       # 本地数据集根目录，Git 忽略
+    fonts/                               # 原始字体文件，不提交
     rendered/
       ContentImage/<character>.png
       TargetImage/<font_id>/<font_id>+<character>.png
@@ -77,41 +77,41 @@ experiments/llm_style_trajectory/
       dataset_summary.json
 ```
 
-`fonts.csv` records `font_id`, display name, version, source URL, license identifier, local file SHA-256, common-character coverage, and acceptance status. `characters.csv` records the Unicode character, split, and complexity proxy. `splits.json` stores all style, character, support-character, and seed assignments.
+`fonts.csv` 记录 `font_id`、显示名称、版本、来源 URL、许可证标识、本地文件 SHA-256、公共字符覆盖率和接收状态。`characters.csv` 记录 Unicode 字符、数据划分和复杂度代理量。`splits.json` 记录风格、字符、参考字符和随机种子的完整划分。
 
-## Validation gates
+## 质量验证门槛
 
-The builder must fail or exclude a font when any of the following occurs:
+出现以下任一情况时，构建器必须拒绝或排除相应字体：
 
-- license evidence is absent or ambiguous;
-- the font cannot render every character in the common set;
-- rendering produces a blank glyph, clipping, or non-square image;
-- a target style has fewer than two usable characters for reference sampling;
-- a split overlaps on a protected style or protected target character.
+- 没有许可证依据，或许可证含义不明确；
+- 字体不能渲染公共字符表中的全部字符；
+- 渲染结果为空白、被裁切或不是正方形图像；
+- 目标风格少于 2 个可用字符，无法采样不同的参考字；
+- 数据划分中出现受保护风格或目标字符重叠。
 
-Before model training, the builder produces a visual audit grid with examples from every accepted font and a machine-readable summary of counts, coverage, and exclusions. The user must visually inspect the audit grid before baseline training.
+训练前，构建器必须生成包含每个接收字体样例的可视化审计图，并生成记录数量、覆盖率和排除原因的机器可读摘要。用户人工确认审计图后，才可启动基线训练。
 
-## Evaluation plan
+## 评价方案
 
-Use FontDiffuser-compatible image metrics on the frozen test pairs:
+在固定测试对上使用与 FontDiffuser 可对齐的图像指标：
 
-- FID (lower is better);
-- SSIM (higher is better);
-- LPIPS (lower is better);
-- L1 error (lower is better).
+- FID（越低越好）；
+- SSIM（越高越好）；
+- LPIPS（越低越好）；
+- L1 误差（越低越好）。
 
-After a baseline failure analysis, add a structure-specific metric only if it measures the observed failure mode. Candidate metrics are skeleton Chamfer distance, skeleton F1 with a documented tolerance, endpoint F1, or connected-component error. These are supplementary to the four FontDiffuser-compatible metrics.
+只有在基线失败分析发现明确结构问题时，才增加结构指标。候选包括骨架 Chamfer Distance、明确容忍半径的骨架 F1、端点 F1 或连通分量误差。这些指标是对四项 FontDiffuser 图像指标的补充，而非替代。
 
-## Deferred model improvement
+## 延后确定的模型改进
 
-Do not select a new architecture before a baseline run. If the baseline exhibits missing thin strokes, broken endpoints, or merged strokes, the preferred single improvement candidate is a topology-aware, stroke-sensitive reconstruction loss computed from preprocessed target glyph structure. This candidate must be checked against FontDiffuser's existing MCA, RSI, and SCR mechanisms before implementation.
+在基线完成前不确定新网络结构。若基线出现细笔画缺失、端点断裂或笔画粘连，首选的单一改进候选是：由目标字结构预处理得到的、拓扑感知且对笔画敏感的重建损失。实现前必须逐项确认其不与 FontDiffuser 已有的 MCA、RSI 和 SCR 机制重复。
 
-## Success criteria
+## 完成标准
 
-This subproject is complete when:
+满足以下条件时，本数据集子项目才算完成：
 
-1. At least 20 explicitly licensed training styles and the agreed validation/test styles have passed coverage checks.
-2. All accepted styles render the 1,000-character common set without clipping or blanks.
-3. Manifests and deterministic splits exist.
-4. A visual audit grid has been inspected and accepted.
-5. The resulting layout is consumable by FontDiffuser without manual renaming.
+1. 至少 20 种许可明确的训练风格，以及约定的验证/测试风格，均通过覆盖率检查；
+2. 所有接收字体都能完整渲染 1,000 字公共字符表，且无空白或裁切；
+3. 已生成清单文件和确定性数据划分；
+4. 已生成人工可审阅的样张审计图，并获得确认；
+5. 目录无需手工重命名即可被 FontDiffuser 数据加载器读取。
