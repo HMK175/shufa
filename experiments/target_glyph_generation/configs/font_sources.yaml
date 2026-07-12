@@ -1,0 +1,170 @@
+# 仅记录已在上游项目核验到 OFL-1.1 的候选来源。
+# local_path 是数据集根目录 fonts/ 下的相对路径；构建前会核验文件、许可证副本和 SHA-256。
+# 三个 Noto 可变字体会在下载后固化为指定 wght 的静态 TTF，避免训练时依赖可变字体轴。
+fonts:
+  - &noto_sans_sc
+    font_id: noto_sans_sc_100
+    display_name: Noto Sans SC Thin
+    version: Google Fonts main, wght=100
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/OFL.txt
+    local_path: fonts/noto_sans_sc_100.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_200
+    display_name: Noto Sans SC ExtraLight
+    version: Google Fonts main, wght=200
+    local_path: fonts/noto_sans_sc_200.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_300
+    display_name: Noto Sans SC Light
+    version: Google Fonts main, wght=300
+    local_path: fonts/noto_sans_sc_300.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_400
+    display_name: Noto Sans SC Regular
+    version: Google Fonts main, wght=400
+    local_path: fonts/noto_sans_sc_400.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_500
+    display_name: Noto Sans SC Medium
+    version: Google Fonts main, wght=500
+    local_path: fonts/noto_sans_sc_500.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_700
+    display_name: Noto Sans SC Bold
+    version: Google Fonts main, wght=700
+    local_path: fonts/noto_sans_sc_700.ttf
+  - <<: *noto_sans_sc
+    font_id: noto_sans_sc_900
+    display_name: Noto Sans SC Black
+    version: Google Fonts main, wght=900
+    local_path: fonts/noto_sans_sc_900.ttf
+
+  - &noto_serif_sc
+    font_id: noto_serif_sc_200
+    display_name: Noto Serif SC ExtraLight
+    version: Google Fonts main, wght=200
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/OFL.txt
+    local_path: fonts/noto_serif_sc_200.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_300
+    display_name: Noto Serif SC Light
+    version: Google Fonts main, wght=300
+    local_path: fonts/noto_serif_sc_300.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_400
+    display_name: Noto Serif SC Regular
+    version: Google Fonts main, wght=400
+    local_path: fonts/noto_serif_sc_400.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_500
+    display_name: Noto Serif SC Medium
+    version: Google Fonts main, wght=500
+    local_path: fonts/noto_serif_sc_500.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_600
+    display_name: Noto Serif SC SemiBold
+    version: Google Fonts main, wght=600
+    local_path: fonts/noto_serif_sc_600.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_700
+    display_name: Noto Serif SC Bold
+    version: Google Fonts main, wght=700
+    local_path: fonts/noto_serif_sc_700.ttf
+  - <<: *noto_serif_sc
+    font_id: noto_serif_sc_900
+    display_name: Noto Serif SC Black
+    version: Google Fonts main, wght=900
+    local_path: fonts/noto_serif_sc_900.ttf
+
+  - &noto_sans_tc
+    font_id: noto_sans_tc_100
+    display_name: Noto Sans TC Thin
+    version: Google Fonts main, wght=100
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/notosanstc/OFL.txt
+    local_path: fonts/noto_sans_tc_100.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_200
+    display_name: Noto Sans TC ExtraLight
+    version: Google Fonts main, wght=200
+    local_path: fonts/noto_sans_tc_200.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_300
+    display_name: Noto Sans TC Light
+    version: Google Fonts main, wght=300
+    local_path: fonts/noto_sans_tc_300.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_400
+    display_name: Noto Sans TC Regular
+    version: Google Fonts main, wght=400
+    local_path: fonts/noto_sans_tc_400.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_500
+    display_name: Noto Sans TC Medium
+    version: Google Fonts main, wght=500
+    local_path: fonts/noto_sans_tc_500.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_700
+    display_name: Noto Sans TC Bold
+    version: Google Fonts main, wght=700
+    local_path: fonts/noto_sans_tc_700.ttf
+  - <<: *noto_sans_tc
+    font_id: noto_sans_tc_900
+    display_name: Noto Sans TC Black
+    version: Google Fonts main, wght=900
+    local_path: fonts/noto_sans_tc_900.ttf
+
+  - font_id: ma_shan_zheng
+    display_name: Ma Shan Zheng Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/MaShanZheng-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/mashanzheng/OFL.txt
+    local_path: fonts/ma_shan_zheng.ttf
+  - font_id: zhi_mang_xing
+    display_name: Zhi Mang Xing Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zhimangxing/ZhiMangXing-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zhimangxing/OFL.txt
+    local_path: fonts/zhi_mang_xing.ttf
+  - font_id: long_cang
+    display_name: Long Cang Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/longcang/LongCang-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/longcang/OFL.txt
+    local_path: fonts/long_cang.ttf
+  - font_id: liu_jian_mao_cao
+    display_name: Liu Jian Mao Cao Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/liujianmaocao/LiuJianMaoCao-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/liujianmaocao/OFL.txt
+    local_path: fonts/liu_jian_mao_cao.ttf
+  - font_id: zcool_qingke_huangyou
+    display_name: ZCOOL QingKe HuangYou Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/ZCOOLQingKeHuangYou-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/OFL.txt
+    local_path: fonts/zcool_qingke_huangyou.ttf
+  - font_id: zcool_xiaowei
+    display_name: ZCOOL XiaoWei Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolxiaowei/ZCOOLXiaoWei-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolxiaowei/OFL.txt
+    local_path: fonts/zcool_xiaowei.ttf
+  - font_id: zcool_kuaile
+    display_name: ZCOOL KuaiLe Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/ZCOOLKuaiLe-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/OFL.txt
+    local_path: fonts/zcool_kuaile.ttf

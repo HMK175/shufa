@@ -4,6 +4,8 @@ __pycache__/
 *.png
 *.jpg
 .pytest_cache/
+.pytest_tmp/
+.pytest_tmp_target/
 .env
 .venvs/
 .uv_cache/
