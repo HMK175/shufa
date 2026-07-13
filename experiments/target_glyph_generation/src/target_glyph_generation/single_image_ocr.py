@@ -151,6 +151,40 @@ def apply_manual_overrides(
     return _mark_duplicate_characters(applied_labels)
 
 
+def load_manual_overrides(path: Path) -> dict[OverrideKey, OverridePayload]:
+    """Load a manual override CSV using the exact emitted template header."""
+    path = Path(path)
+    if not path.is_file():
+        raise ValueError(f"manual overrides path is not a file: {path}")
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != list(_MANUAL_OVERRIDE_FIELDNAMES):
+            raise ValueError("manual overrides header must match the template exactly")
+        items: list[tuple[OverrideKey, OverridePayload]] = []
+        for row in reader:
+            if row is None or any(key is None for key in row):
+                raise ValueError("manual overrides rows must match the template columns")
+            if all(not (value or "").strip() for value in row.values()):
+                continue
+            key: OverrideKey = (
+                row["dataset_id"] or "",
+                row["style_id"] or "",
+                row["source_split"] or "",
+                row["raw_filename"] or "",
+            )
+            items.append(
+                (
+                    key,
+                    {
+                        "manual_character": row["manual_character"] or "",
+                        "decision": row["decision"] or "",
+                        "note": row["note"] or "",
+                    },
+                )
+            )
+    return _validate_overrides(items)
+
+
 def dataset_fingerprint(records: Sequence[ImageRecord]) -> str:
     """Hash stable image metadata and source bytes without decoding image pixels."""
     digest = hashlib.sha256()
