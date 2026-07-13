@@ -9,7 +9,6 @@ import json
 import math
 from pathlib import Path
 import random
-import re
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -60,7 +59,6 @@ _CANDIDATE_FIELDNAMES = (
     "review_state",
 )
 _JOIN_CANDIDATE_STATES = frozenset({"provisional", "sample_checked", "manual_override"})
-_FINGERPRINT_PATTERN = re.compile(r"[0-9a-f]{64}")
 
 
 @dataclass(frozen=True)
@@ -246,14 +244,14 @@ def create_review_pages(
     labels: Sequence[LabelRecord], output_dir: Path, page_size: int = 25
 ) -> list[Path]:
     """Render read-only source-image pages for efficient manual OCR review."""
-    if isinstance(page_size, bool) or not isinstance(page_size, int) or page_size <= 0:
-        raise ValueError("page_size must be a positive integer")
+    if isinstance(page_size, bool) or not isinstance(page_size, int) or not 1 <= page_size <= 25:
+        raise ValueError("page_size must be an integer from 1 through 25")
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     font = _load_review_font(14)
     page_paths: list[Path] = []
-    tile_width, tile_height = 250, 220
+    tile_width, tile_height = 250, 225
     for page_number, start in enumerate(range(0, len(labels), page_size), start=1):
         page_labels = labels[start : start + page_size]
         columns = min(5, len(page_labels))
@@ -346,8 +344,8 @@ def _validate_model_name(model_name: object) -> str:
 
 
 def _validate_dataset_fingerprint(value: object) -> None:
-    if not isinstance(value, str) or _FINGERPRINT_PATTERN.fullmatch(value) is None:
-        raise ValueError("dataset_fingerprint must be a 64-character lowercase SHA-256 hex digest")
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("dataset_fingerprint must be a nonempty string")
 
 
 def _write_csv(path: Path, fieldnames: Sequence[str], rows: Iterable[Mapping[str, object]]) -> None:
@@ -454,13 +452,14 @@ def _draw_review_tile(
     preview_x = x + (tile_width - preview.width) // 2
     page.paste(preview, (preview_x, y + 5))
     details = (
+        f"dataset: {label.image.dataset_id}",
         f"style: {label.image.style_id}",
         f"file: {label.image.raw_filename}",
         f"ocr: {label.ocr_text or '-'} score: {label.ocr_score:.3f}",
         f"final: {label.character or '-'} state: {label.review_state}",
     )
     for line_index, detail in enumerate(details):
-        _draw_text(draw, (x + 6, y + 124 + line_index * 21), detail, font)
+        _draw_text(draw, (x + 6, y + 120 + line_index * 20), detail, font)
 
 
 def _draw_text(

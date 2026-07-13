@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageChops
 
 from target_glyph_generation.external_dataset_discovery import ImageRecord
 from target_glyph_generation.single_image_ocr import (
@@ -381,6 +381,32 @@ def test_write_audit_outputs_preserves_existing_manual_override_entries(tmp_path
     assert manual_overrides.read_text(encoding="utf-8") == existing_contents
 
 
+@pytest.mark.parametrize("invalid_fingerprint", ["", "   ", None, 123])
+def test_write_audit_outputs_accepts_nonempty_fingerprint_and_rejects_blank_or_nonstring_values(
+    tmp_path: Path, invalid_fingerprint: object
+):
+    image_path = _write_jpeg(tmp_path / "source.jpg")
+    label = _label_record(image_path)
+
+    summary = write_audit_outputs(
+        [label],
+        tmp_path / "accepted",
+        allowed_characters={"山"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint="test-fingerprint",
+    )
+
+    assert summary["dataset_fingerprint"] == "test-fingerprint"
+    with pytest.raises(ValueError, match="dataset_fingerprint"):
+        write_audit_outputs(
+            [label],
+            tmp_path / "rejected",
+            allowed_characters={"山"},
+            model_name="PaddleOCR-v4",
+            dataset_fingerprint=invalid_fingerprint,  # type: ignore[arg-type]
+        )
+
+
 def test_dataset_fingerprint_is_order_stable_and_detects_source_file_size_changes(tmp_path: Path):
     first_path = _write_jpeg(tmp_path / "first.jpg")
     second_path = _write_jpeg(tmp_path / "second.jpg", (10, 20, 30))
@@ -433,5 +459,24 @@ def test_create_review_pages_paginates_images_and_rejects_invalid_page_size(tmp_
     assert [path.name for path in pages] == ["review_page_001.png", "review_page_002.png"]
     assert all(path.is_file() and path.stat().st_size > 0 for path in pages)
     assert all(Image.open(path).verify() is None for path in pages)
+    first_dataset_page = create_review_pages(
+        [_label_record(labels[0].image.image_path, dataset_id="dataset-one")],
+        tmp_path / "dataset-one",
+    )[0]
+    second_dataset_page = create_review_pages(
+        [_label_record(labels[0].image.image_path, dataset_id="dataset-two")],
+        tmp_path / "dataset-two",
+    )[0]
+    with Image.open(first_dataset_page) as first_dataset_image:
+        first_pixels = first_dataset_image.convert("RGB")
+    with Image.open(second_dataset_page) as second_dataset_image:
+        second_pixels = second_dataset_image.convert("RGB")
+    assert ImageChops.difference(first_pixels, second_pixels).getbbox() is not None
+
+
+@pytest.mark.parametrize("page_size", [0, 26])
+def test_create_review_pages_rejects_page_sizes_outside_one_to_twenty_five(
+    tmp_path: Path, page_size: int
+):
     with pytest.raises(ValueError, match="page_size"):
-        create_review_pages(labels, tmp_path / "invalid-pages", page_size=0)
+        create_review_pages([], tmp_path / "invalid-pages", page_size=page_size)
