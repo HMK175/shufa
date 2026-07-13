@@ -374,7 +374,7 @@ def _sanitize_csv_row(row: Mapping[str, object]) -> dict[str, object]:
 
 
 def _neutralize_formula_cell(value: object) -> object:
-    if isinstance(value, str) and value.lstrip(" \t\r\n").startswith(("=", "+", "-", "@")):
+    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
         return f"'{value}"
     return value
 

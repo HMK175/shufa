@@ -507,6 +507,27 @@ def test_write_audit_outputs_neutralizes_whitespace_prefixed_formula_cells(
     assert label.manual_character == " =1+1"
 
 
+@pytest.mark.parametrize("prefix", ["\v", "\f"])
+def test_write_audit_outputs_neutralizes_all_unicode_whitespace_prefixed_formulas(
+    tmp_path: Path, prefix: str
+):
+    image_path = _write_jpeg(tmp_path / "source.jpg")
+    label = _label_record(image_path, ocr_text=f"{prefix}=1+1")
+
+    write_audit_outputs(
+        [label],
+        tmp_path / "audit",
+        allowed_characters={"山"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint="test-fingerprint",
+    )
+
+    with (tmp_path / "audit" / "ocr_labels.csv").open(encoding="utf-8", newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["ocr_text"] == f"'{prefix}=1+1"
+    assert label.ocr_text == f"{prefix}=1+1"
+
+
 @pytest.mark.parametrize("invalid_fingerprint", ["", "   ", None, 123])
 def test_write_audit_outputs_accepts_nonempty_fingerprint_and_rejects_blank_or_nonstring_values(
     tmp_path: Path, invalid_fingerprint: object
