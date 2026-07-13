@@ -1,0 +1,31 @@
+# v2 候选池：仅登记已完成来源核验、等待自动审计和人工预览的字体。
+# 此文件不是最终 28 种风格清单；书写书体仍需满足单独的 2/2/1/1/1 配额。
+fonts:
+  - font_id: zcool_qingke_huangyou
+    display_name: ZCOOL QingKe HuangYou Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/ZCOOLQingKeHuangYou-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolqingkehuangyou/OFL.txt
+    local_path: fonts/zcool_qingke_huangyou.ttf
+    license_path: fonts/licenses/zcool_qingke_huangyou_OFL.txt
+    family_id: zcool_qingke_huangyou
+    category: regular
+    variant_role: regular
+    ecosystem_id: zcool
+    script_class: regular
+    style_role: display
+  - font_id: zcool_kuaile
+    display_name: ZCOOL KuaiLe Regular
+    version: Google Fonts main
+    source_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/ZCOOLKuaiLe-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/OFL.txt
+    local_path: fonts/zcool_kuaile.ttf
+    license_path: fonts/licenses/zcool_kuaile_OFL.txt
+    family_id: zcool_kuaile
+    category: regular
+    variant_role: regular
+    ecosystem_id: zcool
+    script_class: regular
+    style_role: display
