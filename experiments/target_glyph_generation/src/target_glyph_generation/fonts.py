@@ -19,7 +19,7 @@ REQUIRED_FONT_FIELDS = {
 }
 
 
-def load_font_sources(path: Path) -> list[FontSource]:
+def load_font_sources(path: Path, require_v2_metadata: bool = False) -> list[FontSource]:
     """读取字体清单，并拒绝缺字段、重复 ID 与非白名单许可。"""
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     records = payload.get("fonts", [])
@@ -35,6 +35,16 @@ def load_font_sources(path: Path) -> list[FontSource]:
         missing = REQUIRED_FONT_FIELDS - set(record)
         if missing:
             raise ValueError(f"字体记录缺少字段：{', '.join(sorted(missing))}")
+        if require_v2_metadata:
+            if not record.get("family_id", ""):
+                raise ValueError(f"字体记录缺少 family_id：{record.get('font_id', '<unknown>')}")
+            category = record.get("category", "")
+            if category not in {"regular", "writing"}:
+                raise ValueError(
+                    f"字体记录 category 必须是 regular 或 writing：{record.get('font_id', '<unknown>')}={category}"
+                )
+            if not record.get("variant_role", ""):
+                raise ValueError(f"字体记录缺少 variant_role：{record.get('font_id', '<unknown>')}")
 
     sources = [FontSource(**record) for record in records]
     ids = [source.font_id for source in sources]

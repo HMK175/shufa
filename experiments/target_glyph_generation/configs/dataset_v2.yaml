@@ -1,0 +1,11 @@
+canvas_size: 256
+character_seed: 20260713
+regular_style_count: 21
+writing_style_count: 7
+minimum_regular_families: 8
+maximum_styles_per_family: 3
+maximum_writing_styles_per_family: 1
+train_styles: 20
+validation_styles: 3
+test_styles: 5
+content_font_id: noto_sans_sc_400
