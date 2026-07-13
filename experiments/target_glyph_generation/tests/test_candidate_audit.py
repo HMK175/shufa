@@ -1,3 +1,9 @@
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
 from PIL import Image
 import pytest
 
@@ -174,3 +180,151 @@ def test_create_candidate_preview_grid_draws_all_ascii_safe_metadata_labels(tmp_
     assert labels[0].isascii()
     assert output_path.is_file()
     assert result["style_count"] == 1
+
+
+def test_audit_font_candidates_rejects_font_with_missing_characters(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("present", "example", "regular")],
+        tmp_path,
+        ["A", "B"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["candidate_count"] == 1
+    assert summary["accepted_count"] == 0
+    assert summary["records"][0]["missing_characters"] == ["B"]
+    assert summary["records"][0]["accepted"] is False
+
+
+def test_audit_font_candidates_rejects_missing_font_file(tmp_path):
+    summary = candidate_audit.audit_font_candidates(
+        [_source("absent", "example", "regular")],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    record = summary["records"][0]
+    assert summary["rejected_count"] == 1
+    assert record["accepted"] is False
+    assert record["file_error"]
+    assert record["font_sha256"] is None
+
+
+def test_audit_font_candidates_writes_summary_and_preview_for_renderable_font(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    output_dir = tmp_path / "audit"
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("present", "example", "regular", ecosystem_id="example")],
+        tmp_path,
+        ["A"],
+        output_dir,
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["accepted_count"] == 1
+    assert summary["rejected_count"] == 0
+    record = summary["records"][0]
+    assert len(record["font_sha256"]) == 64
+    assert record["missing_count"] == 0
+    assert record["render_error"] is None
+    assert record["accepted"] is True
+    assert (output_dir / "candidate_preview_grid.png").is_file()
+    assert json.loads((output_dir / "candidate_audit_summary.json").read_text(encoding="utf-8")) == summary
+
+
+def test_audit_font_candidates_omits_preview_grid_when_every_candidate_fails(tmp_path):
+    output_dir = tmp_path / "audit"
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("absent", "example", "regular")],
+        tmp_path,
+        ["A"],
+        output_dir,
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["accepted_count"] == 0
+    assert not (output_dir / "candidate_preview_grid.png").exists()
+    failures = json.loads((output_dir / "candidate_audit_failures.json").read_text(encoding="utf-8"))
+    assert failures == summary["records"]
+
+
+def test_audit_font_candidates_rejects_invalid_preview_character_list(tmp_path):
+    with pytest.raises(ValueError, match="8"):
+        candidate_audit.audit_font_candidates(
+            [],
+            tmp_path,
+            ["A"],
+            tmp_path / "audit",
+            preview_characters=["A"] * 7,
+        )
+
+
+def test_audit_font_candidates_cli_writes_auditable_outputs(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    sources_path = tmp_path / "sources.yaml"
+    sources_path.write_text(
+        """fonts:
+  - font_id: present
+    display_name: Present
+    version: '1.0'
+    source_url: https://example.com/present.ttf
+    license_id: OFL-1.1
+    license_url: https://example.com/OFL.txt
+    local_path: fonts/present.ttf
+    family_id: example
+    category: regular
+    variant_role: regular
+    ecosystem_id: example
+    script_class: regular
+    style_role: text
+""",
+        encoding="utf-8",
+    )
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("A\n", encoding="utf-8")
+    output_dir = tmp_path / "audit"
+    script_path = Path(__file__).parents[1] / "scripts" / "audit_font_candidates.py"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--sources",
+            str(sources_path),
+            "--characters",
+            str(characters_path),
+            "--font-root",
+            str(tmp_path),
+            "--output-dir",
+            str(output_dir),
+            "--preview-characters",
+            "AAAAAAAA",
+        ],
+        capture_output=True,
+        check=False,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "accepted=1" in completed.stdout
+    assert (output_dir / "candidate_audit_summary.json").is_file()

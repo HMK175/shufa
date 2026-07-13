@@ -1,10 +1,12 @@
-"""v2 字体候选的家族配额校验与人工预览。"""
+"""v2 字体候选的家族配额校验、可审计检查与人工预览。"""
 
 from collections import Counter
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .font_files import find_missing_characters, sha256_file
 from .models import FontSource
 from .render import render_glyph
 
@@ -71,3 +73,112 @@ def create_candidate_preview_grid(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     grid.save(output_path)
     return {"style_count": len(sources), "sampled_characters": characters, "grid_cells": len(sources) * len(characters)}
+
+
+def _validate_preview_characters(characters: list[str], preview_characters: list[str]) -> None:
+    if len(preview_characters) != 8:
+        raise ValueError("候选预览必须使用 8 个固定字符")
+    if any(not isinstance(character, str) or len(character) != 1 for character in preview_characters):
+        raise ValueError("候选预览字符必须均为单个字符")
+    if not set(preview_characters).issubset(set(characters)):
+        raise ValueError("候选预览字符必须包含在审计字符池中")
+
+
+def _resolve_candidate_font_path(font_root: Path, local_path: str) -> tuple[Path | None, str | None]:
+    relative_path = Path(local_path)
+    if not local_path or relative_path.is_absolute():
+        return None, "local_path 必须是非空相对路径"
+
+    resolved_root = font_root.resolve()
+    resolved_path = (resolved_root / relative_path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError:
+        return None, "local_path 不可越出字体根目录"
+    if not resolved_path.is_file():
+        return None, "字体文件不存在"
+    if resolved_path.stat().st_size == 0:
+        return None, "字体文件为空"
+    return resolved_path, None
+
+
+def audit_font_candidates(
+    sources: list[FontSource],
+    font_root: Path,
+    characters: list[str],
+    output_dir: Path,
+    preview_characters: list[str],
+    canvas_size: int = 128,
+) -> dict:
+    """审计候选字体的文件、字符覆盖和固定预览字符的可渲染性。"""
+    _validate_preview_characters(characters, preview_characters)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    records = []
+    accepted_sources = []
+
+    for source in sources:
+        record = {
+            "font_id": source.font_id,
+            "family_id": source.family_id,
+            "category": source.category,
+            "ecosystem_id": source.ecosystem_id,
+            "script_class": source.script_class,
+            "style_role": source.style_role,
+            "font_sha256": None,
+            "missing_count": 0,
+            "missing_characters": [],
+            "file_error": None,
+            "render_error": None,
+            "accepted": False,
+        }
+        font_path, file_error = _resolve_candidate_font_path(font_root, source.local_path)
+        if file_error is not None:
+            record["file_error"] = file_error
+        else:
+            try:
+                record["font_sha256"] = sha256_file(font_path)
+                missing_characters = find_missing_characters(font_path, characters)
+                record["missing_characters"] = missing_characters
+                record["missing_count"] = len(missing_characters)
+            except Exception as error:
+                record["file_error"] = f"字体文件读取失败：{error}"
+
+            if record["file_error"] is None:
+                try:
+                    for character in preview_characters:
+                        render_glyph(font_path, character, canvas_size)
+                except Exception as error:
+                    record["render_error"] = f"预览字符渲染失败：{error}"
+
+        record["accepted"] = (
+            record["file_error"] is None
+            and record["missing_count"] == 0
+            and record["render_error"] is None
+        )
+        records.append(record)
+        if record["accepted"]:
+            accepted_sources.append(source)
+
+    summary = {
+        "candidate_count": len(records),
+        "accepted_count": len(accepted_sources),
+        "rejected_count": len(records) - len(accepted_sources),
+        "preview_characters": preview_characters,
+        "records": records,
+    }
+    (output_dir / "candidate_audit_summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    failures = [record for record in records if not record["accepted"]]
+    (output_dir / "candidate_audit_failures.json").write_text(
+        json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    if accepted_sources:
+        create_candidate_preview_grid(
+            accepted_sources,
+            font_root,
+            preview_characters,
+            output_dir / "candidate_preview_grid.png",
+            canvas_size,
+        )
+    return summary
