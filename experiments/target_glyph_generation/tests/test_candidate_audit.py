@@ -1,6 +1,7 @@
 from PIL import Image
 import pytest
 
+import target_glyph_generation.candidate_audit as candidate_audit
 from target_glyph_generation.candidate_audit import create_candidate_preview_grid, validate_v2_style_pool
 from target_glyph_generation.models import FontSource
 
@@ -125,3 +126,49 @@ def test_create_candidate_preview_grid_labels_style_role_metadata(tmp_path):
         assert text_image.crop((0, 0, text_image.width, 20)).tobytes() != display_image.crop(
             (0, 0, display_image.width, 20)
         ).tobytes()
+
+
+def test_create_candidate_preview_grid_draws_all_ascii_safe_metadata_labels(tmp_path, monkeypatch):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "font_a.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    labels = []
+    original_draw = candidate_audit.ImageDraw.Draw
+
+    class CapturingDraw:
+        def __init__(self, draw):
+            self._draw = draw
+
+        def text(self, position, text, **kwargs):
+            if position == (2, 2):
+                labels.append(text)
+            return self._draw.text(position, text, **kwargs)
+
+    monkeypatch.setattr(
+        candidate_audit.ImageDraw,
+        "Draw",
+        lambda image: CapturingDraw(original_draw(image)),
+    )
+    output_path = tmp_path / "candidate_preview.png"
+
+    result = create_candidate_preview_grid(
+        [
+            _source(
+                "font_a",
+                "family_a",
+                "regular",
+                ecosystem_id="生态",
+                script_class="regular",
+                style_role="display",
+            )
+        ],
+        tmp_path,
+        ["A"] * 8,
+        output_path,
+    )
+
+    assert labels == ["font_a/??/regular/display"]
+    assert output_path.is_file()
+    assert result["style_count"] == 1
