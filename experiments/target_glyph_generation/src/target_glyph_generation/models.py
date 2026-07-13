@@ -12,6 +12,7 @@ class FontSource:
     license_id: str
     license_url: str
     local_path: str
+    license_path: str = ""
     family_id: str = ""
     category: str = ""
     variant_role: str = ""

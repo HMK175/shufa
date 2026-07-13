@@ -84,24 +84,37 @@ def _validate_preview_characters(characters: list[str], preview_characters: list
         raise ValueError("候选预览字符必须包含在审计字符池中")
 
 
-def _resolve_candidate_font_path(font_root: Path, local_path: str) -> tuple[Path | None, str | None]:
-    if not isinstance(local_path, str) or not local_path.strip():
-        return None, "local_path 必须是非空字符串相对路径"
-    relative_path = Path(local_path)
+def _resolve_candidate_relative_file_path(
+    font_root: Path,
+    relative_file_path: str,
+    field_name: str,
+    file_label: str,
+) -> tuple[Path | None, str | None]:
+    if not isinstance(relative_file_path, str) or not relative_file_path.strip():
+        return None, f"{field_name} 必须是非空字符串相对路径"
+    relative_path = Path(relative_file_path)
     if relative_path.is_absolute():
-        return None, "local_path 必须是非空相对路径"
+        return None, f"{field_name} 必须是非空相对路径"
 
     resolved_root = font_root.resolve()
     resolved_path = (resolved_root / relative_path).resolve()
     try:
         resolved_path.relative_to(resolved_root)
     except ValueError:
-        return None, "local_path 不可越出字体根目录"
+        return None, f"{field_name} 不可越出字体根目录"
     if not resolved_path.is_file():
-        return None, "字体文件不存在"
+        return None, f"{file_label}不存在"
     if resolved_path.stat().st_size == 0:
-        return None, "字体文件为空"
+        return None, f"{file_label}为空"
     return resolved_path, None
+
+
+def _resolve_candidate_font_path(font_root: Path, local_path: str) -> tuple[Path | None, str | None]:
+    return _resolve_candidate_relative_file_path(font_root, local_path, "local_path", "字体文件")
+
+
+def _resolve_candidate_license_path(font_root: Path, license_path: str) -> tuple[Path | None, str | None]:
+    return _resolve_candidate_relative_file_path(font_root, license_path, "license_path", "许可证文件")
 
 
 def audit_font_candidates(
@@ -127,16 +140,27 @@ def audit_font_candidates(
             "script_class": source.script_class,
             "style_role": source.style_role,
             "font_sha256": None,
+            "license_sha256": None,
             "missing_count": 0,
             "missing_characters": [],
             "file_error": None,
+            "license_error": None,
             "render_error": None,
             "accepted": False,
         }
         font_path, file_error = _resolve_candidate_font_path(font_root, source.local_path)
+        license_path, license_error = _resolve_candidate_license_path(font_root, source.license_path)
         if file_error is not None:
             record["file_error"] = file_error
+        if license_error is not None:
+            record["license_error"] = license_error
         else:
+            try:
+                record["license_sha256"] = sha256_file(license_path)
+            except Exception as error:
+                record["license_error"] = f"许可证文件读取失败：{error}"
+
+        if record["file_error"] is None:
             try:
                 record["font_sha256"] = sha256_file(font_path)
                 missing_characters = find_missing_characters(font_path, characters)
@@ -154,6 +178,7 @@ def audit_font_candidates(
 
         record["accepted"] = (
             record["file_error"] is None
+            and record["license_error"] is None
             and record["missing_count"] == 0
             and record["render_error"] is None
         )

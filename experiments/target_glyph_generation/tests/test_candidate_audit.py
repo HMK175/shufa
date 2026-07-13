@@ -1,8 +1,6 @@
 import json
 import importlib.util
-import os
 from pathlib import Path
-import subprocess
 import sys
 
 from PIL import Image
@@ -21,6 +19,8 @@ def _source(
     ecosystem_id: str = "",
     script_class: str | None = None,
     style_role: str | None = None,
+    local_path: str | None = None,
+    license_path: str = "",
 ) -> FontSource:
     return FontSource(
         font_id=font_id,
@@ -29,7 +29,7 @@ def _source(
         source_url="https://example.com/font.ttf",
         license_id="OFL-1.1",
         license_url="https://example.com/OFL.txt",
-        local_path=f"fonts/{font_id}.ttf",
+        local_path=local_path if local_path is not None else f"fonts/{font_id}.ttf",
         family_id=family_id,
         category=category,
         variant_role="regular",
@@ -40,7 +40,13 @@ def _source(
         style_role=(
             style_role if style_role is not None else ("text" if category == "regular" else "writing")
         ),
+        license_path=license_path,
     )
+
+
+def _write_license(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("Open Font License", encoding="utf-8")
 
 
 def test_validate_v2_style_pool_rejects_more_than_three_regular_styles_per_family():
@@ -226,10 +232,20 @@ def test_audit_font_candidates_writes_summary_and_preview_for_renderable_font(tm
     font_path = tmp_path / "fonts" / "present.ttf"
     font_path.parent.mkdir()
     _build_test_font(font_path)
+    license_path = tmp_path / "licenses" / "present.txt"
+    _write_license(license_path)
     output_dir = tmp_path / "audit"
 
     summary = candidate_audit.audit_font_candidates(
-        [_source("present", "example", "regular", ecosystem_id="example")],
+        [
+            _source(
+                "present",
+                "example",
+                "regular",
+                ecosystem_id="example",
+                license_path="licenses/present.txt",
+            )
+        ],
         tmp_path,
         ["A"],
         output_dir,
@@ -240,11 +256,145 @@ def test_audit_font_candidates_writes_summary_and_preview_for_renderable_font(tm
     assert summary["rejected_count"] == 0
     record = summary["records"][0]
     assert len(record["font_sha256"]) == 64
+    assert len(record["license_sha256"]) == 64
+    assert record["license_error"] is None
     assert record["missing_count"] == 0
     assert record["render_error"] is None
     assert record["accepted"] is True
     assert (output_dir / "candidate_preview_grid.png").is_file()
     assert json.loads((output_dir / "candidate_audit_summary.json").read_text(encoding="utf-8")) == summary
+
+
+def test_audit_font_candidates_rejects_candidate_without_license_file(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("present", "example", "regular", license_path="licenses/missing.txt")],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    record = summary["records"][0]
+    assert record["accepted"] is False
+    assert record["license_error"]
+    assert record["license_sha256"] is None
+
+
+def test_audit_font_candidates_rejects_license_path_outside_font_root(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    (tmp_path.parent / "outside-license.txt").write_text("outside", encoding="utf-8")
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("present", "example", "regular", license_path="../outside-license.txt")],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["records"][0]["accepted"] is False
+    assert summary["records"][0]["license_error"]
+
+
+def test_audit_font_candidates_continues_after_corrupt_font_file(tmp_path):
+    from test_font_files import _build_test_font
+
+    fonts_dir = tmp_path / "fonts"
+    fonts_dir.mkdir()
+    (fonts_dir / "corrupt.ttf").write_bytes(b"not a font")
+    _build_test_font(fonts_dir / "valid.ttf")
+    _write_license(tmp_path / "licenses" / "corrupt.txt")
+    _write_license(tmp_path / "licenses" / "valid.txt")
+
+    summary = candidate_audit.audit_font_candidates(
+        [
+            _source("corrupt", "example", "regular", license_path="licenses/corrupt.txt"),
+            _source("valid", "example", "regular", license_path="licenses/valid.txt"),
+        ],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["records"][0]["accepted"] is False
+    assert summary["records"][0]["file_error"]
+    assert summary["records"][1]["accepted"] is True
+
+
+def test_audit_font_candidates_continues_after_font_path_escape(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "valid.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    _write_license(tmp_path / "licenses" / "escaped.txt")
+    _write_license(tmp_path / "licenses" / "valid.txt")
+
+    summary = candidate_audit.audit_font_candidates(
+        [
+            _source(
+                "escaped",
+                "example",
+                "regular",
+                local_path="../outside.ttf",
+                license_path="licenses/escaped.txt",
+            ),
+            _source("valid", "example", "regular", license_path="licenses/valid.txt"),
+        ],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["records"][0]["accepted"] is False
+    assert summary["records"][0]["file_error"]
+    assert summary["records"][1]["accepted"] is True
+
+
+def test_audit_font_candidates_continues_after_render_error(tmp_path, monkeypatch):
+    from test_font_files import _build_test_font
+
+    fonts_dir = tmp_path / "fonts"
+    fonts_dir.mkdir()
+    _build_test_font(fonts_dir / "render_error.ttf")
+    _build_test_font(fonts_dir / "valid.ttf")
+    _write_license(tmp_path / "licenses" / "render_error.txt")
+    _write_license(tmp_path / "licenses" / "valid.txt")
+    original_render_glyph = candidate_audit.render_glyph
+
+    def fail_only_for_first_font(font_path, character, canvas_size):
+        if font_path.name == "render_error.ttf":
+            raise ValueError("render failed")
+        return original_render_glyph(font_path, character, canvas_size)
+
+    monkeypatch.setattr(candidate_audit, "render_glyph", fail_only_for_first_font)
+
+    summary = candidate_audit.audit_font_candidates(
+        [
+            _source("render_error", "example", "regular", license_path="licenses/render_error.txt"),
+            _source("valid", "example", "regular", license_path="licenses/valid.txt"),
+        ],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["records"][0]["render_error"]
+    assert summary["records"][0]["accepted"] is False
+    assert summary["records"][1]["accepted"] is True
 
 
 def test_audit_font_candidates_omits_preview_grid_when_every_candidate_fails(tmp_path):
@@ -308,60 +458,73 @@ def test_audit_font_candidates_rejects_invalid_preview_character_list(tmp_path):
         )
 
 
-def test_audit_font_candidates_cli_writes_auditable_outputs(tmp_path):
-    from test_font_files import _build_test_font
-
-    font_path = tmp_path / "fonts" / "present.ttf"
-    font_path.parent.mkdir()
-    _build_test_font(font_path)
-    sources_path = tmp_path / "sources.yaml"
-    sources_path.write_text(
-        """fonts:
-  - font_id: present
-    display_name: Present
-    version: '1.0'
-    source_url: https://example.com/present.ttf
-    license_id: OFL-1.1
-    license_url: https://example.com/OFL.txt
-    local_path: fonts/present.ttf
-    family_id: example
-    category: regular
-    variant_role: regular
-    ecosystem_id: example
-    script_class: regular
-    style_role: text
-""",
-        encoding="utf-8",
-    )
-    characters_path = tmp_path / "characters.txt"
-    characters_path.write_text("A\n", encoding="utf-8")
-    output_dir = tmp_path / "audit"
+def test_audit_font_candidates_cli_passes_fixed_preview_characters(tmp_path, monkeypatch):
     script_path = Path(__file__).parents[1] / "scripts" / "audit_font_candidates.py"
-
-    completed = subprocess.run(
+    spec = importlib.util.spec_from_file_location("audit_font_candidates_fixed_preview", script_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    observed = {}
+    monkeypatch.setattr(module, "load_font_sources", lambda *args, **kwargs: [])
+    monkeypatch.setattr(module, "load_characters", lambda *args, **kwargs: list("一二三人口心中天"))
+    monkeypatch.setattr(
+        module,
+        "audit_font_candidates",
+        lambda *args: observed.update(preview_characters=args[4])
+        or {"accepted_count": 0, "rejected_count": 0},
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
         [
-            sys.executable,
             str(script_path),
             "--sources",
-            str(sources_path),
+            str(tmp_path / "sources.yaml"),
             "--characters",
-            str(characters_path),
+            str(tmp_path / "characters.txt"),
             "--font-root",
             str(tmp_path),
             "--output-dir",
-            str(output_dir),
+            str(tmp_path / "audit"),
+        ],
+    )
+
+    module.main()
+
+    assert observed["preview_characters"] == list("一二三人口心中天")
+
+
+def test_audit_font_candidates_cli_rejects_preview_character_override(tmp_path, monkeypatch):
+    script_path = Path(__file__).parents[1] / "scripts" / "audit_font_candidates.py"
+    spec = importlib.util.spec_from_file_location("audit_font_candidates_no_override", script_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "load_font_sources", lambda *args, **kwargs: [])
+    monkeypatch.setattr(module, "load_characters", lambda *args, **kwargs: list("一二三人口心中天"))
+    monkeypatch.setattr(module, "audit_font_candidates", lambda *args: {"accepted_count": 0, "rejected_count": 0})
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(script_path),
+            "--sources",
+            str(tmp_path / "sources.yaml"),
+            "--characters",
+            str(tmp_path / "characters.txt"),
+            "--font-root",
+            str(tmp_path),
+            "--output-dir",
+            str(tmp_path / "audit"),
             "--preview-characters",
             "AAAAAAAA",
         ],
-        capture_output=True,
-        check=False,
-        encoding="utf-8",
-        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
     )
 
-    assert completed.returncode == 0, completed.stderr
-    assert "accepted=1" in completed.stdout
-    assert (output_dir / "candidate_audit_summary.json").is_file()
+    with pytest.raises(SystemExit) as error:
+        module.main()
+
+    assert error.value.code == 2
 
 
 def test_audit_font_candidates_cli_returns_zero_for_rejected_candidate(tmp_path, monkeypatch, capsys):
@@ -374,6 +537,7 @@ def test_audit_font_candidates_cli_returns_zero_for_rejected_candidate(tmp_path,
     source_url: https://example.com/absent.ttf
     license_id: OFL-1.1
     license_url: https://example.com/OFL.txt
+    license_path: licenses/absent.txt
     local_path: fonts/absent.ttf
     family_id: example
     category: regular
@@ -385,7 +549,7 @@ def test_audit_font_candidates_cli_returns_zero_for_rejected_candidate(tmp_path,
         encoding="utf-8",
     )
     characters_path = tmp_path / "characters.txt"
-    characters_path.write_text("A\n", encoding="utf-8")
+    characters_path.write_text("\n".join("一二三人口心中天") + "\n", encoding="utf-8")
     output_dir = tmp_path / "audit"
     script_path = Path(__file__).parents[1] / "scripts" / "audit_font_candidates.py"
     spec = importlib.util.spec_from_file_location("audit_font_candidates_cli", script_path)
@@ -405,8 +569,6 @@ def test_audit_font_candidates_cli_returns_zero_for_rejected_candidate(tmp_path,
             str(tmp_path),
             "--output-dir",
             str(output_dir),
-            "--preview-characters",
-            "AAAAAAAA",
         ],
     )
 

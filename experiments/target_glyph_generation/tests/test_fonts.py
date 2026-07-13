@@ -15,6 +15,7 @@ def _v2_font_record(**overrides) -> dict:
         "source_url": "https://example.com/font",
         "license_id": "OFL-1.1",
         "license_url": "https://openfontlicense.org",
+        "license_path": "licenses/example_regular.txt",
         "local_path": "fonts/example_regular.ttf",
         "family_id": "example",
         "category": "regular",
@@ -54,9 +55,10 @@ def test_load_font_sources_requires_family_id_for_v2_metadata(tmp_path: Path):
         "    display_name: Example Regular\n"
         "    version: 1.0\n"
         "    source_url: https://example.com/font\n"
-        "    license_id: OFL-1.1\n"
-        "    license_url: https://openfontlicense.org\n"
-        "    local_path: fonts/example_regular.ttf\n",
+            "    license_id: OFL-1.1\n"
+            "    license_url: https://openfontlicense.org\n"
+            "    license_path: licenses/example_regular.txt\n"
+            "    local_path: fonts/example_regular.ttf\n",
         encoding="utf-8",
     )
 
@@ -72,9 +74,10 @@ def test_load_font_sources_rejects_invalid_category_for_v2_metadata(tmp_path: Pa
         "    display_name: Example Regular\n"
         "    version: 1.0\n"
         "    source_url: https://example.com/font\n"
-        "    license_id: OFL-1.1\n"
-        "    license_url: https://openfontlicense.org\n"
-        "    local_path: fonts/example_regular.ttf\n"
+            "    license_id: OFL-1.1\n"
+            "    license_url: https://openfontlicense.org\n"
+            "    license_path: licenses/example_regular.txt\n"
+            "    local_path: fonts/example_regular.ttf\n"
         "    family_id: example\n"
         "    category: display\n"
         "    variant_role: regular\n",
@@ -93,9 +96,10 @@ def test_load_font_sources_rejects_non_string_category_for_v2_metadata(tmp_path:
         "    display_name: Example Regular\n"
         "    version: 1.0\n"
         "    source_url: https://example.com/font\n"
-        "    license_id: OFL-1.1\n"
-        "    license_url: https://openfontlicense.org\n"
-        "    local_path: fonts/example_regular.ttf\n"
+            "    license_id: OFL-1.1\n"
+            "    license_url: https://openfontlicense.org\n"
+            "    license_path: licenses/example_regular.txt\n"
+            "    local_path: fonts/example_regular.ttf\n"
         "    family_id: example\n"
         "    category: []\n"
         "    variant_role: regular\n",
@@ -115,6 +119,17 @@ def test_load_font_sources_accepts_complete_v2_style_metadata(tmp_path: Path):
     assert sources[0].ecosystem_id == "example"
     assert sources[0].script_class == "regular"
     assert sources[0].style_role == "text"
+
+
+def test_load_font_sources_requires_license_path_for_v2_metadata(tmp_path: Path):
+    path = tmp_path / "fonts.yaml"
+    _write_v2_font_manifest(path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    del payload["fonts"][0]["license_path"]
+    path.write_text(yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="license_path"):
+        load_font_sources(path, require_v2_metadata=True)
 
 
 @pytest.mark.parametrize("missing_field", ["ecosystem_id", "script_class", "style_role"])

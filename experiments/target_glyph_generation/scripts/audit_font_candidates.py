@@ -13,14 +13,18 @@ from target_glyph_generation.characters import load_characters
 from target_glyph_generation.fonts import load_font_sources
 
 
+CANDIDATE_PREVIEW_CHARACTERS = list("一二三人口心中天")
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="审计 FontDiffuser v2 候选字体")
+    parser = argparse.ArgumentParser(
+        description=f"审计 FontDiffuser v2 候选字体（固定预览字：{''.join(CANDIDATE_PREVIEW_CHARACTERS)}）"
+    )
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--characters", type=Path, required=True)
     parser.add_argument("--font-root", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--canvas-size", type=int, default=128)
-    parser.add_argument("--preview-characters", default="一二三人口心中天")
     arguments = parser.parse_args()
 
     summary = audit_font_candidates(
@@ -28,7 +32,7 @@ def main() -> None:
         arguments.font_root,
         load_characters(arguments.characters),
         arguments.output_dir,
-        list(arguments.preview_characters),
+        CANDIDATE_PREVIEW_CHARACTERS,
         arguments.canvas_size,
     )
     print(f"候选字体审计完成：accepted={summary['accepted_count']}, rejected={summary['rejected_count']}")

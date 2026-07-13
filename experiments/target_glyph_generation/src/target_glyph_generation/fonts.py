@@ -36,6 +36,12 @@ def load_font_sources(path: Path, require_v2_metadata: bool = False) -> list[Fon
         if missing:
             raise ValueError(f"字体记录缺少字段：{', '.join(sorted(missing))}")
         if require_v2_metadata:
+            license_path = record.get("license_path", "")
+            if not isinstance(license_path, str) or not license_path.strip():
+                raise ValueError(
+                    f"字体记录 license_path 必须是非空字符串：{record.get('font_id', '<unknown>')}={license_path}"
+                )
+            record["license_path"] = license_path.strip()
             if not record.get("family_id", ""):
                 raise ValueError(f"字体记录缺少 family_id：{record.get('font_id', '<unknown>')}")
             category = record.get("category", "")
