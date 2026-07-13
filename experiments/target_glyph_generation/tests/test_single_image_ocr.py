@@ -314,6 +314,9 @@ def test_write_audit_outputs_exports_labels_reviews_candidates_and_summary(tmp_p
         "target_glyph_candidates.csv",
         "ocr_audit_summary.json",
     }
+    assert (output_dir / "manual_overrides.csv").read_text(encoding="utf-8") == (
+        "dataset_id,style_id,source_split,raw_filename,manual_character,decision,note\n"
+    )
     with (output_dir / "ocr_labels.csv").open(encoding="utf-8", newline="") as handle:
         assert len(list(csv.DictReader(handle))) == 6
     with (output_dir / "required_review.csv").open(encoding="utf-8", newline="") as handle:
@@ -381,6 +384,89 @@ def test_write_audit_outputs_preserves_existing_manual_override_entries(tmp_path
     assert manual_overrides.read_text(encoding="utf-8") == existing_contents
 
 
+def test_write_audit_outputs_neutralizes_formula_like_csv_cells_without_changing_records(
+    tmp_path: Path,
+):
+    source_path = _write_jpeg(tmp_path / "@source.jpg")
+    dangerous = LabelRecord(
+        image=ImageRecord(
+            dataset_id="=dataset",
+            style_id="+style",
+            style_display_name="-display",
+            source_split="@split",
+            raw_filename="@source.jpg",
+            raw_index="=index",
+            image_path=source_path,
+        ),
+        ocr_text="=SUM(1,1)",
+        ocr_score=0.99,
+        manual_character="+manual",
+        character="@final",
+        review_state="=state",
+        flags=("-flag", "@second"),
+    )
+    candidate = LabelRecord(
+        image=ImageRecord(
+            dataset_id="=candidate-dataset",
+            style_id="+candidate-style",
+            style_display_name="display",
+            source_split="-candidate-split",
+            raw_filename="@candidate.jpg",
+            raw_index="candidate-index",
+            image_path=source_path,
+        ),
+        ocr_text="safe",
+        ocr_score=0.99,
+        manual_character=None,
+        character="=candidate-character",
+        review_state="provisional",
+        flags=(),
+    )
+    output_dir = tmp_path / "audit"
+
+    summary = write_audit_outputs(
+        [dangerous, candidate],
+        output_dir,
+        allowed_characters={"=candidate-character"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint="test-fingerprint",
+    )
+
+    with (output_dir / "ocr_labels.csv").open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    with (output_dir / "target_glyph_candidates.csv").open(encoding="utf-8", newline="") as handle:
+        candidate_rows = list(csv.DictReader(handle))
+    assert rows[0] == {
+        "dataset_id": "'=dataset",
+        "style_id": "'+style",
+        "style_display_name": "'-display",
+        "source_split": "'@split",
+        "raw_filename": "'@source.jpg",
+        "raw_index": "'=index",
+        "image_path": str(source_path),
+        "ocr_text": "'=SUM(1,1)",
+        "ocr_score": "0.99",
+        "manual_character": "'+manual",
+        "character": "'@final",
+        "review_state": "'=state",
+        "flags": "'-flag;@second",
+    }
+    assert candidate_rows == [
+        {
+            "dataset_id": "'=candidate-dataset",
+            "style_id": "'+candidate-style",
+            "character": "'=candidate-character",
+            "source_split": "'-candidate-split",
+            "target_path": str(source_path),
+            "raw_filename": "'@candidate.jpg",
+            "review_state": "provisional",
+        }
+    ]
+    assert dangerous.ocr_text == "=SUM(1,1)"
+    assert dangerous.character == "@final"
+    assert summary["dataset_fingerprint"] == "test-fingerprint"
+
+
 @pytest.mark.parametrize("invalid_fingerprint", ["", "   ", None, 123])
 def test_write_audit_outputs_accepts_nonempty_fingerprint_and_rejects_blank_or_nonstring_values(
     tmp_path: Path, invalid_fingerprint: object
@@ -437,8 +523,11 @@ def test_dataset_fingerprint_is_order_stable_and_detects_source_file_size_change
     assert dataset_fingerprint([same_metadata_first, same_metadata_second]) == dataset_fingerprint(
         [same_metadata_second, same_metadata_first]
     )
-    with first_path.open("ab") as handle:
-        handle.write(b"extra-byte")
+    original_bytes = first_path.read_bytes()
+    replacement_bytes = bytearray(original_bytes)
+    replacement_bytes[len(replacement_bytes) // 2] ^= 1
+    first_path.write_bytes(replacement_bytes)
+    assert first_path.stat().st_size == len(original_bytes)
     assert dataset_fingerprint([first, second]) != fingerprint
     with pytest.raises(FileNotFoundError, match="source image"):
         dataset_fingerprint([_image_record(tmp_path / "missing.jpg")])

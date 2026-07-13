@@ -48,6 +48,7 @@ _MANUAL_OVERRIDE_FIELDNAMES = (
     "raw_filename",
     "manual_character",
     "decision",
+    "note",
 )
 _CANDIDATE_FIELDNAMES = (
     "dataset_id",
@@ -151,9 +152,9 @@ def apply_manual_overrides(
 
 
 def dataset_fingerprint(records: Sequence[ImageRecord]) -> str:
-    """Hash stable image metadata and byte sizes without reading image pixels."""
+    """Hash stable image metadata and source bytes without decoding image pixels."""
     digest = hashlib.sha256()
-    entries: list[tuple[str, str, str, str, str, int]] = []
+    entries: list[tuple[str, str, str, str, str, int, bytes]] = []
     for record in records:
         image_path = Path(record.image_path)
         if not image_path.is_file():
@@ -166,9 +167,18 @@ def dataset_fingerprint(records: Sequence[ImageRecord]) -> str:
                 record.raw_filename,
                 record.raw_index,
                 image_path.stat().st_size,
+                _source_file_digest(image_path),
             )
         )
-    for dataset_id, style_id, source_split, raw_filename, raw_index, source_file_size in sorted(entries):
+    for (
+        dataset_id,
+        style_id,
+        source_split,
+        raw_filename,
+        raw_index,
+        source_file_size,
+        source_file_digest,
+    ) in sorted(entries):
         metadata = {
             "dataset_id": dataset_id,
             "style_id": style_id,
@@ -176,6 +186,7 @@ def dataset_fingerprint(records: Sequence[ImageRecord]) -> str:
             "raw_filename": raw_filename,
             "raw_index": raw_index,
             "source_file_size": source_file_size,
+            "source_file_sha256": source_file_digest.hex(),
         }
         digest.update(json.dumps(metadata, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8"))
         digest.update(b"\n")
@@ -352,7 +363,28 @@ def _write_csv(path: Path, fieldnames: Sequence[str], rows: Iterable[Mapping[str
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(_sanitize_csv_row(row) for row in rows)
+
+
+def _sanitize_csv_row(row: Mapping[str, object]) -> dict[str, object]:
+    return {
+        fieldname: _neutralize_formula_cell(value)
+        for fieldname, value in row.items()
+    }
+
+
+def _neutralize_formula_cell(value: object) -> object:
+    if isinstance(value, str) and value.startswith(("=", "+", "-", "@")):
+        return f"'{value}"
+    return value
+
+
+def _source_file_digest(image_path: Path) -> bytes:
+    digest = hashlib.sha256()
+    with image_path.open("rb") as handle:
+        while chunk := handle.read(1024 * 1024):
+            digest.update(chunk)
+    return digest.digest()
 
 
 def _write_manual_override_template(path: Path) -> None:
