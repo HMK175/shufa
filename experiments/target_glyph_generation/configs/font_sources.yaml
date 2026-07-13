@@ -36,6 +36,11 @@ fonts:
     version: Google Fonts main, wght=700
     local_path: fonts/noto_sans_sc_700.ttf
   - <<: *noto_sans_sc
+    font_id: noto_sans_sc_600
+    display_name: Noto Sans SC SemiBold
+    version: Google Fonts main, wght=600
+    local_path: fonts/noto_sans_sc_600.ttf
+  - <<: *noto_sans_sc
     font_id: noto_sans_sc_900
     display_name: Noto Sans SC Black
     version: Google Fonts main, wght=900
@@ -168,3 +173,46 @@ fonts:
     license_id: OFL-1.1
     license_url: https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuaile/OFL.txt
     local_path: fonts/zcool_kuaile.ttf
+
+  - font_id: lxgw_wenkai_light
+    display_name: LXGW WenKai Light
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/fonts/TTF/LXGWWenKai-Light.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_light.ttf
+  - font_id: lxgw_wenkai_regular
+    display_name: LXGW WenKai Regular
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/fonts/TTF/LXGWWenKai-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_regular.ttf
+  - font_id: lxgw_wenkai_medium
+    display_name: LXGW WenKai Medium
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/fonts/TTF/LXGWWenKai-Medium.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenKai/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_medium.ttf
+  - font_id: lxgw_wenkai_gb_light
+    display_name: LXGW WenKai GB Light
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/fonts/TTF/LXGWWenKaiGB-Light.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_gb_light.ttf
+  - font_id: lxgw_wenkai_gb_regular
+    display_name: LXGW WenKai GB Regular
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/fonts/TTF/LXGWWenKaiGB-Regular.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_gb_regular.ttf
+  - font_id: lxgw_wenkai_gb_medium
+    display_name: LXGW WenKai GB Medium
+    version: upstream main
+    source_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/fonts/TTF/LXGWWenKaiGB-Medium.ttf
+    license_id: OFL-1.1
+    license_url: https://raw.githubusercontent.com/lxgw/LxgwWenkaiGB/main/OFL.txt
+    local_path: fonts/lxgw_wenkai_gb_medium.ttf
