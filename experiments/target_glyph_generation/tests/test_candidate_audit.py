@@ -314,6 +314,28 @@ def test_audit_font_candidates_allows_preview_characters_outside_training_pool(t
     assert summary["preview_characters"] == preview_characters
 
 
+def test_audit_font_candidates_rejects_missing_preview_glyphs_outside_training_pool(tmp_path):
+    training_characters = ["A"]
+    preview_characters = list("一二三人口心中天")
+    font_path = tmp_path / "fonts" / "training_only.ttf"
+    font_path.parent.mkdir()
+    _build_font_with_characters(font_path, training_characters)
+    _write_license(tmp_path / "licenses" / "training_only.txt")
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("training_only", "example", "regular", license_path="licenses/training_only.txt")],
+        tmp_path,
+        training_characters,
+        tmp_path / "audit",
+        preview_characters=preview_characters,
+    )
+
+    record = summary["records"][0]
+    assert record["missing_count"] == 0
+    assert record["preview_missing_characters"] == preview_characters
+    assert record["accepted"] is False
+
+
 def test_audit_font_candidates_rejects_candidate_without_license_file(tmp_path):
     from test_font_files import _build_test_font
 

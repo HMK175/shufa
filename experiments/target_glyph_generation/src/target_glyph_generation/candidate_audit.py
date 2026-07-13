@@ -141,6 +141,7 @@ def audit_font_candidates(
             "license_sha256": None,
             "missing_count": 0,
             "missing_characters": [],
+            "preview_missing_characters": [],
             "file_error": None,
             "license_error": None,
             "render_error": None,
@@ -164,6 +165,9 @@ def audit_font_candidates(
                 missing_characters = find_missing_characters(font_path, characters)
                 record["missing_characters"] = missing_characters
                 record["missing_count"] = len(missing_characters)
+                record["preview_missing_characters"] = find_missing_characters(
+                    font_path, preview_characters
+                )
             except Exception as error:
                 record["file_error"] = f"字体文件读取失败：{error}"
 
@@ -178,6 +182,7 @@ def audit_font_candidates(
             record["file_error"] is None
             and record["license_error"] is None
             and record["missing_count"] == 0
+            and not record["preview_missing_characters"]
             and record["render_error"] is None
         )
         records.append(record)
