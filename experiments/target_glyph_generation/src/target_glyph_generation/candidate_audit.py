@@ -75,13 +75,11 @@ def create_candidate_preview_grid(
     return {"style_count": len(sources), "sampled_characters": characters, "grid_cells": len(sources) * len(characters)}
 
 
-def _validate_preview_characters(characters: list[str], preview_characters: list[str]) -> None:
+def _validate_preview_characters(preview_characters: list[str]) -> None:
     if len(preview_characters) != 8:
         raise ValueError("候选预览必须使用 8 个固定字符")
     if any(not isinstance(character, str) or len(character) != 1 for character in preview_characters):
         raise ValueError("候选预览字符必须均为单个字符")
-    if not set(preview_characters).issubset(set(characters)):
-        raise ValueError("候选预览字符必须包含在审计字符池中")
 
 
 def _resolve_candidate_relative_file_path(
@@ -126,7 +124,7 @@ def audit_font_candidates(
     canvas_size: int = 128,
 ) -> dict:
     """审计候选字体的文件、字符覆盖和固定预览字符的可渲染性。"""
-    _validate_preview_characters(characters, preview_characters)
+    _validate_preview_characters(preview_characters)
     output_dir.mkdir(parents=True, exist_ok=True)
     records = []
     accepted_sources = []

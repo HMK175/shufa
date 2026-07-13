@@ -49,6 +49,34 @@ def _write_license(path: Path) -> None:
     path.write_text("Open Font License", encoding="utf-8")
 
 
+def _build_font_with_characters(path: Path, characters: list[str]) -> None:
+    from fontTools.fontBuilder import FontBuilder
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+
+    def box_glyph():
+        pen = TTGlyphPen(None)
+        pen.moveTo((100, 100))
+        pen.lineTo((900, 100))
+        pen.lineTo((900, 900))
+        pen.lineTo((100, 900))
+        pen.closePath()
+        return pen.glyph()
+
+    glyph_names = {character: f"glyph_{ord(character):04X}" for character in characters}
+    glyph_order = [".notdef", *glyph_names.values()]
+    font_builder = FontBuilder(1000, isTTF=True)
+    font_builder.setupGlyphOrder(glyph_order)
+    font_builder.setupCharacterMap({ord(character): glyph_name for character, glyph_name in glyph_names.items()})
+    font_builder.setupGlyf({name: box_glyph() for name in glyph_order})
+    font_builder.setupHorizontalMetrics({name: (600, 0) for name in glyph_order})
+    font_builder.setupHorizontalHeader(ascent=800, descent=-200)
+    font_builder.setupNameTable({"familyName": "Preview Font", "styleName": "Regular"})
+    font_builder.setupOS2()
+    font_builder.setupPost()
+    font_builder.setupMaxp()
+    font_builder.save(path)
+
+
 def test_validate_v2_style_pool_rejects_more_than_three_regular_styles_per_family():
     sources = [_source(f"noto_{index}", "noto", "regular") for index in range(4)]
 
@@ -263,6 +291,27 @@ def test_audit_font_candidates_writes_summary_and_preview_for_renderable_font(tm
     assert record["accepted"] is True
     assert (output_dir / "candidate_preview_grid.png").is_file()
     assert json.loads((output_dir / "candidate_audit_summary.json").read_text(encoding="utf-8")) == summary
+
+
+def test_audit_font_candidates_allows_preview_characters_outside_training_pool(tmp_path):
+    training_characters = ["A"]
+    preview_characters = list("一二三人口心中天")
+    font_path = tmp_path / "fonts" / "preview.ttf"
+    font_path.parent.mkdir()
+    _build_font_with_characters(font_path, [*training_characters, *preview_characters])
+    _write_license(tmp_path / "licenses" / "preview.txt")
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("preview", "example", "regular", license_path="licenses/preview.txt")],
+        tmp_path,
+        training_characters,
+        tmp_path / "audit",
+        preview_characters=preview_characters,
+    )
+
+    assert summary["accepted_count"] == 1
+    assert summary["records"][0]["missing_count"] == 0
+    assert summary["preview_characters"] == preview_characters
 
 
 def test_audit_font_candidates_rejects_candidate_without_license_file(tmp_path):
