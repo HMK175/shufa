@@ -529,3 +529,74 @@ def test_audit_clis_reject_blank_model_name_before_discovery_or_inference(
         module.main()
 
     assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("script_name", "discovery_name", "style_id", "requires_sources"),
+    [
+        (
+            "audit_chinese_style_ocr.py",
+            "discover_chinese_style_images",
+            "lishu",
+            False,
+        ),
+        (
+            "audit_calligrapher8_ocr.py",
+            "discover_calligrapher_images",
+            "wxz",
+            True,
+        ),
+    ],
+)
+def test_audit_clis_reject_unknown_override_keys_after_discovery_before_inference(
+    monkeypatch,
+    tmp_path: Path,
+    script_name: str,
+    discovery_name: str,
+    style_id: str,
+    requires_sources: bool,
+):
+    module = _load_script(script_name)
+    records = [_image_record(tmp_path, style_id)]
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("山\n", encoding="utf-8")
+    overrides_path = tmp_path / "overrides.csv"
+    overrides_path.write_text(
+        "dataset_id,style_id,source_split,raw_filename,manual_character,decision,note\n"
+        "unknown_dataset,unknown_style,train,missing.jpg,山,accept,\n",
+        encoding="utf-8",
+    )
+    source_arguments = []
+    if requires_sources:
+        sources_path = tmp_path / "sources.yaml"
+        sources_path.write_text("sources:\n  wxz: {}\n", encoding="utf-8")
+        source_arguments = ["--sources", str(sources_path)]
+
+    calls = []
+    monkeypatch.setattr(
+        module,
+        discovery_name,
+        lambda *args: calls.append("discovery") or records,
+    )
+    monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            script_name,
+            "--dataset-root",
+            str(tmp_path / "dataset"),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+            "--overrides",
+            str(overrides_path),
+            *source_arguments,
+        ],
+    )
+
+    with pytest.raises(ValueError, match="override key"):
+        module.main()
+
+    assert calls == ["discovery"]

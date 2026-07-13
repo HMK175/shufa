@@ -21,6 +21,7 @@ from target_glyph_generation.single_image_ocr import (
     dataset_fingerprint,
     load_manual_overrides,
     select_review_sample,
+    validate_override_keys,
     write_audit_outputs,
 )
 
@@ -48,6 +49,8 @@ def main() -> None:
     )
 
     images = discover_calligrapher_images(arguments.dataset_root, _load_sources(arguments.sources))
+    if overrides is not None:
+        validate_override_keys(overrides, (image.key for image in images))
     labels = build_label_records(
         images,
         run_local_ocr(images, model_name=model_name, batch_size=arguments.batch_size),

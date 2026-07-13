@@ -140,15 +140,22 @@ def apply_manual_overrides(
     overrides_by_key = _validate_overrides(override_items)
     labels_by_key = {label.key: label for label in labels}
 
-    unknown_keys = set(overrides_by_key).difference(labels_by_key)
-    if unknown_keys:
-        raise ValueError(f"override key does not map to an existing label: {sorted(unknown_keys)!r}")
+    validate_override_keys(overrides_by_key, labels_by_key)
 
     applied_labels = [
         _apply_override(label, overrides_by_key[label.key]) if label.key in overrides_by_key else label
         for label in labels
     ]
     return _mark_duplicate_characters(applied_labels)
+
+
+def validate_override_keys(
+    override_keys: Iterable[OverrideKey], valid_keys: Iterable[OverrideKey]
+) -> None:
+    """Reject manual override keys that do not identify a discovered source image."""
+    unknown_keys = set(override_keys).difference(valid_keys)
+    if unknown_keys:
+        raise ValueError(f"override key does not map to an existing label: {sorted(unknown_keys)!r}")
 
 
 def load_manual_overrides(path: Path) -> dict[OverrideKey, OverridePayload]:
