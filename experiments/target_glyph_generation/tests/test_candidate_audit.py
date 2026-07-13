@@ -1,10 +1,19 @@
+from PIL import Image
 import pytest
 
-from target_glyph_generation.candidate_audit import validate_v2_style_pool
+from target_glyph_generation.candidate_audit import create_candidate_preview_grid, validate_v2_style_pool
 from target_glyph_generation.models import FontSource
 
 
-def _source(font_id: str, family_id: str, category: str) -> FontSource:
+def _source(
+    font_id: str,
+    family_id: str,
+    category: str,
+    *,
+    ecosystem_id: str = "",
+    script_class: str | None = None,
+    style_role: str | None = None,
+) -> FontSource:
     return FontSource(
         font_id=font_id,
         display_name=font_id,
@@ -16,6 +25,13 @@ def _source(font_id: str, family_id: str, category: str) -> FontSource:
         family_id=family_id,
         category=category,
         variant_role="regular",
+        ecosystem_id=ecosystem_id,
+        script_class=(
+            script_class if script_class is not None else ("regular" if category == "regular" else "kaishu")
+        ),
+        style_role=(
+            style_role if style_role is not None else ("text" if category == "regular" else "writing")
+        ),
     )
 
 
@@ -35,11 +51,9 @@ def test_validate_v2_style_pool_rejects_more_than_three_regular_styles_per_famil
 
 def test_validate_v2_style_pool_rejects_more_than_three_lxgw_ecosystem_styles():
     sources = [
-        _source(f"lxgw_{index}", f"family_{index}", "regular")
+        _source(f"lxgw_{index}", f"family_{index}", "regular", ecosystem_id="lxgw")
         for index in range(4)
     ]
-    for source in sources:
-        object.__setattr__(source, "ecosystem_id", "lxgw")
 
     with pytest.raises(ValueError, match="LXGW 生态上限"):
         validate_v2_style_pool(
@@ -55,8 +69,6 @@ def test_validate_v2_style_pool_rejects_more_than_three_lxgw_ecosystem_styles():
 def test_validate_v2_style_pool_rejects_wrong_writing_script_quota():
     sources = [_source(f"regular_{index}", f"family_{index}", "regular") for index in range(8)]
     sources += [_source(f"writing_{index}", f"writing_{index}", "writing") for index in range(7)]
-    for source in sources:
-        object.__setattr__(source, "script_class", "regular" if source.category == "regular" else "kaishu")
 
     with pytest.raises(ValueError, match="书体配额"):
         validate_v2_style_pool(
@@ -67,3 +79,49 @@ def test_validate_v2_style_pool_rejects_wrong_writing_script_quota():
             maximum_styles_per_family=3,
             maximum_writing_styles_per_family=1,
         )
+
+
+def test_validate_v2_style_pool_rejects_more_than_three_display_fonts():
+    sources = [
+        _source(f"display_{index}", f"family_{index}", "regular", style_role="display")
+        for index in range(4)
+    ]
+
+    with pytest.raises(ValueError, match="展示字体上限"):
+        validate_v2_style_pool(
+            sources,
+            regular_style_count=4,
+            writing_style_count=0,
+            minimum_regular_families=4,
+            maximum_styles_per_family=3,
+            maximum_writing_styles_per_family=1,
+        )
+
+
+def test_create_candidate_preview_grid_labels_style_role_metadata(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "test.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    characters = ["A"] * 8
+
+    text_output = tmp_path / "text.png"
+    display_output = tmp_path / "display.png"
+    create_candidate_preview_grid(
+        [_source("test", "example", "regular", ecosystem_id="example", style_role="text")],
+        tmp_path,
+        characters,
+        text_output,
+    )
+    create_candidate_preview_grid(
+        [_source("test", "example", "regular", ecosystem_id="example", style_role="display")],
+        tmp_path,
+        characters,
+        display_output,
+    )
+
+    with Image.open(text_output) as text_image, Image.open(display_output) as display_image:
+        assert text_image.crop((0, 0, text_image.width, 20)).tobytes() != display_image.crop(
+            (0, 0, display_image.width, 20)
+        ).tobytes()

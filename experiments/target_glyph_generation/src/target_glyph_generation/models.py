@@ -17,3 +17,4 @@ class FontSource:
     variant_role: str = ""
     ecosystem_id: str = ""
     script_class: str = ""
+    style_role: str = ""
