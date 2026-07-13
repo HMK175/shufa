@@ -286,6 +286,29 @@ def test_audit_font_candidates_rejects_candidate_without_license_file(tmp_path):
     assert record["license_sha256"] is None
 
 
+def test_audit_font_candidates_rejects_empty_license_file(tmp_path):
+    from test_font_files import _build_test_font
+
+    font_path = tmp_path / "fonts" / "present.ttf"
+    font_path.parent.mkdir()
+    _build_test_font(font_path)
+    license_path = tmp_path / "licenses" / "empty.txt"
+    license_path.parent.mkdir()
+    license_path.write_bytes(b"")
+
+    summary = candidate_audit.audit_font_candidates(
+        [_source("present", "example", "regular", license_path="licenses/empty.txt")],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    record = summary["records"][0]
+    assert "许可证文件为空" in record["license_error"]
+    assert record["accepted"] is False
+
+
 def test_audit_font_candidates_rejects_license_path_outside_font_root(tmp_path):
     from test_font_files import _build_test_font
 

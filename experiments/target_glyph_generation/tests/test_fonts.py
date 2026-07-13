@@ -132,6 +132,17 @@ def test_load_font_sources_requires_license_path_for_v2_metadata(tmp_path: Path)
         load_font_sources(path, require_v2_metadata=True)
 
 
+@pytest.mark.parametrize("license_path", ["", []])
+def test_load_font_sources_rejects_empty_or_non_string_license_path(
+    tmp_path: Path, license_path: object
+):
+    path = tmp_path / "fonts.yaml"
+    _write_v2_font_manifest(path, license_path=license_path)
+
+    with pytest.raises(ValueError, match="license_path"):
+        load_font_sources(path, require_v2_metadata=True)
+
+
 @pytest.mark.parametrize("missing_field", ["ecosystem_id", "script_class", "style_role"])
 def test_load_font_sources_requires_complete_string_v2_style_metadata(
     tmp_path: Path, missing_field: str
