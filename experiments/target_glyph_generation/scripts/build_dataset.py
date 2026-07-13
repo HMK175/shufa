@@ -19,8 +19,9 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--limit-fonts", type=int)
     parser.add_argument("--limit-characters", type=int)
+    parser.add_argument("--font-offset", type=int, default=0)
     arguments = parser.parse_args()
-    print(build_dataset(arguments.config, arguments.sources, arguments.characters, arguments.output_root, arguments.limit_fonts, arguments.limit_characters))
+    print(build_dataset(arguments.config, arguments.sources, arguments.characters, arguments.output_root, arguments.limit_fonts, arguments.limit_characters, arguments.font_offset))
 
 
 if __name__ == "__main__":

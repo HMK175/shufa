@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import yaml
+from PIL import Image
 
 from .characters import load_characters
 from .font_files import find_missing_characters, sha256_file
@@ -28,6 +29,7 @@ def build_dataset(
     output_root: Path,
     limit_fonts: int | None = None,
     limit_characters: int | None = None,
+    font_offset: int = 0,
 ) -> dict:
     """构建可被 FontDiffuser 读取的内容图、目标图和可审计清单。"""
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -55,7 +57,7 @@ def build_dataset(
     style_splits = split_styles([source.font_id for source in accepted], int(config["character_seed"]))
     character_splits = split_characters(characters, int(config["character_seed"]))
 
-    selected_fonts = accepted[:limit_fonts] if limit_fonts else accepted
+    selected_fonts = accepted[font_offset:font_offset + limit_fonts] if limit_fonts else accepted[font_offset:]
     selected_characters = characters[:limit_characters] if limit_characters else characters
     content_source = next((source for source in accepted if source.font_id == "noto_sans_sc_400"), None)
     if content_source is None:
@@ -69,9 +71,14 @@ def build_dataset(
 
     content_font_path = output_root / content_source.local_path
     for character in selected_characters:
-        image = render_glyph(content_font_path, character, canvas_size)
-        _validate_image(image)
-        image.save(content_dir / f"{character}.png")
+        output_path = content_dir / f"{character}.png"
+        if output_path.is_file():
+            with Image.open(output_path) as image:
+                _validate_image(image)
+        else:
+            image = render_glyph(content_font_path, character, canvas_size)
+            _validate_image(image)
+            image.save(output_path)
 
     rendered_targets = 0
     for source in selected_fonts:
@@ -80,9 +87,14 @@ def build_dataset(
         style_dir.mkdir(parents=True, exist_ok=True)
         for character in selected_characters:
             try:
-                image = render_glyph(font_path, character, canvas_size)
-                _validate_image(image)
-                image.save(style_dir / f"{source.font_id}+{character}.png")
+                output_path = style_dir / f"{source.font_id}+{character}.png"
+                if output_path.is_file():
+                    with Image.open(output_path) as image:
+                        _validate_image(image)
+                else:
+                    image = render_glyph(font_path, character, canvas_size)
+                    _validate_image(image)
+                    image.save(output_path)
                 rendered_targets += 1
             except (OSError, ValueError) as error:
                 failures.append({"font_id": source.font_id, "character": character, "reason": str(error)})
@@ -123,6 +135,7 @@ def build_dataset(
         "target_image_count": rendered_targets,
         "failure_count": len(failures),
         "smoke_build": bool(limit_fonts or limit_characters),
+        "font_offset": font_offset,
     }
     (manifest_dir / "dataset_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary

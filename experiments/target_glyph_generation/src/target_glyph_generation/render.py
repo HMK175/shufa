@@ -1,8 +1,14 @@
 """统一输出 FontDiffuser 所需的黑字白底字形图。"""
 
 from pathlib import Path
+from functools import lru_cache
 
 from PIL import Image, ImageDraw, ImageFont
+
+
+@lru_cache(maxsize=64)
+def _load_font(font_path: str, size: int):
+    return ImageFont.truetype(font_path, size=size)
 
 
 def normalize_glyph_canvas(image: Image.Image, canvas_size: int) -> Image.Image:
@@ -31,7 +37,7 @@ def render_glyph(font_path: Path, character: str, canvas_size: int) -> Image.Ima
     if len(character) != 1:
         raise ValueError("一次只能渲染一个字符")
 
-    font = ImageFont.truetype(str(font_path), size=canvas_size * 3)
+    font = _load_font(str(font_path), canvas_size * 3)
     bbox = font.getbbox(character)
     if bbox is None or bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
         raise ValueError(f"字体中无法渲染字符：{character}")
