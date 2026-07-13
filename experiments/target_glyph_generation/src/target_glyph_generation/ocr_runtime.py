@@ -19,7 +19,11 @@ def run_local_ocr(
     record_iterator = iter(records)
     predictions: list[tuple[str, float]] = []
     while batch := list(islice(record_iterator, batch_size)):
-        results = list(recognition_model.predict([str(record.image_path) for record in batch]))
+        results = list(
+            recognition_model.predict(
+                [str(record.image_path) for record in batch], batch_size=batch_size
+            )
+        )
         if len(results) != len(batch):
             raise ValueError("OCR must return exactly one result per input record")
         predictions.extend((result["rec_text"], float(result["rec_score"])) for result in results)

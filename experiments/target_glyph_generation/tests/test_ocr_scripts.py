@@ -287,8 +287,8 @@ def test_ocr_runtime_batches_records_preserves_order_and_sets_model_source(monke
         def __init__(self, *, model_name):
             assert model_name == "test-model"
 
-        def predict(self, paths):
-            calls.append(paths)
+        def predict(self, paths, *, batch_size):
+            calls.append((paths, batch_size))
             return [{"rec_text": Path(path).stem, "rec_score": "0.90"} for path in paths]
 
     monkeypatch.delenv("PADDLE_PDX_MODEL_SOURCE", raising=False)
@@ -298,9 +298,9 @@ def test_ocr_runtime_batches_records_preserves_order_and_sets_model_source(monke
 
     assert result == [(str(index), 0.90) for index in range(5)]
     assert calls == [
-        [str(record.image_path) for record in records[:2]],
-        [str(record.image_path) for record in records[2:4]],
-        [str(record.image_path) for record in records[4:]],
+        ([str(record.image_path) for record in records[:2]], 2),
+        ([str(record.image_path) for record in records[2:4]], 2),
+        ([str(record.image_path) for record in records[4:]], 2),
     ]
     assert os.environ["PADDLE_PDX_MODEL_SOURCE"] == "BOS"
 
@@ -320,10 +320,212 @@ def test_ocr_runtime_rejects_batch_result_count_mismatch(monkeypatch, tmp_path: 
         def __init__(self, *, model_name):
             pass
 
-        def predict(self, paths):
+        def predict(self, paths, *, batch_size):
             return []
 
     monkeypatch.setattr(ocr_runtime, "_load_text_recognition", lambda: TextRecognition)
 
     with pytest.raises(ValueError, match="exactly one"):
         ocr_runtime.run_local_ocr([_image_record(tmp_path, "wxz")], batch_size=1)
+
+
+@pytest.mark.parametrize(
+    ("script_name", "discovery_name", "source_arguments"),
+    [
+        ("audit_chinese_style_ocr.py", "discover_chinese_style_images", []),
+        (
+            "audit_calligrapher8_ocr.py",
+            "discover_calligrapher_images",
+            ["--sources", "unused-sources.yaml"],
+        ),
+    ],
+)
+@pytest.mark.parametrize("review_per_style", ["0", "-1"])
+def test_audit_clis_reject_invalid_review_cap_before_discovery_or_inference(
+    monkeypatch,
+    tmp_path: Path,
+    script_name: str,
+    discovery_name: str,
+    source_arguments: list[str],
+    review_per_style: str,
+):
+    module = _load_script(script_name)
+    calls = []
+    monkeypatch.setattr(module, discovery_name, lambda *args: calls.append("discovery"))
+    monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            script_name,
+            "--dataset-root",
+            str(tmp_path / "dataset"),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(tmp_path / "missing-characters.txt"),
+            "--review-per-style",
+            review_per_style,
+            *source_arguments,
+        ],
+    )
+
+    with pytest.raises(SystemExit):
+        module.main()
+
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("script_name", "discovery_name", "source_arguments"),
+    [
+        ("audit_chinese_style_ocr.py", "discover_chinese_style_images", []),
+        (
+            "audit_calligrapher8_ocr.py",
+            "discover_calligrapher_images",
+            ["--sources", "unused-sources.yaml"],
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("characters_path_kind", "expected_exception"),
+    [("missing", FileNotFoundError), ("directory", OSError)],
+)
+def test_audit_clis_reject_missing_or_unreadable_characters_before_discovery_or_inference(
+    monkeypatch,
+    tmp_path: Path,
+    script_name: str,
+    discovery_name: str,
+    source_arguments: list[str],
+    characters_path_kind: str,
+    expected_exception: type[OSError],
+):
+    module = _load_script(script_name)
+    calls = []
+    characters_path = tmp_path / "characters.txt"
+    if characters_path_kind == "directory":
+        characters_path.mkdir()
+    monkeypatch.setattr(module, discovery_name, lambda *args: calls.append("discovery"))
+    monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            script_name,
+            "--dataset-root",
+            str(tmp_path / "dataset"),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+            *source_arguments,
+        ],
+    )
+
+    with pytest.raises(expected_exception):
+        module.main()
+
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("script_name", "discovery_name", "source_arguments"),
+    [
+        ("audit_chinese_style_ocr.py", "discover_chinese_style_images", []),
+        (
+            "audit_calligrapher8_ocr.py",
+            "discover_calligrapher_images",
+            ["--sources", "unused-sources.yaml"],
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    ("overrides_text", "error_pattern"),
+    [
+        ("dataset_id,style_id\n", "header"),
+        (
+            "dataset_id,style_id,source_split,raw_filename,manual_character,decision,note\n"
+            "calligrapher20,wxz,train,7.jpg,,defer,\n",
+            "decision",
+        ),
+    ],
+)
+def test_audit_clis_reject_malformed_or_invalid_overrides_before_discovery_or_inference(
+    monkeypatch,
+    tmp_path: Path,
+    script_name: str,
+    discovery_name: str,
+    source_arguments: list[str],
+    overrides_text: str,
+    error_pattern: str,
+):
+    module = _load_script(script_name)
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("X\n", encoding="utf-8")
+    overrides_path = tmp_path / "overrides.csv"
+    overrides_path.write_text(overrides_text, encoding="utf-8")
+    calls = []
+    monkeypatch.setattr(module, discovery_name, lambda *args: calls.append("discovery"))
+    monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            script_name,
+            "--dataset-root",
+            str(tmp_path / "dataset"),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+            "--overrides",
+            str(overrides_path),
+            *source_arguments,
+        ],
+    )
+
+    with pytest.raises(ValueError, match=error_pattern):
+        module.main()
+
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    ("script_name", "discovery_name", "source_arguments"),
+    [
+        ("audit_chinese_style_ocr.py", "discover_chinese_style_images", []),
+        (
+            "audit_calligrapher8_ocr.py",
+            "discover_calligrapher_images",
+            ["--sources", "unused-sources.yaml"],
+        ),
+    ],
+)
+def test_audit_clis_reject_blank_model_name_before_discovery_or_inference(
+    monkeypatch, tmp_path: Path, script_name: str, discovery_name: str, source_arguments: list[str]
+):
+    module = _load_script(script_name)
+    calls = []
+    monkeypatch.setattr(module, discovery_name, lambda *args: calls.append("discovery"))
+    monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            script_name,
+            "--dataset-root",
+            str(tmp_path / "dataset"),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(tmp_path / "missing-characters.txt"),
+            "--model-name",
+            "   ",
+            *source_arguments,
+        ],
+    )
+
+    with pytest.raises(SystemExit):
+        module.main()
+
+    assert calls == []

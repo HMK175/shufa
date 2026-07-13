@@ -37,18 +37,28 @@ def main() -> None:
     parser.add_argument("--review-per-style", type=int, default=200)
     arguments = parser.parse_args()
 
+    if arguments.review_per_style <= 0:
+        parser.error("--review-per-style must be a positive integer")
+    model_name = arguments.model_name.strip()
+    if not model_name:
+        parser.error("--model-name must be a nonempty string")
+    allowed_characters = set(load_characters(arguments.characters))
+    overrides = (
+        load_manual_overrides(arguments.overrides) if arguments.overrides is not None else None
+    )
+
     images = discover_calligrapher_images(arguments.dataset_root, _load_sources(arguments.sources))
     labels = build_label_records(
         images,
-        run_local_ocr(images, model_name=arguments.model_name, batch_size=arguments.batch_size),
+        run_local_ocr(images, model_name=model_name, batch_size=arguments.batch_size),
     )
-    if arguments.overrides is not None:
-        labels = apply_manual_overrides(labels, load_manual_overrides(arguments.overrides))
+    if overrides is not None:
+        labels = apply_manual_overrides(labels, overrides)
     summary = write_audit_outputs(
         labels,
         arguments.output_dir,
-        set(load_characters(arguments.characters)),
-        arguments.model_name,
+        allowed_characters,
+        model_name,
         dataset_fingerprint(images),
         review_per_style=arguments.review_per_style,
     )
