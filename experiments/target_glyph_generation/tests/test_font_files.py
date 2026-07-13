@@ -9,7 +9,13 @@ from target_glyph_generation.font_files import find_missing_characters, sha256_f
 def _build_test_font(path: Path) -> None:
     font_builder = FontBuilder(1000, isTTF=True)
     glyph_order = [".notdef", "A", "uni4E00"]
-    glyphs = {name: TTGlyphPen(None).glyph() for name in glyph_order}
+    pen = TTGlyphPen(None)
+    pen.moveTo((100, 100))
+    pen.lineTo((900, 100))
+    pen.lineTo((900, 900))
+    pen.lineTo((100, 900))
+    pen.closePath()
+    glyphs = {".notdef": TTGlyphPen(None).glyph(), "A": pen.glyph(), "uni4E00": pen.glyph()}
     font_builder.setupGlyphOrder(glyph_order)
     font_builder.setupCharacterMap({ord("A"): "A", ord("一"): "uni4E00"})
     font_builder.setupGlyf(glyphs)
