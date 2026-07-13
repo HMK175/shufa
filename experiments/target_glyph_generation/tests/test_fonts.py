@@ -3,10 +3,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+from target_glyph_generation.candidate_audit import validate_v2_style_pool
 from target_glyph_generation.fonts import load_font_sources
 
 
-def _write_v2_font_manifest(path: Path, **overrides) -> None:
+def _v2_font_record(**overrides) -> dict:
     record = {
         "font_id": "example_regular",
         "display_name": "Example Regular",
@@ -23,6 +24,11 @@ def _write_v2_font_manifest(path: Path, **overrides) -> None:
         "style_role": "text",
     }
     record.update(overrides)
+    return record
+
+
+def _write_v2_font_manifest(path: Path, **overrides) -> None:
+    record = _v2_font_record(**overrides)
     path.write_text(
         yaml.safe_dump({"fonts": [record]}, allow_unicode=True, sort_keys=False),
         encoding="utf-8",
@@ -162,3 +168,36 @@ def test_load_font_sources_rejects_style_role_incompatible_with_category(
 
     with pytest.raises(ValueError, match=message):
         load_font_sources(path, require_v2_metadata=True)
+
+
+def test_load_font_sources_normalizes_v2_metadata_before_ecosystem_audit(tmp_path: Path):
+    path = tmp_path / "fonts.yaml"
+    records = [
+        _v2_font_record(
+            font_id=f"lxgw_{index}",
+            family_id=f"family_{index}",
+            ecosystem_id=" lxgw ",
+            script_class=" regular ",
+            style_role=" text ",
+        )
+        for index in range(4)
+    ]
+    path.write_text(
+        yaml.safe_dump({"fonts": records}, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    sources = load_font_sources(path, require_v2_metadata=True)
+
+    assert [source.ecosystem_id for source in sources] == ["lxgw"] * 4
+    assert [source.script_class for source in sources] == ["regular"] * 4
+    assert [source.style_role for source in sources] == ["text"] * 4
+    with pytest.raises(ValueError, match="LXGW 生态上限"):
+        validate_v2_style_pool(
+            sources,
+            regular_style_count=4,
+            writing_style_count=0,
+            minimum_regular_families=4,
+            maximum_styles_per_family=3,
+            maximum_writing_styles_per_family=1,
+        )

@@ -169,6 +169,8 @@ def test_create_candidate_preview_grid_draws_all_ascii_safe_metadata_labels(tmp_
         output_path,
     )
 
-    assert labels == ["font_a/??/regular/display"]
+    escaped_ecosystem_id = "生态".encode("unicode_escape").decode("ascii")
+    assert labels == [f"font_a/{escaped_ecosystem_id}/regular/display"]
+    assert labels[0].isascii()
     assert output_path.is_file()
     assert result["style_count"] == 1

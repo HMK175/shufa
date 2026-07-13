@@ -64,7 +64,7 @@ def create_candidate_preview_grid(
         label = "/".join(
             (source.font_id, source.ecosystem_id, source.script_class, source.style_role)
         )
-        draw.text((2, y + 2), label.encode("ascii", "replace").decode("ascii"), fill=0, font=font)
+        draw.text((2, y + 2), label.encode("unicode_escape").decode("ascii"), fill=0, font=font)
         for column, character in enumerate(characters):
             image = render_glyph(font_root / source.local_path, character, canvas_size)
             grid.paste(image, (column * canvas_size, y + label_height))

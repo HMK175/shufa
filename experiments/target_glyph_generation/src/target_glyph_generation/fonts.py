@@ -52,7 +52,8 @@ def load_font_sources(path: Path, require_v2_metadata: bool = False) -> list[Fon
                     raise ValueError(
                         f"字体记录 {field} 必须是非空字符串：{record.get('font_id', '<unknown>')}={value}"
                     )
-                metadata[field] = value
+                metadata[field] = value.strip()
+                record[field] = metadata[field]
             if category == "regular":
                 if metadata["script_class"] != "regular":
                     raise ValueError(
