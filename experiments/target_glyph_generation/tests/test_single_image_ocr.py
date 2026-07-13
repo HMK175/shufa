@@ -467,6 +467,46 @@ def test_write_audit_outputs_neutralizes_formula_like_csv_cells_without_changing
     assert summary["dataset_fingerprint"] == "test-fingerprint"
 
 
+def test_write_audit_outputs_neutralizes_whitespace_prefixed_formula_cells(
+    tmp_path: Path,
+):
+    source_path = _write_jpeg(tmp_path / "source.jpg")
+    label = LabelRecord(
+        image=ImageRecord(
+            dataset_id="dataset",
+            style_id="style",
+            style_display_name="display",
+            source_split="train",
+            raw_filename=" @source.jpg",
+            raw_index="index",
+            image_path=source_path,
+        ),
+        ocr_text="\t=1+1",
+        ocr_score=0.99,
+        manual_character=" =1+1",
+        character="山",
+        review_state="provisional",
+        flags=("\r\n@flag",),
+    )
+
+    write_audit_outputs(
+        [label],
+        tmp_path / "audit",
+        allowed_characters={"山"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint="test-fingerprint",
+    )
+
+    with (tmp_path / "audit" / "ocr_labels.csv").open(encoding="utf-8", newline="") as handle:
+        row = next(csv.DictReader(handle))
+    assert row["raw_filename"] == "' @source.jpg"
+    assert row["ocr_text"] == "'\t=1+1"
+    assert row["manual_character"] == "' =1+1"
+    assert row["flags"] == "'\r\n@flag"
+    assert label.ocr_text == "\t=1+1"
+    assert label.manual_character == " =1+1"
+
+
 @pytest.mark.parametrize("invalid_fingerprint", ["", "   ", None, 123])
 def test_write_audit_outputs_accepts_nonempty_fingerprint_and_rejects_blank_or_nonstring_values(
     tmp_path: Path, invalid_fingerprint: object
