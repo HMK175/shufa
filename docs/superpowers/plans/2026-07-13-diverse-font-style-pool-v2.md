@@ -226,3 +226,9 @@ git commit -m "feat: build diverse FontDiffuser dataset v2"
 - 书写组必须恰好包含：楷书 2、行楷 2、隶书 1、草书 1、过渡书体 1。装饰字体不允许用于填充这些书体配额。
 - `validate_v2_style_pool` 必须额外校验 LXGW 生态上限与上述书体配额；候选预览网格必须显示字体 ID、生态 ID 和书体类别。
 - `fonts.csv` 和 `dataset_summary.json` 必须写入 `ecosystem_id`、`script_class`、生态计数和书体计数。全量构建的验收摘要必须同时显示：至少 8 个常规字体家族、LXGW 生态不超过 3、楷书 2/行楷 2/隶书 1/草书 1/过渡书体 1。
+
+## v2 修订条款：装饰/展示字体受控补充（优先于前述同名规则）
+
+- v2 来源条目新增 `style_role`。常规字体只能标为 `text` 或 `display`，书写字体必须标为 `writing`；读取器必须拒绝缺失或与 `category` 不匹配的标注。
+- `validate_v2_style_pool` 必须拒绝常规组中超过 3 个 `display` 条目；最终清单的目标是保留 2–3 个通过人工预览的展示字体，其余常规条目为 `text`。展示字体不能填充楷书、行楷、隶书、草书或过渡书体配额。
+- 候选预览网格、`fonts.csv` 与 `dataset_summary.json` 必须写入或展示 `style_role`，以便人工审计时将展示字体与基本书体明确区分。
