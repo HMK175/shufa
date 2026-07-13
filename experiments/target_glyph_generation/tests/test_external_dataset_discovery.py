@@ -99,6 +99,24 @@ def test_discover_calligrapher_images_uses_writer_as_style_and_preserves_split(
     assert records[1].style_display_name == "颜真卿"
 
 
+def test_discover_calligrapher_images_allows_same_split_writer_index_collisions(
+    tmp_path: Path,
+):
+    _touch(tmp_path / "data" / "train" / "wxz" / "31.jpg")
+    _touch(tmp_path / "data" / "train" / "yzq" / "31.jpg")
+    sources = {
+        "wxz": {"display_name": "王羲之", "expected_total": 6741},
+        "yzq": {"display_name": "颜真卿", "expected_total": 6756},
+    }
+
+    records = discover_calligrapher_images(tmp_path / "data", sources)
+
+    assert [(record.style_id, record.source_split, record.raw_index) for record in records] == [
+        ("wxz", "train", "31"),
+        ("yzq", "train", "31"),
+    ]
+
+
 def test_discover_calligrapher_images_rejects_unknown_writer_with_jpg(tmp_path: Path):
     _touch(tmp_path / "data" / "train" / "unknown" / "1.jpg")
 
