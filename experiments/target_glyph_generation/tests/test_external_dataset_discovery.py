@@ -128,10 +128,23 @@ def test_discover_calligrapher_images_allows_same_split_writer_index_collisions(
     ]
 
 
-def test_discover_calligrapher_images_rejects_unknown_writer_with_jpg(tmp_path: Path):
-    _touch(tmp_path / "data" / "train" / "unknown" / "1.jpg")
+def test_discover_calligrapher_images_ignores_unselected_writer_directories(tmp_path: Path):
+    _touch(tmp_path / "data" / "train" / "wxz" / "1.jpg")
+    _touch(tmp_path / "data" / "train" / "bdsr" / "1.jpg")
 
-    with pytest.raises(ValueError, match="未知书法家目录"):
+    records = discover_calligrapher_images(
+        tmp_path / "data",
+        {"wxz": {"display_name": "王羲之", "expected_total": 6741}},
+    )
+
+    assert [(record.style_id, record.raw_filename) for record in records] == [("wxz", "1.jpg")]
+    assert all("bdsr" not in record.image_path.parts for record in records)
+
+
+def test_discover_calligrapher_images_rejects_jpg_directly_in_split_root(tmp_path: Path):
+    _touch(tmp_path / "data" / "train" / "stray.jpg")
+
+    with pytest.raises(ValueError, match="格式错误"):
         discover_calligrapher_images(
             tmp_path / "data",
             {"wxz": {"display_name": "王羲之", "expected_total": 6741}},

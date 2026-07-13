@@ -257,6 +257,56 @@ def test_calligrapher_cli_uses_only_configured_sources_and_forwards_all_argument
     }
 
 
+def test_calligrapher_cli_ignores_unselected_writer_directories_after_real_discovery(
+    monkeypatch, tmp_path: Path
+):
+    module = _load_script("audit_calligrapher8_ocr.py")
+    dataset_root = tmp_path / "dataset"
+    for source_split, filename in (("train", "1.jpg"), ("test", "2.jpg")):
+        selected_path = dataset_root / source_split / "wxz" / filename
+        selected_path.parent.mkdir(parents=True)
+        selected_path.write_bytes(b"image")
+        unselected_path = dataset_root / source_split / "bdsr" / filename
+        unselected_path.parent.mkdir(parents=True)
+        unselected_path.write_bytes(b"image")
+    sources_path = tmp_path / "sources.yaml"
+    sources_path.write_text(
+        "sources:\n  wxz:\n    display_name: Wang Xizhi\n    expected_total: 2\n",
+        encoding="utf-8",
+    )
+    final_label = SimpleNamespace(key=("label",), review_state="provisional")
+    captured = _patch_audit_steps(
+        monkeypatch,
+        module,
+        [],
+        [final_label],
+        {"characters": ["山"], "overrides": {}},
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "audit_calligrapher8_ocr.py",
+            "--dataset-root",
+            str(dataset_root),
+            "--sources",
+            str(sources_path),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(tmp_path / "characters.txt"),
+        ],
+    )
+
+    module.main()
+
+    assert {(record.style_id, record.source_split) for record in captured["ocr_records"]} == {
+        ("wxz", "train"),
+        ("wxz", "test"),
+    }
+    assert all("bdsr" not in record.image_path.parts for record in captured["ocr_records"])
+
+
 def test_load_manual_overrides_requires_the_template_header_and_validates_rows(tmp_path: Path):
     from target_glyph_generation.single_image_ocr import load_manual_overrides
 

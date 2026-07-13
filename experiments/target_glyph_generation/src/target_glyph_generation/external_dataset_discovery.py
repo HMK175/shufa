@@ -87,7 +87,7 @@ def discover_calligrapher_images(
         if not split_dir.is_dir():
             continue
 
-        _reject_unknown_writer_images(split_dir, display_names)
+        _reject_split_root_jpg_images(split_dir)
         for writer_id in sorted(display_names):
             writer_dir = split_dir / writer_id
             if not writer_dir.is_dir():
@@ -231,16 +231,10 @@ def _source_expected_totals(sources: Mapping[str, Mapping[str, object]]) -> dict
     return expected_totals
 
 
-def _reject_unknown_writer_images(split_dir: Path, display_names: Mapping[str, str]) -> None:
+def _reject_split_root_jpg_images(split_dir: Path) -> None:
     for entry in sorted(split_dir.iterdir(), key=lambda path: path.name):
         if entry.is_file() and entry.suffix.lower() == ".jpg":
             raise ValueError(f"书法家图像格式错误：{entry}")
-        if entry.is_dir() and entry.name not in display_names and _contains_jpg(entry):
-            raise ValueError(f"未知书法家目录包含 JPG 图像：{entry}")
-
-
-def _contains_jpg(directory: Path) -> bool:
-    return any(path.is_file() and path.suffix.lower() == ".jpg" for path in directory.rglob("*"))
 
 
 def _sort_records(records: list[ImageRecord]) -> list[ImageRecord]:
