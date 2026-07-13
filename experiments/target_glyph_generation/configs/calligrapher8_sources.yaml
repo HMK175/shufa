@@ -1,0 +1,25 @@
+sources:
+  wxz:
+    display_name: 王羲之
+    expected_total: 6741
+  yzq:
+    display_name: 颜真卿
+    expected_total: 6756
+  lgq:
+    display_name: 柳公权
+    expected_total: 6763
+  oyx:
+    display_name: 欧阳询
+    expected_total: 3510
+  mf:
+    display_name: 米芾
+    expected_total: 6763
+  sgt:
+    display_name: 孙过庭
+    expected_total: 6251
+  yyr:
+    display_name: 于右任
+    expected_total: 6763
+  shz:
+    display_name: 宋徽宗
+    expected_total: 6763
