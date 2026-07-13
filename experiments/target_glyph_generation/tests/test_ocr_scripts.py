@@ -107,6 +107,9 @@ def test_chinese_style_cli_uses_independent_records_and_forwards_all_arguments(
     expected = {"characters": ["山", "水"], "overrides": {records[0].key: {"decision": "reject"}}}
     captured = _patch_audit_steps(monkeypatch, module, records, [required, provisional], expected)
     monkeypatch.setattr(module, "discover_chinese_style_images", lambda root: records)
+    for source_split in ("train", "test"):
+        for style_id in ("lishu", "xingkai"):
+            (tmp_path / "dataset" / source_split / style_id).mkdir(parents=True)
     output_dir = tmp_path / "out"
     monkeypatch.setattr(
         sys,
@@ -167,7 +170,12 @@ def test_calligrapher_cli_uses_only_configured_sources_and_forwards_all_argument
     expected = {"characters": ["山"], "overrides": {records[0].key: {"decision": "reject"}}}
     captured = _patch_audit_steps(monkeypatch, module, records, [required], expected)
     source_config = tmp_path / "sources.yaml"
-    source_config.write_text("sources:\n  wxz:\n    display_name: 王羲之\n", encoding="utf-8")
+    source_config.write_text(
+        "sources:\n  wxz:\n    display_name: 王羲之\n    expected_total: 1\n",
+        encoding="utf-8",
+    )
+    for source_split in ("train", "test"):
+        (tmp_path / "dataset" / source_split / "wxz").mkdir(parents=True)
 
     def discover(root, sources):
         captured["discovery"] = {"root": root, "sources": sources}
@@ -203,7 +211,7 @@ def test_calligrapher_cli_uses_only_configured_sources_and_forwards_all_argument
 
     assert captured["discovery"] == {
         "root": tmp_path / "dataset",
-        "sources": {"wxz": {"display_name": "王羲之"}},
+        "sources": {"wxz": {"display_name": "王羲之", "expected_total": 1}},
     }
     assert captured["ocr_records"] == records
     assert {record.style_id for record in captured["ocr_records"]} == {"wxz"}
@@ -578,6 +586,14 @@ def test_audit_clis_reject_unknown_override_keys_after_discovery_before_inferenc
         discovery_name,
         lambda *args: calls.append("discovery") or records,
     )
+    if script_name == "audit_chinese_style_ocr.py":
+        monkeypatch.setattr(module, "validate_chinese_style_audit_inventory", lambda root, records: None)
+    else:
+        monkeypatch.setattr(
+            module,
+            "validate_calligrapher_audit_inventory",
+            lambda root, records, sources: None,
+        )
     monkeypatch.setattr(module, "run_local_ocr", lambda *args, **kwargs: calls.append("ocr"))
     monkeypatch.setattr(
         sys,
@@ -600,3 +616,178 @@ def test_audit_clis_reject_unknown_override_keys_after_discovery_before_inferenc
         module.main()
 
     assert calls == ["discovery"]
+
+
+def test_chinese_style_cli_rejects_missing_required_directory_before_ocr(
+    monkeypatch, tmp_path: Path
+):
+    module = _load_script("audit_chinese_style_ocr.py")
+    dataset_root = tmp_path / "dataset"
+    for split, style_id in [("train", "lishu"), ("train", "xingkai"), ("test", "lishu")]:
+        (dataset_root / split / style_id).mkdir(parents=True)
+    records = [
+        _image_record(tmp_path, "lishu", "lishu_7.jpg"),
+        _image_record(tmp_path, "xingkai", "xingkai_7.jpg"),
+    ]
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("山\n", encoding="utf-8")
+    ocr_calls = []
+
+    monkeypatch.setattr(module, "discover_chinese_style_images", lambda root: records)
+
+    def reject_ocr(*args, **kwargs):
+        ocr_calls.append("ocr")
+        raise AssertionError("OCR runtime must not be called for an incomplete inventory")
+
+    monkeypatch.setattr(module, "run_local_ocr", reject_ocr)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "audit_chinese_style_ocr.py",
+            "--dataset-root",
+            str(dataset_root),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+        ],
+    )
+
+    with pytest.raises(ValueError, match=r"test/xingkai"):
+        module.main()
+
+    assert ocr_calls == []
+
+
+def test_chinese_style_cli_rejects_style_without_discovered_records_before_ocr(
+    monkeypatch, tmp_path: Path
+):
+    module = _load_script("audit_chinese_style_ocr.py")
+    dataset_root = tmp_path / "dataset"
+    for split in ("train", "test"):
+        for style_id in ("lishu", "xingkai"):
+            (dataset_root / split / style_id).mkdir(parents=True)
+    records = [_image_record(tmp_path, "lishu", "lishu_7.jpg")]
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("山\n", encoding="utf-8")
+    ocr_calls = []
+
+    monkeypatch.setattr(module, "discover_chinese_style_images", lambda root: records)
+
+    def reject_ocr(*args, **kwargs):
+        ocr_calls.append("ocr")
+        raise AssertionError("OCR runtime must not be called for an incomplete inventory")
+
+    monkeypatch.setattr(module, "run_local_ocr", reject_ocr)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "audit_chinese_style_ocr.py",
+            "--dataset-root",
+            str(dataset_root),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+        ],
+    )
+
+    with pytest.raises(ValueError, match=r"missing records.*xingkai"):
+        module.main()
+
+    assert ocr_calls == []
+
+
+def test_calligrapher_cli_rejects_missing_writer_directory_before_ocr(
+    monkeypatch, tmp_path: Path
+):
+    module = _load_script("audit_calligrapher8_ocr.py")
+    dataset_root = tmp_path / "dataset"
+    (dataset_root / "train" / "wxz").mkdir(parents=True)
+    records = [_image_record(tmp_path, "wxz", "7.jpg")]
+    sources_path = tmp_path / "sources.yaml"
+    sources_path.write_text(
+        "sources:\n  wxz:\n    display_name: Wang Xizhi\n    expected_total: 1\n",
+        encoding="utf-8",
+    )
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("山\n", encoding="utf-8")
+    ocr_calls = []
+
+    monkeypatch.setattr(module, "discover_calligrapher_images", lambda root, sources: records)
+
+    def reject_ocr(*args, **kwargs):
+        ocr_calls.append("ocr")
+        raise AssertionError("OCR runtime must not be called for an incomplete inventory")
+
+    monkeypatch.setattr(module, "run_local_ocr", reject_ocr)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "audit_calligrapher8_ocr.py",
+            "--dataset-root",
+            str(dataset_root),
+            "--sources",
+            str(sources_path),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+        ],
+    )
+
+    with pytest.raises(ValueError, match=r"missing directories.*test/wxz"):
+        module.main()
+
+    assert ocr_calls == []
+
+
+def test_calligrapher_cli_rejects_writer_total_mismatch_before_ocr(
+    monkeypatch, tmp_path: Path
+):
+    module = _load_script("audit_calligrapher8_ocr.py")
+    dataset_root = tmp_path / "dataset"
+    for split in ("train", "test"):
+        (dataset_root / split / "wxz").mkdir(parents=True)
+    records = [_image_record(tmp_path, "wxz", "7.jpg")]
+    sources_path = tmp_path / "sources.yaml"
+    sources_path.write_text(
+        "sources:\n  wxz:\n    display_name: Wang Xizhi\n    expected_total: 2\n",
+        encoding="utf-8",
+    )
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("山\n", encoding="utf-8")
+    ocr_calls = []
+
+    monkeypatch.setattr(module, "discover_calligrapher_images", lambda root, sources: records)
+
+    def reject_ocr(*args, **kwargs):
+        ocr_calls.append("ocr")
+        raise AssertionError("OCR runtime must not be called for an incomplete inventory")
+
+    monkeypatch.setattr(module, "run_local_ocr", reject_ocr)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "audit_calligrapher8_ocr.py",
+            "--dataset-root",
+            str(dataset_root),
+            "--sources",
+            str(sources_path),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--characters",
+            str(characters_path),
+        ],
+    )
+
+    with pytest.raises(
+        ValueError, match=r"writer image totals.*wxz.*expected 2.*discovered 1"
+    ):
+        module.main()
+
+    assert ocr_calls == []

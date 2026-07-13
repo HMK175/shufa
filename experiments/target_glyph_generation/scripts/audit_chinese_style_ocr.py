@@ -10,7 +10,10 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_DIR / "src"))
 
 from target_glyph_generation.characters import load_characters
-from target_glyph_generation.external_dataset_discovery import discover_chinese_style_images
+from target_glyph_generation.external_dataset_discovery import (
+    discover_chinese_style_images,
+    validate_chinese_style_audit_inventory,
+)
 from target_glyph_generation.ocr_runtime import run_local_ocr
 from target_glyph_generation.single_image_ocr import (
     apply_manual_overrides,
@@ -46,6 +49,7 @@ def main() -> None:
     )
 
     images = discover_chinese_style_images(arguments.dataset_root)
+    validate_chinese_style_audit_inventory(arguments.dataset_root, images)
     if overrides is not None:
         validate_override_keys(overrides, (image.key for image in images))
     labels = build_label_records(

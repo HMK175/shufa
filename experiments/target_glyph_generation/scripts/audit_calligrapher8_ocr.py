@@ -12,7 +12,10 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_DIR / "src"))
 
 from target_glyph_generation.characters import load_characters
-from target_glyph_generation.external_dataset_discovery import discover_calligrapher_images
+from target_glyph_generation.external_dataset_discovery import (
+    discover_calligrapher_images,
+    validate_calligrapher_audit_inventory,
+)
 from target_glyph_generation.ocr_runtime import run_local_ocr
 from target_glyph_generation.single_image_ocr import (
     apply_manual_overrides,
@@ -48,7 +51,9 @@ def main() -> None:
         load_manual_overrides(arguments.overrides) if arguments.overrides is not None else None
     )
 
-    images = discover_calligrapher_images(arguments.dataset_root, _load_sources(arguments.sources))
+    sources = _load_sources(arguments.sources)
+    images = discover_calligrapher_images(arguments.dataset_root, sources)
+    validate_calligrapher_audit_inventory(arguments.dataset_root, images, sources)
     if overrides is not None:
         validate_override_keys(overrides, (image.key for image in images))
     labels = build_label_records(

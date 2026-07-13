@@ -1,6 +1,7 @@
 """外部书法图像数据集的只读发现器。"""
 
-from collections.abc import Mapping
+from collections import Counter
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -118,6 +119,80 @@ def discover_calligrapher_images(
     return _sort_records(records)
 
 
+def validate_chinese_style_audit_inventory(root: Path, records: Iterable[ImageRecord]) -> None:
+    """Reject incomplete ChineseStyle inventories before OCR audit inference."""
+    root = Path(root)
+    if not root.is_dir():
+        raise ValueError(f"ChineseStyle dataset root directory does not exist: {root}")
+
+    missing_directories = [
+        f"{source_split}/{style_id}"
+        for source_split in SOURCE_SPLITS
+        for style_id in CHINESE_STYLE_DISPLAY_NAMES
+        if not (root / source_split / style_id).is_dir()
+    ]
+    if missing_directories:
+        raise ValueError(
+            "ChineseStyle dataset inventory incomplete: missing directories: "
+            + ", ".join(missing_directories)
+        )
+
+    record_counts = Counter(record.style_id for record in records)
+    missing_styles = [
+        style_id for style_id in CHINESE_STYLE_DISPLAY_NAMES if record_counts[style_id] == 0
+    ]
+    if missing_styles:
+        raise ValueError(
+            "ChineseStyle dataset inventory incomplete: missing records for styles: "
+            + ", ".join(missing_styles)
+        )
+
+
+def validate_calligrapher_audit_inventory(
+    data_root: Path,
+    records: Iterable[ImageRecord],
+    sources: Mapping[str, Mapping[str, object]],
+) -> None:
+    """Reject incomplete configured calligrapher inventories before OCR audit inference."""
+    data_root = Path(data_root)
+    if not data_root.is_dir():
+        raise ValueError(f"Calligrapher dataset root directory does not exist: {data_root}")
+
+    expected_totals = _source_expected_totals(sources)
+    missing_directories = [
+        f"{source_split}/{writer_id}"
+        for source_split in SOURCE_SPLITS
+        for writer_id in sorted(expected_totals)
+        if not (data_root / source_split / writer_id).is_dir()
+    ]
+    if missing_directories:
+        raise ValueError(
+            "Calligrapher dataset inventory incomplete: missing directories: "
+            + ", ".join(missing_directories)
+        )
+
+    record_counts = Counter(record.style_id for record in records)
+    missing_writers = [
+        writer_id for writer_id in sorted(expected_totals) if record_counts[writer_id] == 0
+    ]
+    if missing_writers:
+        raise ValueError(
+            "Calligrapher dataset inventory incomplete: missing records for writers: "
+            + ", ".join(missing_writers)
+        )
+
+    mismatched_totals = [
+        f"{writer_id}: expected {expected_total}, discovered {record_counts[writer_id]}"
+        for writer_id, expected_total in sorted(expected_totals.items())
+        if record_counts[writer_id] != expected_total
+    ]
+    if mismatched_totals:
+        raise ValueError(
+            "Calligrapher dataset inventory incomplete: writer image totals differ: "
+            + "; ".join(mismatched_totals)
+        )
+
+
 def _source_display_names(sources: Mapping[str, Mapping[str, object]]) -> dict[str, str]:
     display_names: dict[str, str] = {}
     for writer_id, source in sources.items():
@@ -128,6 +203,22 @@ def _source_display_names(sources: Mapping[str, Mapping[str, object]]) -> dict[s
             raise ValueError(f"书法家来源缺少 display_name：{writer_id}")
         display_names[writer_id] = display_name.strip()
     return display_names
+
+
+def _source_expected_totals(sources: Mapping[str, Mapping[str, object]]) -> dict[str, int]:
+    expected_totals: dict[str, int] = {}
+    for writer_id, source in sources.items():
+        expected_total = source.get("expected_total") if isinstance(source, Mapping) else None
+        if (
+            isinstance(expected_total, bool)
+            or not isinstance(expected_total, int)
+            or expected_total <= 0
+        ):
+            raise ValueError(
+                f"Calligrapher source expected_total must be a positive integer: {writer_id}"
+            )
+        expected_totals[writer_id] = expected_total
+    return expected_totals
 
 
 def _reject_unknown_writer_images(split_dir: Path, display_names: Mapping[str, str]) -> None:
