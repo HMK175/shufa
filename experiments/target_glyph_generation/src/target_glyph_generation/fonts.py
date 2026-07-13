@@ -39,7 +39,7 @@ def load_font_sources(path: Path, require_v2_metadata: bool = False) -> list[Fon
             if not record.get("family_id", ""):
                 raise ValueError(f"字体记录缺少 family_id：{record.get('font_id', '<unknown>')}")
             category = record.get("category", "")
-            if category not in {"regular", "writing"}:
+            if not isinstance(category, str) or category not in {"regular", "writing"}:
                 raise ValueError(
                     f"字体记录 category 必须是 regular 或 writing：{record.get('font_id', '<unknown>')}={category}"
                 )
