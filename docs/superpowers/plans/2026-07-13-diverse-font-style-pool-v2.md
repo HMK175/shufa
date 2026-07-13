@@ -218,3 +218,11 @@ git commit -m "feat: build diverse FontDiffuser dataset v2"
 - 设计覆盖：Task 1 对应 v2 元数据，Task 2 对应家族配额和人工预览，Task 3 对应官方来源/许可证/覆盖率/人工筛选，Task 4 对应独立 v2 构建与最终验收。
 - 无占位：每个代码任务给出了实际测试、函数名、命令和预期结果；候选字体只在审计后进入已选清单，不预先宣称通过。
 - 一致性：`family_id`、`category`、`variant_role` 在注册表、配额校验、最终清单和 `fonts.csv` 中使用同一命名。
+
+## v2 修订条款：生态与基本书体配额（优先于前述同名规则）
+
+- v2 的目标仍为 21 个常规风格和 7 个书写风格，但 LXGW 的所有衍生项目按一个生态整体计数，合计最多保留 3 个。文楷、文楷 GB、Screen、臻楷和漫黑不得通过不同 `family_id` 绕开此限制。
+- v2 来源条目新增 `ecosystem_id` 与 `script_class`。`ecosystem_id` 用于跨仓库生态合并计数；`script_class` 对常规字体固定为 `regular`，对书写字体只能为 `kaishu`、`xingkai`、`lishu`、`caoshu` 或 `transitional`。
+- 书写组必须恰好包含：楷书 2、行楷 2、隶书 1、草书 1、过渡书体 1。装饰字体不允许用于填充这些书体配额。
+- `validate_v2_style_pool` 必须额外校验 LXGW 生态上限与上述书体配额；候选预览网格必须显示字体 ID、生态 ID 和书体类别。
+- `fonts.csv` 和 `dataset_summary.json` 必须写入 `ecosystem_id`、`script_class`、生态计数和书体计数。全量构建的验收摘要必须同时显示：至少 8 个常规字体家族、LXGW 生态不超过 3、楷书 2/行楷 2/隶书 1/草书 1/过渡书体 1。
