@@ -15,3 +15,5 @@ class FontSource:
     family_id: str = ""
     category: str = ""
     variant_role: str = ""
+    ecosystem_id: str = ""
+    script_class: str = ""

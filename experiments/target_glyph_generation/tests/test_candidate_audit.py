@@ -31,3 +31,22 @@ def test_validate_v2_style_pool_rejects_more_than_three_regular_styles_per_famil
             maximum_styles_per_family=3,
             maximum_writing_styles_per_family=1,
         )
+
+
+def test_validate_v2_style_pool_rejects_more_than_three_lxgw_ecosystem_styles():
+    sources = [
+        _source(f"lxgw_{index}", f"family_{index}", "regular")
+        for index in range(4)
+    ]
+    for source in sources:
+        object.__setattr__(source, "ecosystem_id", "lxgw")
+
+    with pytest.raises(ValueError, match="LXGW 生态上限"):
+        validate_v2_style_pool(
+            sources,
+            regular_style_count=4,
+            writing_style_count=0,
+            minimum_regular_families=4,
+            maximum_styles_per_family=3,
+            maximum_writing_styles_per_family=1,
+        )

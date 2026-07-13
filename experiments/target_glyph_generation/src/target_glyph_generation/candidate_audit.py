@@ -28,10 +28,13 @@ def validate_v2_style_pool(
         raise ValueError("v2 常规字体家族数量不足")
     regular_counts = Counter(source.family_id for source in regular)
     writing_counts = Counter(source.family_id for source in writing)
+    ecosystem_counts = Counter(source.ecosystem_id for source in sources if source.ecosystem_id)
     if any(count > maximum_styles_per_family for count in regular_counts.values()):
         raise ValueError("常规字体家族上限被突破")
     if any(count > maximum_writing_styles_per_family for count in writing_counts.values()):
         raise ValueError("书写字体家族上限被突破")
+    if ecosystem_counts["lxgw"] > 3:
+        raise ValueError("LXGW 生态上限被突破")
 
 
 def create_candidate_preview_grid(
