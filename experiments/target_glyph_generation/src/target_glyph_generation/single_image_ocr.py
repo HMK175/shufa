@@ -41,28 +41,33 @@ class LabelRecord:
 
 
 def build_label_records(
-    images: Sequence[ImageRecord], predictions: Sequence[tuple[object, object]]
+    images: Sequence[ImageRecord], predictions: Sequence[object]
 ) -> list[LabelRecord]:
     """Normalize OCR predictions and identify duplicate characters within one style."""
     if len(images) != len(predictions):
         raise ValueError("images and predictions must have equal length")
 
     labels = [_build_label(image, prediction) for image, prediction in zip(images, predictions)]
+    return _mark_duplicate_characters(labels)
+
+
+def _mark_duplicate_characters(labels: Sequence[LabelRecord]) -> list[LabelRecord]:
+    result = list(labels)
     duplicate_groups: dict[tuple[str, str, str], list[int]] = defaultdict(list)
-    for index, label in enumerate(labels):
+    for index, label in enumerate(result):
         if label.character is not None:
             duplicate_groups[(label.image.dataset_id, label.image.style_id, label.character)].append(index)
 
     for indices in duplicate_groups.values():
         if len(indices) > 1:
             for index in indices:
-                label = labels[index]
-                labels[index] = replace(
+                label = result[index]
+                result[index] = replace(
                     label,
                     review_state="required_review",
                     flags=_append_flag(label.flags, "duplicate_character"),
                 )
-    return labels
+    return result
 
 
 def select_review_sample(
@@ -72,20 +77,19 @@ def select_review_sample(
     if isinstance(per_style, bool) or not isinstance(per_style, int) or per_style <= 0:
         raise ValueError("per_style must be a positive integer")
 
-    grouped: dict[tuple[str, str], list[LabelRecord]] = defaultdict(list)
-    for label in labels:
-        grouped[(label.image.dataset_id, label.image.style_id)].append(label)
+    grouped: dict[tuple[str, str], list[int]] = defaultdict(list)
+    for index, label in enumerate(labels):
+        grouped[(label.image.dataset_id, label.image.style_id)].append(index)
 
-    selected_ids: set[int] = set()
-    for group_key, group_labels in grouped.items():
-        if len(group_labels) <= per_style:
-            selected_ids.update(id(label) for label in group_labels)
+    selected_indices: set[int] = set()
+    for group_key, group_indices in grouped.items():
+        if len(group_indices) <= per_style:
+            selected_indices.update(group_indices)
             continue
-        ordered_labels = sorted(group_labels, key=lambda label: label.key)
+        ordered_indices = sorted(group_indices, key=lambda index: (labels[index].key, index))
         group_seed = _group_seed(seed, group_key)
-        sampled_labels = random.Random(group_seed).sample(ordered_labels, per_style)
-        selected_ids.update(id(label) for label in sampled_labels)
-    return [label for label in labels if id(label) in selected_ids]
+        selected_indices.update(random.Random(group_seed).sample(ordered_indices, per_style))
+    return [label for index, label in enumerate(labels) if index in selected_indices]
 
 
 def apply_manual_overrides(
@@ -100,17 +104,18 @@ def apply_manual_overrides(
     if unknown_keys:
         raise ValueError(f"override key does not map to an existing label: {sorted(unknown_keys)!r}")
 
-    return [
+    applied_labels = [
         _apply_override(label, overrides_by_key[label.key]) if label.key in overrides_by_key else label
         for label in labels
     ]
+    return _mark_duplicate_characters(applied_labels)
 
 
-def _build_label(image: ImageRecord, prediction: tuple[object, object]) -> LabelRecord:
-    try:
-        raw_ocr, raw_score = prediction
-    except (TypeError, ValueError):
+def _build_label(image: ImageRecord, prediction: object) -> LabelRecord:
+    if not isinstance(prediction, (tuple, list)) or len(prediction) != 2:
         raw_ocr, raw_score = None, None
+    else:
+        raw_ocr, raw_score = prediction
 
     ocr_text = raw_ocr if isinstance(raw_ocr, str) else None
     ocr_score = _normalize_score(raw_score)
@@ -143,7 +148,7 @@ def _normalize_score(value: object) -> float:
         score = float(value)
     except (TypeError, ValueError):
         return 0.0
-    return score if math.isfinite(score) else 0.0
+    return score if math.isfinite(score) and 0.0 <= score <= 1.0 else 0.0
 
 
 def _normalize_cjk_glyph(value: object) -> str | None:

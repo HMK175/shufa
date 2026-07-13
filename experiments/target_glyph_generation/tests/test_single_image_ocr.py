@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import pytest
@@ -90,14 +91,44 @@ def test_build_label_records_uses_point_nine_as_low_confidence_boundary(tmp_path
     )
 
     assert labels[0].review_state == "provisional"
+    assert labels[0].ocr_score == 0.90
     assert labels[0].flags == ()
     assert labels[1].review_state == "provisional"
+    assert labels[1].ocr_score == 0.899
     assert labels[1].flags == ("low_confidence",)
+
+
+@pytest.mark.parametrize("score", [-0.1, 1.1, math.nan, math.inf, -math.inf])
+def test_build_label_records_normalizes_out_of_range_scores_to_low_confidence(
+    tmp_path: Path, score: float
+):
+    label = build_label_records([_image_record(tmp_path / "1.jpg")], [("山", score)])[0]
+
+    assert label.ocr_score == 0.0
+    assert label.character == "山"
+    assert label.review_state == "provisional"
+    assert label.flags == ("low_confidence",)
 
 
 def test_build_label_records_rejects_prediction_count_mismatch(tmp_path: Path):
     with pytest.raises(ValueError, match="length"):
         build_label_records([_image_record(tmp_path / "1.jpg")], [])
+
+
+@pytest.mark.parametrize(
+    "prediction",
+    ["木0", b"m0", {"text": "木", "score": 0.99}, ("木",), ("木", 0.99, "extra")],
+)
+def test_build_label_records_rejects_malformed_prediction_containers(
+    tmp_path: Path, prediction: object
+):
+    label = build_label_records([_image_record(tmp_path / "1.jpg")], [prediction])[0]  # type: ignore[list-item]
+
+    assert label.ocr_text is None
+    assert label.ocr_score == 0.0
+    assert label.character is None
+    assert label.review_state == "required_review"
+    assert label.flags == ("invalid_prediction",)
 
 
 def test_select_review_sample_is_deterministic_per_style_and_returns_under_cap_groups(tmp_path: Path):
@@ -125,6 +156,14 @@ def test_select_review_sample_is_deterministic_per_style_and_returns_under_cap_g
     }
     assert under_cap == mf_labels
     assert all(label.review_state == "provisional" for label in labels)
+
+
+def test_select_review_sample_caps_repeated_label_instance_by_input_position(tmp_path: Path):
+    label = _label_record(tmp_path / "1.jpg")
+
+    sample = select_review_sample([label, label], per_style=1, seed=42)
+
+    assert sample == [label]
 
 
 @pytest.mark.parametrize("per_style", [0, -1, True, 1.5])
@@ -155,6 +194,24 @@ def test_apply_manual_overrides_accepts_corrected_character_and_rejects_label(tm
     assert labels[0].review_state == "manual_override"
     assert labels[1].character is None
     assert labels[1].review_state == "rejected"
+
+
+def test_apply_manual_overrides_marks_same_style_final_character_collisions_for_review(
+    tmp_path: Path,
+):
+    existing = _label_record(tmp_path / "existing.jpg", ocr_text="山", character="山")
+    corrected = _label_record(
+        tmp_path / "corrected.jpg", ocr_text="山水", character=None, review_state="required_review"
+    )
+
+    labels = apply_manual_overrides(
+        [existing, corrected],
+        {corrected.key: {"manual_character": "山", "decision": "accept"}},
+    )
+
+    assert [label.character for label in labels] == ["山", "山"]
+    assert [label.review_state for label in labels] == ["required_review", "required_review"]
+    assert all("duplicate_character" in label.flags for label in labels)
 
 
 @pytest.mark.parametrize(
