@@ -48,7 +48,7 @@ def discover_chinese_style_images(root: Path) -> list[ImageRecord]:
                     continue
                 match = filename_pattern.fullmatch(image_path.name)
                 if match is None:
-                    continue
+                    raise ValueError(f"ChineseStyle 图像格式错误：{image_path}")
                 record = ImageRecord(
                     dataset_id=CHINESE_STYLE_DATASET_ID,
                     style_id=style_id,

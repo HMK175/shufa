@@ -78,6 +78,16 @@ def test_discover_chinese_style_rejects_duplicate_records(tmp_path: Path, monkey
         discover_chinese_style_images(tmp_path)
 
 
+def test_discover_chinese_style_rejects_malformed_jpg_in_recognized_style_directory(
+    tmp_path: Path,
+):
+    _touch(tmp_path / "train" / "lishu" / "lishu_7.jpg")
+    _touch(tmp_path / "train" / "lishu" / "xingkai_7.jpg")
+
+    with pytest.raises(ValueError, match="ChineseStyle 图像格式错误"):
+        discover_chinese_style_images(tmp_path)
+
+
 def test_discover_calligrapher_images_uses_writer_as_style_and_preserves_split(
     tmp_path: Path,
 ):
