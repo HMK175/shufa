@@ -85,8 +85,10 @@ def _validate_preview_characters(characters: list[str], preview_characters: list
 
 
 def _resolve_candidate_font_path(font_root: Path, local_path: str) -> tuple[Path | None, str | None]:
+    if not isinstance(local_path, str) or not local_path.strip():
+        return None, "local_path 必须是非空字符串相对路径"
     relative_path = Path(local_path)
-    if not local_path or relative_path.is_absolute():
+    if relative_path.is_absolute():
         return None, "local_path 必须是非空相对路径"
 
     resolved_root = font_root.resolve()
@@ -173,12 +175,15 @@ def audit_font_candidates(
     (output_dir / "candidate_audit_failures.json").write_text(
         json.dumps(failures, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    preview_grid_path = output_dir / "candidate_preview_grid.png"
     if accepted_sources:
         create_candidate_preview_grid(
             accepted_sources,
             font_root,
             preview_characters,
-            output_dir / "candidate_preview_grid.png",
+            preview_grid_path,
             canvas_size,
         )
+    else:
+        preview_grid_path.unlink(missing_ok=True)
     return summary

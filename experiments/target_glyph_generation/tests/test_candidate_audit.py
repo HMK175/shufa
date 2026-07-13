@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import os
 from pathlib import Path
 import subprocess
@@ -248,6 +249,9 @@ def test_audit_font_candidates_writes_summary_and_preview_for_renderable_font(tm
 
 def test_audit_font_candidates_omits_preview_grid_when_every_candidate_fails(tmp_path):
     output_dir = tmp_path / "audit"
+    output_dir.mkdir()
+    stale_grid = output_dir / "candidate_preview_grid.png"
+    stale_grid.write_bytes(b"stale preview")
 
     summary = candidate_audit.audit_font_candidates(
         [_source("absent", "example", "regular")],
@@ -258,9 +262,39 @@ def test_audit_font_candidates_omits_preview_grid_when_every_candidate_fails(tmp
     )
 
     assert summary["accepted_count"] == 0
-    assert not (output_dir / "candidate_preview_grid.png").exists()
+    assert not stale_grid.exists()
     failures = json.loads((output_dir / "candidate_audit_failures.json").read_text(encoding="utf-8"))
     assert failures == summary["records"]
+
+
+def test_audit_font_candidates_rejects_non_string_local_path_without_stopping(tmp_path):
+    invalid_source = FontSource(
+        font_id="invalid_path",
+        display_name="Invalid path",
+        version="1.0",
+        source_url="https://example.com/font.ttf",
+        license_id="OFL-1.1",
+        license_url="https://example.com/OFL.txt",
+        local_path=None,
+        family_id="example",
+        category="regular",
+        variant_role="regular",
+        ecosystem_id="example",
+        script_class="regular",
+        style_role="text",
+    )
+
+    summary = candidate_audit.audit_font_candidates(
+        [invalid_source],
+        tmp_path,
+        ["A"],
+        tmp_path / "audit",
+        preview_characters=["A"] * 8,
+    )
+
+    assert summary["rejected_count"] == 1
+    assert summary["records"][0]["file_error"]
+    assert summary["records"][0]["accepted"] is False
 
 
 def test_audit_font_candidates_rejects_invalid_preview_character_list(tmp_path):
@@ -328,3 +362,55 @@ def test_audit_font_candidates_cli_writes_auditable_outputs(tmp_path):
     assert completed.returncode == 0, completed.stderr
     assert "accepted=1" in completed.stdout
     assert (output_dir / "candidate_audit_summary.json").is_file()
+
+
+def test_audit_font_candidates_cli_returns_zero_for_rejected_candidate(tmp_path, monkeypatch, capsys):
+    sources_path = tmp_path / "sources.yaml"
+    sources_path.write_text(
+        """fonts:
+  - font_id: absent
+    display_name: Absent
+    version: '1.0'
+    source_url: https://example.com/absent.ttf
+    license_id: OFL-1.1
+    license_url: https://example.com/OFL.txt
+    local_path: fonts/absent.ttf
+    family_id: example
+    category: regular
+    variant_role: regular
+    ecosystem_id: example
+    script_class: regular
+    style_role: text
+""",
+        encoding="utf-8",
+    )
+    characters_path = tmp_path / "characters.txt"
+    characters_path.write_text("A\n", encoding="utf-8")
+    output_dir = tmp_path / "audit"
+    script_path = Path(__file__).parents[1] / "scripts" / "audit_font_candidates.py"
+    spec = importlib.util.spec_from_file_location("audit_font_candidates_cli", script_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(script_path),
+            "--sources",
+            str(sources_path),
+            "--characters",
+            str(characters_path),
+            "--font-root",
+            str(tmp_path),
+            "--output-dir",
+            str(output_dir),
+            "--preview-characters",
+            "AAAAAAAA",
+        ],
+    )
+
+    module.main()
+
+    assert "accepted=0" in capsys.readouterr().out
+    assert (output_dir / "candidate_audit_failures.json").is_file()
