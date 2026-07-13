@@ -1,14 +1,20 @@
+import csv
+import json
 import math
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from target_glyph_generation.external_dataset_discovery import ImageRecord
 from target_glyph_generation.single_image_ocr import (
     LabelRecord,
     apply_manual_overrides,
     build_label_records,
+    create_review_pages,
+    dataset_fingerprint,
     select_review_sample,
+    write_audit_outputs,
 )
 
 
@@ -30,16 +36,27 @@ def _label_record(
     ocr_text: str | None = "山",
     character: str | None = "山",
     review_state: str = "provisional",
+    dataset_id: str = "calligrapher20",
+    style_id: str = "wxz",
+    manual_character: str | None = None,
+    ocr_score: float = 0.99,
+    flags: tuple[str, ...] = (),
 ) -> LabelRecord:
     return LabelRecord(
-        image=_image_record(path),
+        image=_image_record(path, dataset_id=dataset_id, style_id=style_id),
         ocr_text=ocr_text,
-        ocr_score=0.99,
-        manual_character=None,
+        ocr_score=ocr_score,
+        manual_character=manual_character,
         character=character,
         review_state=review_state,
-        flags=(),
+        flags=flags,
     )
+
+
+def _write_jpeg(path: Path, color: tuple[int, int, int] = (240, 240, 240)) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGB", (8, 8), color).save(path, format="JPEG")
+    return path
 
 
 def test_build_label_records_marks_duplicate_character_only_within_same_style(tmp_path: Path):
@@ -254,3 +271,167 @@ def test_apply_manual_overrides_rejects_invalid_overrides(
 
     with pytest.raises(ValueError, match=match):
         apply_manual_overrides([label], overrides)  # type: ignore[arg-type]
+
+
+def test_write_audit_outputs_exports_labels_reviews_candidates_and_summary(tmp_path: Path):
+    wxz_one = _write_jpeg(tmp_path / "images" / "wxz-1.jpg")
+    wxz_two = _write_jpeg(tmp_path / "images" / "wxz-2.jpg", (220, 220, 220))
+    wxz_three = _write_jpeg(tmp_path / "images" / "wxz-3.jpg", (200, 200, 200))
+    wxz_four = _write_jpeg(tmp_path / "images" / "wxz-4.jpg", (180, 180, 180))
+    mf_one = _write_jpeg(tmp_path / "images" / "mf-1.jpg", (160, 160, 160))
+    mf_two = _write_jpeg(tmp_path / "images" / "mf-2.jpg", (140, 140, 140))
+    labels = [
+        _label_record(wxz_one, character="山", flags=("low_confidence",)),
+        _label_record(wxz_two, character="水", review_state="sample_checked"),
+        _label_record(wxz_three, character="永", review_state="required_review"),
+        _label_record(wxz_four, character="书", review_state="rejected"),
+        _label_record(
+            mf_one,
+            character="永",
+            style_id="mf",
+            manual_character="永",
+            review_state="manual_override",
+        ),
+        _label_record(mf_two, character="字", style_id="mf"),
+    ]
+    fingerprint = dataset_fingerprint([label.image for label in labels])
+    output_dir = tmp_path / "audit"
+
+    summary = write_audit_outputs(
+        labels,
+        output_dir,
+        allowed_characters={"山", "水", "永", "书"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint=fingerprint,
+        review_per_style=1,
+    )
+
+    assert {path.name for path in output_dir.iterdir()} == {
+        "ocr_labels.csv",
+        "required_review.csv",
+        "review_sample.csv",
+        "manual_overrides.csv",
+        "target_glyph_candidates.csv",
+        "ocr_audit_summary.json",
+    }
+    with (output_dir / "ocr_labels.csv").open(encoding="utf-8", newline="") as handle:
+        assert len(list(csv.DictReader(handle))) == 6
+    with (output_dir / "required_review.csv").open(encoding="utf-8", newline="") as handle:
+        assert len(list(csv.DictReader(handle))) == 1
+    with (output_dir / "review_sample.csv").open(encoding="utf-8", newline="") as handle:
+        assert len(list(csv.DictReader(handle))) == 2
+    with (output_dir / "target_glyph_candidates.csv").open(encoding="utf-8", newline="") as handle:
+        candidates = list(csv.DictReader(handle))
+    assert len(candidates) == 3
+    assert {row["character"] for row in candidates} == {"山", "水", "永"}
+    assert {row["review_state"] for row in candidates} == {
+        "provisional",
+        "sample_checked",
+        "manual_override",
+    }
+    assert all(row["character"] in {"山", "水", "永", "书"} for row in candidates)
+    assert json.loads((output_dir / "ocr_audit_summary.json").read_text(encoding="utf-8")) == summary
+    assert summary["model_name"] == "PaddleOCR-v4"
+    assert summary["dataset_fingerprint"] == fingerprint
+    assert summary["label_count"] == 6
+    assert summary["required_review_count"] == 1
+    assert summary["review_sample_count"] == 2
+    assert summary["join_candidate_count"] == 3
+    assert summary["unique_candidate_character_count"] == 3
+    assert summary["per_style_counts"] == [
+        {
+            "dataset_id": "calligrapher20",
+            "style_id": "mf",
+            "label_count": 2,
+            "required_review_count": 0,
+            "review_sample_count": 1,
+            "join_candidate_count": 1,
+        },
+        {
+            "dataset_id": "calligrapher20",
+            "style_id": "wxz",
+            "label_count": 4,
+            "required_review_count": 1,
+            "review_sample_count": 1,
+            "join_candidate_count": 2,
+        },
+    ]
+
+
+def test_write_audit_outputs_preserves_existing_manual_override_entries(tmp_path: Path):
+    image_path = _write_jpeg(tmp_path / "source.jpg")
+    label = _label_record(image_path)
+    output_dir = tmp_path / "audit"
+    output_dir.mkdir()
+    manual_overrides = output_dir / "manual_overrides.csv"
+    existing_contents = (
+        "dataset_id,style_id,source_split,raw_filename,manual_character,decision\n"
+        "calligrapher20,wxz,train,source.jpg,永,accept\n"
+    )
+    manual_overrides.write_text(existing_contents, encoding="utf-8")
+
+    write_audit_outputs(
+        [label],
+        output_dir,
+        allowed_characters={"山"},
+        model_name="PaddleOCR-v4",
+        dataset_fingerprint=dataset_fingerprint([label.image]),
+    )
+
+    assert manual_overrides.read_text(encoding="utf-8") == existing_contents
+
+
+def test_dataset_fingerprint_is_order_stable_and_detects_source_file_size_changes(tmp_path: Path):
+    first_path = _write_jpeg(tmp_path / "first.jpg")
+    second_path = _write_jpeg(tmp_path / "second.jpg", (10, 20, 30))
+    first = _image_record(first_path)
+    second = _image_record(second_path)
+
+    fingerprint = dataset_fingerprint([first, second])
+
+    assert dataset_fingerprint([second, first]) == fingerprint
+    same_metadata_first = ImageRecord(
+        dataset_id="calligrapher20",
+        style_id="wxz",
+        style_display_name="wxz",
+        source_split="train",
+        raw_filename="same.jpg",
+        raw_index="same",
+        image_path=first_path,
+    )
+    same_metadata_second = ImageRecord(
+        dataset_id="calligrapher20",
+        style_id="wxz",
+        style_display_name="wxz",
+        source_split="train",
+        raw_filename="same.jpg",
+        raw_index="same",
+        image_path=second_path,
+    )
+    assert dataset_fingerprint([same_metadata_first, same_metadata_second]) == dataset_fingerprint(
+        [same_metadata_second, same_metadata_first]
+    )
+    with first_path.open("ab") as handle:
+        handle.write(b"extra-byte")
+    assert dataset_fingerprint([first, second]) != fingerprint
+    with pytest.raises(FileNotFoundError, match="source image"):
+        dataset_fingerprint([_image_record(tmp_path / "missing.jpg")])
+
+
+def test_create_review_pages_paginates_images_and_rejects_invalid_page_size(tmp_path: Path):
+    labels = [
+        _label_record(
+            _write_jpeg(tmp_path / "images" / f"{index}.jpg", (index, index, index)),
+            character="山" if index % 2 == 0 else "水",
+            style_id="wxz" if index % 2 == 0 else "mf",
+        )
+        for index in range(26)
+    ]
+
+    pages = create_review_pages(labels, tmp_path / "review-pages", page_size=25)
+
+    assert [path.name for path in pages] == ["review_page_001.png", "review_page_002.png"]
+    assert all(path.is_file() and path.stat().st_size > 0 for path in pages)
+    assert all(Image.open(path).verify() is None for path in pages)
+    with pytest.raises(ValueError, match="page_size"):
+        create_review_pages(labels, tmp_path / "invalid-pages", page_size=0)
