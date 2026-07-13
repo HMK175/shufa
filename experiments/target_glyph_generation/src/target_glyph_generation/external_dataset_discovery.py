@@ -137,14 +137,17 @@ def validate_chinese_style_audit_inventory(root: Path, records: Iterable[ImageRe
             + ", ".join(missing_directories)
         )
 
-    record_counts = Counter(record.style_id for record in records)
-    missing_styles = [
-        style_id for style_id in CHINESE_STYLE_DISPLAY_NAMES if record_counts[style_id] == 0
+    split_style_counts = Counter((record.source_split, record.style_id) for record in records)
+    missing_split_styles = [
+        f"{source_split}/{style_id}: discovered {split_style_counts[(source_split, style_id)]}"
+        for source_split in SOURCE_SPLITS
+        for style_id in CHINESE_STYLE_DISPLAY_NAMES
+        if split_style_counts[(source_split, style_id)] == 0
     ]
-    if missing_styles:
+    if missing_split_styles:
         raise ValueError(
-            "ChineseStyle dataset inventory incomplete: missing records for styles: "
-            + ", ".join(missing_styles)
+            "ChineseStyle dataset inventory incomplete: missing records for required split/styles: "
+            + ", ".join(missing_split_styles)
         )
 
 
@@ -172,13 +175,17 @@ def validate_calligrapher_audit_inventory(
         )
 
     record_counts = Counter(record.style_id for record in records)
-    missing_writers = [
-        writer_id for writer_id in sorted(expected_totals) if record_counts[writer_id] == 0
+    split_writer_counts = Counter((record.source_split, record.style_id) for record in records)
+    missing_split_writers = [
+        f"{source_split}/{writer_id}: discovered {split_writer_counts[(source_split, writer_id)]}"
+        for source_split in SOURCE_SPLITS
+        for writer_id in sorted(expected_totals)
+        if split_writer_counts[(source_split, writer_id)] == 0
     ]
-    if missing_writers:
+    if missing_split_writers:
         raise ValueError(
-            "Calligrapher dataset inventory incomplete: missing records for writers: "
-            + ", ".join(missing_writers)
+            "Calligrapher dataset inventory incomplete: missing records for required split/writers: "
+            + ", ".join(missing_split_writers)
         )
 
     mismatched_totals = [

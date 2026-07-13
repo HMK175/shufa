@@ -86,8 +86,12 @@ def main() -> None:
 
 
 def _load_sources(path: Path) -> dict[str, dict[str, object]]:
-    with Path(path).open("r", encoding="utf-8") as handle:
-        payload = yaml.safe_load(handle)
+    path = Path(path)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle)
+    except yaml.YAMLError as error:
+        raise ValueError(f"sources YAML is invalid: {path}") from error
     if not isinstance(payload, dict) or not isinstance(payload.get("sources"), dict):
         raise ValueError("sources YAML must contain a sources mapping")
     return payload["sources"]
