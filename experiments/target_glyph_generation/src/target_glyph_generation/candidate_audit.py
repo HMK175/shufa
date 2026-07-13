@@ -35,6 +35,11 @@ def validate_v2_style_pool(
         raise ValueError("书写字体家族上限被突破")
     if ecosystem_counts["lxgw"] > 3:
         raise ValueError("LXGW 生态上限被突破")
+    if writing_style_count == 7:
+        script_counts = Counter(source.script_class for source in writing)
+        expected_script_counts = {"kaishu": 2, "xingkai": 2, "lishu": 1, "caoshu": 1, "transitional": 1}
+        if script_counts != expected_script_counts:
+            raise ValueError("书体配额不符合楷书2、行楷2、隶书1、草书1、过渡书体1")
 
 
 def create_candidate_preview_grid(
