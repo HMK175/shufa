@@ -174,8 +174,11 @@ def validate_calligrapher_audit_inventory(
             + ", ".join(missing_directories)
         )
 
-    record_counts = Counter(record.style_id for record in records)
-    split_writer_counts = Counter((record.source_split, record.style_id) for record in records)
+    record_counts: Counter[str] = Counter()
+    split_writer_counts: Counter[tuple[str, str]] = Counter()
+    for record in records:
+        record_counts[record.style_id] += 1
+        split_writer_counts[(record.source_split, record.style_id)] += 1
     missing_split_writers = [
         f"{source_split}/{writer_id}: discovered {split_writer_counts[(source_split, writer_id)]}"
         for source_split in SOURCE_SPLITS

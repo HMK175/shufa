@@ -8,6 +8,7 @@ from target_glyph_generation.external_dataset_discovery import (
     ImageRecord,
     discover_calligrapher_images,
     discover_chinese_style_images,
+    validate_calligrapher_audit_inventory,
 )
 
 
@@ -177,3 +178,34 @@ def test_calligrapher8_sources_config_has_exact_expected_writers():
             "shz": {"display_name": "宋徽宗", "expected_total": 6763},
         }
     }
+
+
+def test_validate_calligrapher_audit_inventory_accepts_generator_records(tmp_path: Path):
+    for source_split in ("train", "test"):
+        (tmp_path / source_split / "wxz").mkdir(parents=True)
+    records = (
+        ImageRecord(
+            dataset_id="calligrapher20",
+            style_id="wxz",
+            style_display_name="Wang Xizhi",
+            source_split="train",
+            raw_filename="1.jpg",
+            raw_index="1",
+            image_path=tmp_path / "train" / "wxz" / "1.jpg",
+        ),
+        ImageRecord(
+            dataset_id="calligrapher20",
+            style_id="wxz",
+            style_display_name="Wang Xizhi",
+            source_split="test",
+            raw_filename="2.jpg",
+            raw_index="2",
+            image_path=tmp_path / "test" / "wxz" / "2.jpg",
+        ),
+    )
+
+    validate_calligrapher_audit_inventory(
+        tmp_path,
+        (record for record in records),
+        {"wxz": {"expected_total": 2}},
+    )
