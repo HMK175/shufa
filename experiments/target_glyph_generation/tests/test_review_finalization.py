@@ -132,7 +132,7 @@ def test_finalization_rejects_a_non_cjk_manual_character(tmp_path: Path):
     assert [issue.code for issue in result.unresolved] == ["invalid_manual_character"]
 
 
-def test_finalization_marks_reject_with_manual_character_as_unresolved(tmp_path: Path):
+def test_finalization_keeps_reject_when_a_legacy_manual_character_is_left_over(tmp_path: Path):
     labels_path = tmp_path / "ocr_labels.csv"
     draft_path = tmp_path / "review.csv"
     _write_csv(labels_path, LABEL_REQUIRED_FIELDNAMES, [_label("lishu_1.jpg", "一")])
@@ -144,8 +144,9 @@ def test_finalization_marks_reject_with_manual_character_as_unresolved(tmp_path:
 
     result = finalize_review_drafts(load_ocr_labels(labels_path), [load_review_draft(draft_path)])
 
-    assert not result.is_finalizable
-    assert [issue.code for issue in result.unresolved] == ["manual_character_with_reject"]
+    assert result.is_finalizable
+    assert result.unresolved == ()
+    assert [(item.raw_filename, item.note) for item in result.rejected] == [("lishu_1.jpg", "")]
 
 
 def test_finalization_keeps_an_auditable_rejected_row(tmp_path: Path):
@@ -234,6 +235,58 @@ def test_later_manual_character_resolves_an_earlier_pending_accept(tmp_path: Pat
     assert [(candidate.raw_filename, candidate.character) for candidate in result.candidates] == [
         ("lishu_7.jpg", "乙"),
     ]
+
+
+def test_later_reject_resolves_an_earlier_pending_accept(tmp_path: Path):
+    labels_path = tmp_path / "ocr_labels.csv"
+    first_draft_path = tmp_path / "review.csv"
+    correction_path = tmp_path / "correction.csv"
+    _write_csv(labels_path, LABEL_REQUIRED_FIELDNAMES, [_label("lishu_7.jpg", "一")])
+    _write_csv(first_draft_path, DRAFT_FIELDNAMES, [_draft("lishu_7.jpg", decision="accept")])
+    _write_csv(correction_path, DRAFT_FIELDNAMES, [_draft("lishu_7.jpg", decision="reject")])
+
+    result = finalize_review_drafts(
+        load_ocr_labels(labels_path), [load_review_draft(first_draft_path), load_review_draft(correction_path)]
+    )
+
+    assert result.is_finalizable
+    assert result.unresolved == ()
+    assert result.conflicts == ()
+    assert [(item.raw_filename, item.note) for item in result.rejected] == [("lishu_7.jpg", "")]
+
+
+def test_finalization_recovers_a_uniquely_matching_legacy_split_key(tmp_path: Path):
+    labels_path = tmp_path / "ocr_labels.csv"
+    draft_path = tmp_path / "legacy.csv"
+    _write_csv(
+        labels_path,
+        LABEL_REQUIRED_FIELDNAMES,
+        [_label("lishu_559.jpg", "窕", source_split="test")],
+    )
+    _write_csv(
+        draft_path,
+        DRAFT_FIELDNAMES,
+        [
+            _draft(
+                "train",
+                source_split="lishu_559.jpg",
+                decision="aceept",
+                manual_character="遥",
+            )
+        ],
+    )
+
+    result = finalize_review_drafts(load_ocr_labels(labels_path), [load_review_draft(draft_path)])
+
+    assert result.is_finalizable
+    assert [(candidate.source_split, candidate.raw_filename, candidate.character) for candidate in result.candidates] == [
+        ("test", "lishu_559.jpg", "遥")
+    ]
+    assert {item.code for item in result.normalizations} == {
+        "legacy_columns_swapped",
+        "decision_aceept_normalized",
+        "source_split_resolved_by_unique_filename",
+    }
 
 
 def test_finalization_reports_unknown_keys_and_duplicate_style_characters(tmp_path: Path):

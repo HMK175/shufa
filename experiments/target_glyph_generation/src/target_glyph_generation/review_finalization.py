@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import csv
 import io
 from pathlib import Path
@@ -280,6 +280,7 @@ def finalize_review_drafts(
     conflicts.extend(item for draft in draft_list for item in draft.parse_issues)
 
     labels_by_key: dict[Key, OcrLabel] = {}
+    labels_by_filename: dict[tuple[str, str, str], list[OcrLabel]] = defaultdict(list)
     for label in label_list:
         if label.key in labels_by_key:
             conflicts.append(
@@ -292,10 +293,36 @@ def finalize_review_drafts(
             )
         else:
             labels_by_key[label.key] = label
+            labels_by_filename[(label.dataset_id, label.style_id, label.raw_filename)].append(label)
 
     selected: dict[Key, DraftEntry] = {}
     for draft in draft_list:
         for entry in draft.entries:
+            if entry.key not in labels_by_key:
+                matches = labels_by_filename[
+                    (entry.key[0], entry.key[1], entry.key[3])
+                ]
+                if len(matches) == 1:
+                    resolved_key = matches[0].key
+                    normalizations.append(
+                        _issue(
+                            "source_split_resolved_by_unique_filename",
+                            resolved_key,
+                            entry.source_path,
+                            "review draft source_split was resolved from a unique dataset/style/filename match",
+                        )
+                    )
+                    entry = replace(entry, key=resolved_key)
+                else:
+                    conflicts.append(
+                        _issue(
+                            "unknown_source_key",
+                            entry.key,
+                            entry.source_path,
+                            "review draft key does not map to an original OCR label",
+                        )
+                    )
+                    continue
             if entry.key not in labels_by_key:
                 conflicts.append(
                     _issue(
@@ -327,12 +354,12 @@ def finalize_review_drafts(
                 )
                 continue
             if entry.decision == "reject" and entry.manual_character:
-                unresolved.append(
+                normalizations.append(
                     _issue(
-                        "manual_character_with_reject",
+                        "manual_character_ignored_for_reject",
                         entry.key,
                         entry.source_path,
-                        "decision=reject must not include manual_character",
+                        "manual_character is ignored because decision=reject excludes the source image",
                     )
                 )
             prior = selected.get(entry.key)
@@ -468,6 +495,8 @@ def rejected_rows(rejected: Iterable[RejectedRow]) -> list[dict[str, str]]:
 
 def _merge_entries(prior: DraftEntry, later: DraftEntry) -> tuple[DraftEntry, ReviewIssue | None]:
     if prior.decision != later.decision:
+        if prior.decision == "accept" and not prior.manual_character and later.decision == "reject":
+            return later, None
         return prior, _issue(
             "conflicting_draft_decision",
             prior.key,
