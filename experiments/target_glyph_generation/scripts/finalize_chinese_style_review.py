@@ -29,12 +29,16 @@ def main() -> None:
     )
     parser.add_argument("--ocr-labels", type=Path, required=True)
     parser.add_argument("--draft", type=Path, required=True, action="append")
+    parser.add_argument("--resolution-draft", type=Path, action="append")
     parser.add_argument("--output-dir", type=Path, required=True)
     arguments = parser.parse_args()
 
     labels = load_ocr_labels(arguments.ocr_labels)
     drafts = [load_review_draft(path) for path in arguments.draft]
-    result = finalize_review_drafts(labels, drafts)
+    resolution_drafts = [
+        load_review_draft(path) for path in (arguments.resolution_draft or [])
+    ]
+    result = finalize_review_drafts(labels, drafts, resolution_drafts=resolution_drafts)
     summary = {
         "candidate_count": len(result.candidates),
         "rejected_count": len(result.rejected),

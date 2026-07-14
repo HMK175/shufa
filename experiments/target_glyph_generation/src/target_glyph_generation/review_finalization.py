@@ -269,15 +269,24 @@ def load_review_draft(path: Path) -> ReviewDraft:
 
 
 def finalize_review_drafts(
-    labels: Sequence[OcrLabel], drafts: Iterable[ReviewDraft]
+    labels: Sequence[OcrLabel],
+    drafts: Iterable[ReviewDraft],
+    resolution_drafts: Iterable[ReviewDraft] = (),
 ) -> FinalizationResult:
-    """Apply drafts in memory and return candidates plus every blocking issue."""
+    """Apply drafts in memory and return candidates plus every blocking issue.
+
+    Resolution drafts are intentionally higher precedence: an explicit later
+    accept-with-character or reject decision replaces an earlier human draft.
+    Ordinary drafts retain conflict protection.
+    """
     label_list = list(labels)
     draft_list = list(drafts)
+    resolution_draft_list = list(resolution_drafts)
+    all_drafts = [*draft_list, *resolution_draft_list]
     conflicts: list[ReviewIssue] = []
     unresolved: list[ReviewIssue] = []
-    normalizations = [item for draft in draft_list for item in draft.normalizations]
-    conflicts.extend(item for draft in draft_list for item in draft.parse_issues)
+    normalizations = [item for draft in all_drafts for item in draft.normalizations]
+    conflicts.extend(item for draft in all_drafts for item in draft.parse_issues)
 
     labels_by_key: dict[Key, OcrLabel] = {}
     labels_by_filename: dict[tuple[str, str, str], list[OcrLabel]] = defaultdict(list)
@@ -296,7 +305,10 @@ def finalize_review_drafts(
             labels_by_filename[(label.dataset_id, label.style_id, label.raw_filename)].append(label)
 
     selected: dict[Key, DraftEntry] = {}
-    for draft in draft_list:
+    for draft, is_resolution_draft in [
+        *((draft, False) for draft in draft_list),
+        *((draft, True) for draft in resolution_draft_list),
+    ]:
         for entry in draft.entries:
             if entry.key not in labels_by_key:
                 matches = labels_by_filename[
@@ -343,6 +355,8 @@ def finalize_review_drafts(
                     )
                 )
                 continue
+            if entry.decision == "" and not entry.manual_character:
+                continue
             if entry.decision == "" and entry.manual_character:
                 unresolved.append(
                     _issue(
@@ -366,7 +380,9 @@ def finalize_review_drafts(
             if prior is None:
                 selected[entry.key] = entry
                 continue
-            merged, conflict = _merge_entries(prior, entry)
+            merged, conflict = _merge_entries(
+                prior, entry, prefer_later_resolution=is_resolution_draft
+            )
             if conflict is not None:
                 conflicts.append(conflict)
             else:
@@ -493,7 +509,11 @@ def rejected_rows(rejected: Iterable[RejectedRow]) -> list[dict[str, str]]:
     ]
 
 
-def _merge_entries(prior: DraftEntry, later: DraftEntry) -> tuple[DraftEntry, ReviewIssue | None]:
+def _merge_entries(
+    prior: DraftEntry, later: DraftEntry, prefer_later_resolution: bool = False
+) -> tuple[DraftEntry, ReviewIssue | None]:
+    if prefer_later_resolution:
+        return later, None
     if prior.decision != later.decision:
         if prior.decision == "accept" and not prior.manual_character and later.decision == "reject":
             return later, None
@@ -542,7 +562,47 @@ def _read_review_draft_text(path: Path) -> str:
             return contents.decode(encoding)
         except UnicodeDecodeError:
             continue
-    raise ValueError(f"review draft uses an unsupported text encoding: {path}")
+    try:
+        return _decode_mixed_review_draft_cells(contents)
+    except (UnicodeDecodeError, csv.Error, ValueError) as error:
+        raise ValueError(f"review draft uses an unsupported text encoding: {path}") from error
+
+
+def _decode_mixed_review_draft_cells(contents: bytes) -> str:
+    """Decode an Excel CSV whose individual cells mix UTF-8 and GB18030 bytes.
+
+    This fallback is only reached after whole-file UTF-8 and GB18030 decoding
+    both fail.  Parsing bytes as Latin-1 preserves every byte value for CSV
+    parsing; each cell is then decoded independently and re-emitted in memory.
+    """
+    source = io.StringIO(contents.decode("latin-1"), newline="")
+    rendered = io.StringIO(newline="")
+    reader = csv.reader(source)
+    writer = csv.writer(rendered)
+    for row in reader:
+        writer.writerow([_decode_review_cell(cell) for cell in row])
+    return rendered.getvalue()
+
+
+def _decode_review_cell(value: str) -> str:
+    if value.isascii():
+        return value
+    encoded = value.encode("latin-1")
+    decoded: list[tuple[str, str]] = []
+    for encoding in ("utf-8", "gb18030"):
+        try:
+            decoded.append((encoding, encoded.decode(encoding)))
+        except UnicodeDecodeError:
+            continue
+    if not decoded:
+        raise ValueError("review draft cell cannot be decoded as UTF-8 or GB18030")
+    if len(decoded) == 1:
+        return decoded[0][1]
+    return max(decoded, key=lambda item: (_cjk_character_count(item[1]), item[0] == "utf-8"))[1]
+
+
+def _cjk_character_count(value: str) -> int:
+    return sum(1 for character in value if _normalize_cjk_character(character) is not None)
 
 
 def _looks_like_image_filename(value: str) -> bool:

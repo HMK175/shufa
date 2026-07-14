@@ -214,6 +214,27 @@ def test_review_draft_accepts_gb18030_saved_by_excel_without_rewriting_it(tmp_pa
     assert draft_path.read_bytes() == before
 
 
+def test_review_draft_recovers_mixed_utf8_and_gb18030_excel_cells_without_rewriting_it(tmp_path: Path):
+    draft_path = tmp_path / "mixed_excel_saved.csv"
+    header = ",".join(DRAFT_FIELDNAMES).encode("ascii") + b"\r\n"
+    gb18030_row = "chinese_style,lishu,train,lishu_6.jpg,甙,accept,GB18030 单元格\r\n".encode(
+        "gb18030"
+    )
+    utf8_row = "chinese_style,lishu,train,lishu_7.jpg,区,accept,UTF-8 单元格\r\n".encode(
+        "utf-8"
+    )
+    draft_path.write_bytes(header + gb18030_row + utf8_row)
+    before = draft_path.read_bytes()
+
+    draft = load_review_draft(draft_path)
+
+    assert [(entry.key[3], entry.manual_character, entry.note) for entry in draft.entries] == [
+        ("lishu_6.jpg", "甙", "GB18030 单元格"),
+        ("lishu_7.jpg", "区", "UTF-8 单元格"),
+    ]
+    assert draft_path.read_bytes() == before
+
+
 def test_later_manual_character_resolves_an_earlier_pending_accept(tmp_path: Path):
     labels_path = tmp_path / "ocr_labels.csv"
     first_draft_path = tmp_path / "review.csv"
@@ -232,6 +253,29 @@ def test_later_manual_character_resolves_an_earlier_pending_accept(tmp_path: Pat
     )
 
     assert result.is_finalizable
+    assert [(candidate.raw_filename, candidate.character) for candidate in result.candidates] == [
+        ("lishu_7.jpg", "乙"),
+    ]
+
+
+def test_later_explicit_decision_overrides_an_earlier_blank_placeholder(tmp_path: Path):
+    labels_path = tmp_path / "ocr_labels.csv"
+    placeholder_path = tmp_path / "placeholder.csv"
+    correction_path = tmp_path / "correction.csv"
+    _write_csv(labels_path, LABEL_REQUIRED_FIELDNAMES, [_label("lishu_7.jpg", "甲")])
+    _write_csv(placeholder_path, DRAFT_FIELDNAMES, [_draft("lishu_7.jpg")])
+    _write_csv(
+        correction_path,
+        DRAFT_FIELDNAMES,
+        [_draft("lishu_7.jpg", decision="accept", manual_character="乙")],
+    )
+
+    result = finalize_review_drafts(
+        load_ocr_labels(labels_path), [load_review_draft(placeholder_path), load_review_draft(correction_path)]
+    )
+
+    assert result.is_finalizable
+    assert result.conflicts == ()
     assert [(candidate.raw_filename, candidate.character) for candidate in result.candidates] == [
         ("lishu_7.jpg", "乙"),
     ]
@@ -338,3 +382,32 @@ def test_finalization_reports_conflicting_manual_characters(tmp_path: Path):
 
     assert not result.is_finalizable
     assert [issue.code for issue in result.conflicts] == ["conflicting_draft_decision"]
+
+
+def test_final_resolution_draft_overrides_an_earlier_manual_character(tmp_path: Path):
+    labels_path = tmp_path / "ocr_labels.csv"
+    original_path = tmp_path / "original.csv"
+    final_path = tmp_path / "final.csv"
+    _write_csv(labels_path, LABEL_REQUIRED_FIELDNAMES, [_label("lishu_1.jpg", "甲")])
+    _write_csv(
+        original_path,
+        DRAFT_FIELDNAMES,
+        [_draft("lishu_1.jpg", decision="accept", manual_character="乙")],
+    )
+    _write_csv(
+        final_path,
+        DRAFT_FIELDNAMES,
+        [_draft("lishu_1.jpg", decision="accept", manual_character="丙")],
+    )
+
+    result = finalize_review_drafts(
+        load_ocr_labels(labels_path),
+        [load_review_draft(original_path)],
+        resolution_drafts=[load_review_draft(final_path)],
+    )
+
+    assert result.is_finalizable
+    assert result.conflicts == ()
+    assert [(candidate.raw_filename, candidate.character) for candidate in result.candidates] == [
+        ("lishu_1.jpg", "丙"),
+    ]
