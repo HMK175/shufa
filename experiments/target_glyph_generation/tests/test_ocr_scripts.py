@@ -1,4 +1,5 @@
 import builtins
+import csv
 import importlib
 import importlib.util
 import json
@@ -36,6 +37,172 @@ def _image_record(tmp_path: Path, style_id: str, raw_filename: str = "7.jpg") ->
         raw_index=raw_filename.removesuffix(".jpg").removeprefix(f"{style_id}_"),
         image_path=tmp_path / style_id / raw_filename,
     )
+
+
+def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _finalization_label(raw_filename: str, character: str) -> dict[str, str]:
+    return {
+        "dataset_id": "chinese_style",
+        "style_id": "lishu",
+        "source_split": "train",
+        "raw_filename": raw_filename,
+        "image_path": f"D:/source/{raw_filename}",
+        "ocr_text": character,
+        "character": character,
+        "review_state": "required_review",
+    }
+
+
+def test_finalization_cli_writes_candidates_and_diagnostics_without_rewriting_inputs(
+    monkeypatch, tmp_path: Path, capsys
+):
+    module = _load_script("finalize_chinese_style_review.py")
+    labels_path = tmp_path / "ocr_labels.csv"
+    draft_path = tmp_path / "review.csv"
+    output_dir = tmp_path / "finalized"
+    label_fields = [
+        "dataset_id",
+        "style_id",
+        "source_split",
+        "raw_filename",
+        "image_path",
+        "ocr_text",
+        "character",
+        "review_state",
+    ]
+    draft_fields = [
+        "dataset_id",
+        "style_id",
+        "source_split",
+        "raw_filename",
+        "manual_character",
+        "decision",
+        "note",
+    ]
+    _write_csv(labels_path, label_fields, [_finalization_label("lishu_1.jpg", "一")])
+    _write_csv(draft_path, draft_fields, [])
+    source_before = (labels_path.read_bytes(), draft_path.read_bytes())
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "finalize_chinese_style_review.py",
+            "--ocr-labels",
+            str(labels_path),
+            "--draft",
+            str(draft_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    module.main()
+
+    assert source_before == (labels_path.read_bytes(), draft_path.read_bytes())
+    with (output_dir / "candidate_manifest.csv").open(encoding="utf-8", newline="") as handle:
+        assert list(csv.DictReader(handle)) == [
+            {
+                "dataset_id": "chinese_style",
+                "style_id": "lishu",
+                "character": "一",
+                "source_split": "train",
+                "target_path": "D:/source/lishu_1.jpg",
+                "raw_filename": "lishu_1.jpg",
+                "review_state": "default_ocr",
+            }
+        ]
+        assert json.loads((output_dir / "review_finalization_summary.json").read_text(encoding="utf-8")) == {
+            "candidate_count": 1,
+            "rejected_count": 0,
+            "unresolved_count": 0,
+            "conflict_count": 0,
+            "normalization_count": 0,
+            "is_finalizable": True,
+        }
+    with (output_dir / "rejected_rows.csv").open(encoding="utf-8", newline="") as handle:
+        assert list(csv.DictReader(handle)) == []
+    assert json.loads(capsys.readouterr().out) == {
+        "candidate_count": 1,
+        "rejected_count": 0,
+        "unresolved_count": 0,
+        "conflict_count": 0,
+        "normalization_count": 0,
+        "is_finalizable": True,
+    }
+
+
+def test_finalization_cli_writes_diagnostics_and_blocks_manifest_when_unresolved(
+    monkeypatch, tmp_path: Path, capsys
+):
+    module = _load_script("finalize_chinese_style_review.py")
+    labels_path = tmp_path / "ocr_labels.csv"
+    draft_path = tmp_path / "review.csv"
+    output_dir = tmp_path / "finalized"
+    _write_csv(
+        labels_path,
+        [
+            "dataset_id",
+            "style_id",
+            "source_split",
+            "raw_filename",
+            "image_path",
+            "ocr_text",
+            "character",
+            "review_state",
+        ],
+        [_finalization_label("lishu_1.jpg", "一")],
+    )
+    _write_csv(
+        draft_path,
+        [
+            "dataset_id",
+            "style_id",
+            "source_split",
+            "raw_filename",
+            "manual_character",
+            "decision",
+            "note",
+        ],
+        [
+            {
+                "dataset_id": "chinese_style",
+                "style_id": "lishu",
+                "source_split": "train",
+                "raw_filename": "lishu_1.jpg",
+                "manual_character": "",
+                "decision": "accept",
+                "note": "",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "finalize_chinese_style_review.py",
+            "--ocr-labels",
+            str(labels_path),
+            "--draft",
+            str(draft_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    with pytest.raises(SystemExit) as raised:
+        module.main()
+
+    assert raised.value.code == 1
+    assert not (output_dir / "candidate_manifest.csv").exists()
+    with (output_dir / "unresolved_rows.csv").open(encoding="utf-8", newline="") as handle:
+        assert [row["code"] for row in csv.DictReader(handle)] == ["manual_character_needed"]
+    assert json.loads(capsys.readouterr().out)["is_finalizable"] is False
 
 
 def _patch_audit_steps(monkeypatch, module, expected_records, final_labels, expected_arguments):

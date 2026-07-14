@@ -39,6 +39,7 @@ def main() -> None:
     parser.add_argument("--model-name", default="PP-OCRv5_server_rec")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--review-per-style", type=int, default=200)
+    parser.add_argument("--progress", action="store_true")
     arguments = parser.parse_args()
 
     if arguments.review_per_style <= 0:
@@ -56,10 +57,10 @@ def main() -> None:
     validate_calligrapher_audit_inventory(arguments.dataset_root, images, sources)
     if overrides is not None:
         validate_override_keys(overrides, (image.key for image in images))
-    labels = build_label_records(
-        images,
-        run_local_ocr(images, model_name=model_name, batch_size=arguments.batch_size),
-    )
+    ocr_arguments = {"model_name": model_name, "batch_size": arguments.batch_size}
+    if arguments.progress:
+        ocr_arguments["progress_callback"] = _emit_ocr_progress
+    labels = build_label_records(images, run_local_ocr(images, **ocr_arguments))
     if overrides is not None:
         labels = apply_manual_overrides(labels, overrides)
     summary = write_audit_outputs(
@@ -107,6 +108,10 @@ def _review_labels(labels, review_per_style: int):
             seen_keys.add(label.key)
             unique_labels.append(label)
     return unique_labels
+
+
+def _emit_ocr_progress(completed: int, total: int) -> None:
+    print(json.dumps({"ocr_progress": {"completed": completed, "total": total}}), flush=True)
 
 
 if __name__ == "__main__":
