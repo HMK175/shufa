@@ -303,7 +303,7 @@ def create_review_pages(
     output_dir.mkdir(parents=True, exist_ok=True)
     font = _load_review_font(14)
     page_paths: list[Path] = []
-    tile_width, tile_height = 250, 225
+    tile_width, tile_height = 250, 245
     for page_number, start in enumerate(range(0, len(labels), page_size), start=1):
         page_labels = labels[start : start + page_size]
         columns = min(5, len(page_labels))
@@ -527,6 +527,7 @@ def _draw_review_tile(
     details = (
         f"dataset: {label.image.dataset_id}",
         f"style: {label.image.style_id}",
+        f"split: {label.image.source_split}",
         f"file: {label.image.raw_filename}",
         f"ocr: {label.ocr_text or '-'} score: {label.ocr_score:.3f}",
         f"final: {label.character or '-'} state: {label.review_state}",

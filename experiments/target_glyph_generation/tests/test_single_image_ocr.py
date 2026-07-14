@@ -7,6 +7,7 @@ import pytest
 from PIL import Image, ImageChops
 
 from target_glyph_generation.external_dataset_discovery import ImageRecord
+import target_glyph_generation.single_image_ocr as single_image_ocr
 from target_glyph_generation.single_image_ocr import (
     LabelRecord,
     apply_manual_overrides,
@@ -18,12 +19,18 @@ from target_glyph_generation.single_image_ocr import (
 )
 
 
-def _image_record(path: Path, *, dataset_id: str = "calligrapher20", style_id: str = "wxz") -> ImageRecord:
+def _image_record(
+    path: Path,
+    *,
+    dataset_id: str = "calligrapher20",
+    style_id: str = "wxz",
+    source_split: str = "train",
+) -> ImageRecord:
     return ImageRecord(
         dataset_id=dataset_id,
         style_id=style_id,
         style_display_name=style_id,
-        source_split="train",
+        source_split=source_split,
         raw_filename=path.name,
         raw_index=path.stem,
         image_path=path,
@@ -38,12 +45,18 @@ def _label_record(
     review_state: str = "provisional",
     dataset_id: str = "calligrapher20",
     style_id: str = "wxz",
+    source_split: str = "train",
     manual_character: str | None = None,
     ocr_score: float = 0.99,
     flags: tuple[str, ...] = (),
 ) -> LabelRecord:
     return LabelRecord(
-        image=_image_record(path, dataset_id=dataset_id, style_id=style_id),
+        image=_image_record(
+            path,
+            dataset_id=dataset_id,
+            style_id=style_id,
+            source_split=source_split,
+        ),
         ocr_text=ocr_text,
         ocr_score=ocr_score,
         manual_character=manual_character,
@@ -622,6 +635,23 @@ def test_create_review_pages_paginates_images_and_rejects_invalid_page_size(tmp_
     with Image.open(second_dataset_page) as second_dataset_image:
         second_pixels = second_dataset_image.convert("RGB")
     assert ImageChops.difference(first_pixels, second_pixels).getbbox() is not None
+
+
+def test_create_review_pages_includes_source_split_in_tile_metadata(monkeypatch, tmp_path: Path):
+    label = _label_record(
+        _write_jpeg(tmp_path / "images" / "one.jpg"),
+        source_split="test",
+    )
+    captured_text: list[str] = []
+
+    def capture_text(draw, position, text, font):
+        captured_text.append(text)
+
+    monkeypatch.setattr(single_image_ocr, "_draw_text", capture_text)
+
+    create_review_pages([label], tmp_path / "review-pages")
+
+    assert "split: test" in captured_text
 
 
 @pytest.mark.parametrize("page_size", [0, 26])
