@@ -1,0 +1,4 @@
+sources:
+  mzd:
+    display_name: 毛泽东
+    expected_total: 6763

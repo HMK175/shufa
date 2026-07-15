@@ -1,0 +1,55 @@
+# P0 仅用于验证数据管线、训练流程和评价指标；不是论文最终数据集。
+canvas_size: 256
+selection_seed: 20260715
+split_seed: 20260713
+character_count: 800
+character_splits:
+  train: 640
+  validation: 80
+  test: 80
+dataset_tier: exploratory
+
+# ChineseStyle 原始下载页目前无法追溯，明确保留为 unverified。
+# 因而本配置的输出不能作为论文最终数据，后续 P1 需替换为授权可核验的数据源。
+external_styles:
+  - dataset_id: chinese_style
+    style_id: lishu
+    license_status: unverified
+  - dataset_id: chinese_style
+    style_id: xingkai
+    license_status: unverified
+  - dataset_id: calligrapher20
+    style_id: lgq
+    license_status: CC-BY-SA-4.0
+  - dataset_id: calligrapher20
+    style_id: yzq
+    license_status: CC-BY-SA-4.0
+
+# 下列字体均已完成 OFL-1.1 文件、许可、字符覆盖与渲染审计。
+open_style_ids:
+  - noto_serif_sc_400
+  - lxgw_wenkai_regular
+  - ma_shan_zheng
+  - zhi_mang_xing
+  - long_cang
+  - liu_jian_mao_cao
+  - zcool_xiaowei
+  - zcool_qingke_huangyou
+
+# 8/2/2 风格划分。验证与测试风格在训练期未出现，用于检查未见风格泛化。
+style_splits:
+  train:
+    - lishu
+    - xingkai
+    - lgq
+    - yzq
+    - noto_serif_sc_400
+    - lxgw_wenkai_regular
+    - ma_shan_zheng
+    - zhi_mang_xing
+  validation:
+    - long_cang
+    - zcool_xiaowei
+  test:
+    - liu_jian_mao_cao
+    - zcool_qingke_huangyou
