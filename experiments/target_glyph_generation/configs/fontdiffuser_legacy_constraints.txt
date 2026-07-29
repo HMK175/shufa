@@ -1,0 +1,8 @@
+# Compatibility pins for FontDiffuser with PyTorch 1.13.1 / CUDA 11.7.
+# Keep this file ASCII-only because Windows pip may parse it with GBK.
+numpy==1.26.4
+torch==1.13.1+cu117
+torchvision==0.14.1+cu117
+torchaudio==0.13.1+cu117
+kornia==0.6.12
+huggingface-hub==0.25.2

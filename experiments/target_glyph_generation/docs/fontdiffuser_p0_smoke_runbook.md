@@ -30,6 +30,7 @@ $env:TEMP = "$cacheRoot\tmp"
 $env:TMP = "$cacheRoot\tmp"
 $env:PIP_CACHE_DIR = "$cacheRoot\pip"
 $env:TORCH_HOME = "$cacheRoot\torch"
+$constraints = "$project\experiments\target_glyph_generation\configs\fontdiffuser_legacy_constraints.txt"
 ```
 
 ## 补齐环境与修复 NumPy 兼容性
@@ -37,12 +38,17 @@ $env:TORCH_HOME = "$cacheRoot\torch"
 在上述环境变量仍生效的 PowerShell 中执行：
 
 ```powershell
-& $py -m pip install --disable-pip-version-check --no-input --progress-bar off --force-reinstall "numpy<2"
-& $py -m pip install --disable-pip-version-check --no-input --progress-bar off -r "$project\external_repos\FontDiffuser\requirements.txt"
+& $py -m pip install --disable-pip-version-check --no-input --progress-bar off --force-reinstall "numpy==1.26.4"
+& $py -m pip install --disable-pip-version-check --no-input --progress-bar off --force-reinstall --no-deps `
+  torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 `
+  --extra-index-url https://download.pytorch.org/whl/cu117
+& $py -m pip install --disable-pip-version-check --no-input --progress-bar off `
+  -r "$project\external_repos\FontDiffuser\requirements.txt" --constraint $constraints
 & $py -m pip install --disable-pip-version-check --no-input --progress-bar off tensorboard
+& $py -m pip check
 ```
 
-注意：这一步不执行 `torch`、`torchvision` 或 `torchaudio` 的安装命令。
+注意：该仓库发布于 2023 年，不能直接在无约束条件下执行原始 `requirements.txt`。约束文件会固定 `kornia==0.6.12` 和 `huggingface-hub==0.25.2`，避免 pip 将官方 CUDA 版 Torch 升级为不兼容的新版 CPU 包，或使 `diffusers==0.22.0` 因缺失 `cached_download` 接口而无法导入。
 
 ## 官方数据加载检查
 

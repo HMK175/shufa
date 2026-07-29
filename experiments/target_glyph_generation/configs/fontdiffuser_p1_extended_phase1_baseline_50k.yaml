@@ -1,0 +1,50 @@
+# P1-extended Phase 1 正式基线：用于 50,000 step 的服务器运行，不启用 SCR。
+run_name: p1_extended_phase1_baseline_50k
+run_tier: formal_baseline
+dataset_scope: p1_extended
+phase: 1
+scr: false
+
+data_root: ../data/fontdiffuser_p1_extended
+model:
+  resolution: 96
+  style_image_size: 96
+  content_image_size: 96
+  content_encoder_downsample_size: 3
+  channel_attn: true
+  content_start_channel: 64
+  style_start_channel: 64
+
+training:
+  seed: 20260716
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  mixed_precision: fp16
+  learning_rate: 0.0001
+  lr_scheduler: constant
+  lr_warmup_steps: 0
+  perceptual_coefficient: 0.01
+  offset_coefficient: 0.5
+  drop_prob: 0.1
+  max_train_steps: 50000
+  checkpoint_interval: 10000
+  log_interval: 50
+
+evaluation:
+  paired_test_manifest: ../outputs/p1_extended_evaluation_20260716/paired_test_manifest.csv
+  visual_test_manifest: ../outputs/p1_extended_evaluation_20260716/visual_test_manifest.csv
+  sample_checkpoint_steps: [10000, 20000, 30000, 40000, 50000]
+  paired_metrics: [l1, ssim, lpips]
+  distribution_metric: fid
+
+runtime:
+  recommended_gpu_memory_gib: 24
+  output_dir: ../outputs/fontdiffuser_p1_extended_phase1_baseline_50k
+  report_to: tensorboard
+
+paper_boundary:
+  task: 已见风格下的未见字符生成
+  training_initialization: random
+  checkpoint_resume: prohibited_for_formal_baseline
+  chinese_style_license_status: unverified
+  chinese_style_paper_use_basis: user_confirmed_unverified_source

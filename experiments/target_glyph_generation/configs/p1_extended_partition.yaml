@@ -1,0 +1,24 @@
+# P1-extended：包含 ChineseStyle；按用户确认纳入论文实验，许可状态仍记录为 unverified。
+dataset_scope: p1_extended
+paper_use_basis: user_confirmed_unverified_source
+seed: 20260716
+ratios:
+  train: 0.8
+  validation: 0.1
+  test: 0.1
+
+# 两个输入均由已审计的 P1 风格池生成；字符按 Unicode 精确区分，不做繁简转换。
+core_candidates_path: ../outputs/p1_style_pool_20260716/core_calligrapher_candidates.csv
+extended_candidates_path: ../outputs/p1_style_pool_20260716/extended_chinese_style_candidates.csv
+artifact_actions_path: ../outputs/external_dataset_audit/line_artifact_audit_20260716/htj_p1_actions.csv
+
+# 这些 OFL 字体将在下一步经过字符覆盖审计后，按 open_font_render_plan.csv 渲染。
+open_font_style_ids:
+  - noto_serif_sc_400
+  - lxgw_wenkai_regular
+  - ma_shan_zheng
+  - zhi_mang_xing
+  - long_cang
+  - liu_jian_mao_cao
+  - zcool_xiaowei
+  - zcool_qingke_huangyou

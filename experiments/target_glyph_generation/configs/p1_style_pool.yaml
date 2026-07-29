@@ -1,0 +1,196 @@
+# P1 风格池只登记已完成审计、复核与许可边界判定的来源。
+# core 与经用户确认的 extended 均可进入论文实验；ChineseStyle 的许可状态仍如实记录为 unverified。
+core_styles:
+  - style_id: lgq
+    display_name: 柳公权
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: P0 人工审计已通过；P1 仅取严格高置信单字标签
+    candidate_source:
+      path: ../outputs/external_dataset_audit/calligrapher8_single_image_ocr_20260714_225148/ocr_labels.csv
+      path_column: image_path
+      filters:
+        review_state: provisional
+        minimum_ocr_score: 0.90
+  - style_id: yzq
+    display_name: 颜真卿
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: P0 人工审计已通过；P1 仅取严格高置信单字标签
+    candidate_source:
+      path: ../outputs/external_dataset_audit/calligrapher8_single_image_ocr_20260714_225148/ocr_labels.csv
+      path_column: image_path
+      filters:
+        review_state: provisional
+        minimum_ocr_score: 0.90
+  - style_id: htj
+    display_name: 黄庭坚
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-15 分层抽样人工复核，人工覆写已应用
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_style_spotcheck_20260715_v2/htj_overrides_applied/ocr_labels_revised.csv
+      path_column: image_path
+      filters:
+        allowed_review_states:
+          - provisional
+          - manual_override
+        minimum_ocr_score: 0.90
+  - style_id: gj
+    display_name: 管峻
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: wzm
+    display_name: 文徵明
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: hy
+    display_name: 弘一
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: bdsr
+    display_name: 八大山人
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: zmf
+    display_name: 赵孟頫
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: csl
+    display_name: 褚遂良
+    source_kind: calligrapher
+    dataset_id: calligrapher20
+    license_status: CC-BY-SA-4.0
+    paper_eligible: true
+    review_evidence: 2026-07-16 高置信候选抽样人工复核 50/50 正确
+    candidate_source:
+      path: ../outputs/external_dataset_audit/p1_remaining6_highconfidence_spotcheck_20260716/phase1_highconfidence_candidates.csv
+      path_column: image_path
+      filters:
+        p1_phase1_status: eligible
+  - style_id: noto_serif_sc_400
+    display_name: Noto Serif SC Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: lxgw_wenkai_regular
+    display_name: LXGW WenKai Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: ma_shan_zheng
+    display_name: Ma Shan Zheng Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: zhi_mang_xing
+    display_name: Zhi Mang Xing Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: long_cang
+    display_name: Long Cang Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: liu_jian_mao_cao
+    display_name: Liu Jian Mao Cao Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: zcool_xiaowei
+    display_name: ZCOOL XiaoWei Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+  - style_id: zcool_qingke_huangyou
+    display_name: ZCOOL QingKe HuangYou Regular
+    source_kind: open_font
+    dataset_id: open_font
+    license_status: OFL-1.1
+    paper_eligible: true
+    source_catalog: font_sources.yaml
+
+extended_styles:
+  - style_id: lishu
+    display_name: ChineseStyle 隶书
+    source_kind: external_glyph
+    dataset_id: chinese_style
+    license_status: unverified
+    paper_eligible: true
+    paper_use_basis: user_confirmed_unverified_source
+    review_evidence: 全量人工复核已定稿；用户确认将许可未核实来源纳入论文实验
+    candidate_source:
+      path: ../outputs/external_dataset_audit/chinese_style_single_image_ocr_20260713/finalized_review_20260715_v4/candidate_manifest.csv
+      path_column: target_path
+  - style_id: xingkai
+    display_name: ChineseStyle 行楷
+    source_kind: external_glyph
+    dataset_id: chinese_style
+    license_status: unverified
+    paper_eligible: true
+    paper_use_basis: user_confirmed_unverified_source
+    review_evidence: 全量人工复核已定稿；用户确认将许可未核实来源纳入论文实验
+    candidate_source:
+      path: ../outputs/external_dataset_audit/chinese_style_single_image_ocr_20260713/finalized_review_20260715_v4/candidate_manifest.csv
+      path_column: target_path

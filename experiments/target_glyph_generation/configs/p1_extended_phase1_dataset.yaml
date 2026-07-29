@@ -1,0 +1,20 @@
+# FontDiffuser Phase 1 数据构建：稀疏开源字体覆盖，不启用 SCR。
+dataset_scope: p1_extended
+scr: false
+canvas_size: 256
+
+characters_path: ../outputs/p1_extended_partition_20260716/characters.csv
+external_samples_path: ../outputs/p1_extended_partition_20260716/external_samples.csv
+open_font_render_plan_path: ../outputs/p1_extended_partition_20260716/open_font_render_plan.csv
+open_font_coverage_summary: ../outputs/p1_open_font_coverage_20260716/font_coverage_summary.csv
+
+content_font_path: ../data/fontdiffuser_open_dataset/fonts/noto_sans_sc_400.ttf
+open_font_paths:
+  noto_serif_sc_400: ../data/fontdiffuser_open_dataset/fonts/noto_serif_sc_400.ttf
+  lxgw_wenkai_regular: ../data/fontdiffuser_open_dataset/fonts/lxgw_wenkai_regular.ttf
+  ma_shan_zheng: ../data/fontdiffuser_open_dataset/fonts/ma_shan_zheng.ttf
+  zhi_mang_xing: ../data/fontdiffuser_open_dataset/fonts/zhi_mang_xing.ttf
+  long_cang: ../data/fontdiffuser_open_dataset/fonts/long_cang.ttf
+  liu_jian_mao_cao: ../data/fontdiffuser_open_dataset/fonts/liu_jian_mao_cao.ttf
+  zcool_xiaowei: ../data/fontdiffuser_open_dataset/fonts/zcool_xiaowei.ttf
+  zcool_qingke_huangyou: ../data/fontdiffuser_open_dataset/fonts/zcool_qingke_huangyou.ttf

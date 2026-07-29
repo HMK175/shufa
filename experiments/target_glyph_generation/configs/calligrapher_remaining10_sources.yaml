@@ -1,0 +1,31 @@
+sources:
+  smh:
+    display_name: 沙孟海
+    expected_total: 1267
+  zmf:
+    display_name: 赵孟頫
+    expected_total: 2012
+  csl:
+    display_name: 褚遂良
+    expected_total: 1075
+  wzm:
+    display_name: 文徵明
+    expected_total: 4526
+  lqs:
+    display_name: 梁秋生
+    expected_total: 6757
+  hy:
+    display_name: 弘一
+    expected_total: 3331
+  bdsr:
+    display_name: 八大山人
+    expected_total: 1985
+  fwq:
+    display_name: 范文强
+    expected_total: 6763
+  gj:
+    display_name: 管峻
+    expected_total: 6763
+  lx:
+    display_name: 鲁迅
+    expected_total: 6763
